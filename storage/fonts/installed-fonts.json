@@ -1,0 +1,32 @@
+{
+    "font awesome 5 brands": {
+        "normal": "font_awesome_5_brands_normal_fe9f8889de14dac4e5423b59c7c9c4d7"
+    },
+    "font awesome 5 free": {
+        "normal": "font_awesome_5_free_normal_63ceaa3a26a25d15acc67a2a92a86505",
+        "900": "C:\\laragon\\www\\Facturation\\storage\\fonts\/font_awesome_5_free_900_e28be8b0559d1fb8cc4e17872df29e2a"
+    },
+    "boxicons": {
+        "normal": "boxicons_normal_fd2aca5601023d30e3a54d2526f91d26"
+    },
+    "ubuntu": {
+        "300": "C:\\Users\\4B TECHNOLOGY\\OneDrive\\Bureau\\Facturation\\storage\\fonts\/ubuntu_300_78caa070e669b23c12005b68678fc64d",
+        "normal": "C:\\Users\\4B TECHNOLOGY\\OneDrive\\Bureau\\Facturation\\storage\\fonts\/ubuntu_normal_a9b4465f75f1e035e352908784fee311",
+        "500": "C:\\Users\\4B TECHNOLOGY\\OneDrive\\Bureau\\Facturation\\storage\\fonts\/ubuntu_500_77b379fb022b48e8a5f4b688af8ca205",
+        "bold": "ubuntu_bold_01f1f5adaa8ee473febf98094d81e93b"
+    },
+    "font awesome 6 brands": {
+        "normal": "font_awesome_6_brands_normal_fe9f8889de14dac4e5423b59c7c9c4d7"
+    },
+    "font awesome 6 free": {
+        "normal": "C:\\laragon\\www\\Facturation\\storage\\fonts\/font_awesome_6_free_normal_63ceaa3a26a25d15acc67a2a92a86505",
+        "900": "font_awesome_6_free_900_e28be8b0559d1fb8cc4e17872df29e2a"
+    },
+    "fontawesome": {
+        "normal": "fontawesome_normal_06860fa9961d464ff5b77a2ec3345004"
+    },
+    "roboto serif": {
+        "normal": "C:\\laragon\\www\\Facturation\\storage\\fonts\/roboto_serif_normal_863b5bc622ac54416d4ae9aced5a200e",
+        "bold": "roboto_serif_bold_8909b3c9a13a92ae30962efe7c053cb4"
+    }
+}

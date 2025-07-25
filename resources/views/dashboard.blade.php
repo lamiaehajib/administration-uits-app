@@ -371,7 +371,7 @@ button#open-search-modal {
         <button type="button" id="facturButton" class="has-borderr">
            
             <i class="fas fa-file-invoice-dollar"></i>
-            <span>les facture<i id="i-fetch" class="fa fa-chevron-down"></i></span>
+            <span>les factures<i id="i-fetch" class="fa fa-chevron-down"></i></span>
         </button>
 </div>
          <div class="div-car">

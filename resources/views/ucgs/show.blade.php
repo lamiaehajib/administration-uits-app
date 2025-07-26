@@ -96,7 +96,7 @@
         </div>
 
         <div class="footer-text">
-            <p style="margin: 2px;">NB: L'écran et le clavier ne font pas partie de la garantie</p>
+            <p style="margin: 2px;">NB: L'écran et le clavier et Circuit Alimentation ne font pas partie de la garantie</p>
             <p style="margin: 2px;">1er Étage, App 1, N° 68, Rue San Saëns, Belvédère, Casablanca 20300</p>
             <p style="margin: 2px;">06 55 79 44 42 | contact@uits.ma | www.uits.ma</p>
         </div>

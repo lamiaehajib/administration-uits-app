@@ -157,7 +157,7 @@ i{
             <div style="position: absolute; margin-left:370px; font-size:14px;">
                 <ul>
                     <li>cloud computing avec Microsoft azure</li>
-                    <li>sauvegarde et réplication des données avec</li>
+                    <li>sauvegarde et réplication des données avec veeam backup</li>
                     <li>sécurité des infrastructures réseau avec fortigate</li>
                     
                 </ul>

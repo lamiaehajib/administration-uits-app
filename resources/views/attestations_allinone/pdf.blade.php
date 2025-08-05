@@ -148,7 +148,7 @@ i{
         <div style="">
             <div style="position: absolute; margin-left:-120px; font-size:14px; ">
                 <ul>
-                    <li>administration et gestion des routeurs et des suitches CISCO</li>
+                    <li>administration et gestion des routeurs et des switches CISCO</li>
                     <li>Installation et administration de windows serveur 2022/2025</li>
                     <li>virtualisation de serveur avec VMWare VSPHERE (ESXI)</li>
                     <li>Conception et mise en place des architectures réseaux ( câblage, montage des raeles, surveillance,…)</li>

@@ -89,8 +89,9 @@
             <div class="form-group">
                 <label for="tva">TVA (%)</label>
                 <select name="tva" class="form-control" onchange="calculateTTC()">
+                     <option value="20" {{ old('tva', '20') == '20' ? 'selected' : '' }}>TVA 20%</option>
                     <option value="0" {{ old('tva') == '0' ? 'selected' : '' }}>Aucune TVA</option>
-                    <option value="20" {{ old('tva') == '20' ? 'selected' : '' }}>TVA 20%</option>
+              
                 </select>
             </div>
     

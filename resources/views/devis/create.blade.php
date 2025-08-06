@@ -60,13 +60,13 @@
                 <input type="number" step="0.01" name="total_ht" class="form-control" id="total_ht" value="{{ old('total_ht') }}" readonly>
             </div>
     
-            <div class="form-group">
-                <label for="tva">TVA (%)</label>
-                <select name="tva" class="form-control" onchange="calculateTTC()">
-                    <option value="0" {{ old('tva') == '0' ? 'selected' : '' }}>Aucune TVA</option>
-                    <option value="20" {{ old('tva') == '20' ? 'selected' : '' }}>TVA 20%</option>
-                </select>
-            </div>
+     <div class="form-group">
+    <label for="tva">TVA (%)</label>
+    <select name="tva" class="form-control" onchange="calculateTTC()">
+        <option value="20" {{ old('tva', '20') == '20' ? 'selected' : '' }}>TVA 20%</option>
+        <option value="0" {{ old('tva') == '0' ? 'selected' : '' }}>Aucune TVA</option>
+    </select>
+</div>
     
             <div class="form-group">
                 <label for="total_ttc">Total TTC</label>

@@ -67,14 +67,14 @@ color: rgb(195, 57, 57);
     
     width: 100%;
     border-collapse: collapse;
- font-size: 13px;
+ font-size: 11px;
     border: 2px dashed rgb(179, 25, 25);
 }
 
 .devis-table th,
 .devis-table td {
     border: 2px dashed red;
-    padding: 2px;
+    padding: 1px;
     text-align: center; /* Khaliha center ila bghiti l'koulchi */
 }
 

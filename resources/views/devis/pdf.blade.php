@@ -67,16 +67,25 @@ color: rgb(195, 57, 57);
     
     width: 100%;
     border-collapse: collapse;
- font-size: 13px;
+ font-size: 11px;
     border: 2px dashed rgb(179, 25, 25);
 }
 
 .devis-table th,
 .devis-table td {
     border: 2px dashed red;
-    padding: 2px;
-    text-align: center;
+    padding: 1px;
+    text-align: center; /* Khaliha center ila bghiti l'koulchi */
 }
+
+/* L'code l'jdid lli kaykhdam ghir 3la l'colonne dyal "Libellé" */
+.devis-table td:nth-child(2) {
+    text-align: left; /* Tbadlat l'alignement ghir lhad l'colonne */
+    width: 40%;
+    overflow: hidden;
+    word-break: break-all;
+}
+
 
 .devis-table thead th {
     background-color: rgb(203, 4, 4);

@@ -134,7 +134,7 @@ public function duplicate(Devis $devis)
     foreach ($request->libele as $key => $libele) {
         if (!empty($libele)) {
             $items[] = [
-                'libele' => Str::limit($libele, 255),
+               'libele' => $libele,
                 'quantite' => $request->quantite[$key],
                 'prix_unitaire' => $request->prix_unitaire[$key],
                 'prix_total' => $request->quantite[$key] * $request->prix_unitaire[$key],
@@ -225,7 +225,7 @@ public function duplicate(Devis $devis)
         foreach ($request->libele as $key => $libele) {
             if (!empty($libele)) { // نتأكدو أن الوصف مشي خاوي
                 $items[] = [
-                    'libele' => Str::limit($libele, 255),
+                   'libele' => $libele,
                     'quantite' => $request->quantite[$key],
                     'prix_unitaire' => $request->prix_unitaire[$key],
                     'prix_total' => $request->quantite[$key] * $request->prix_unitaire[$key],

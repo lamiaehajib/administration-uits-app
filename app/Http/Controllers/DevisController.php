@@ -311,4 +311,7 @@ public function duplicate(Devis $devis)
         return view('devis.corbeille', compact('devis'));
     }
 
+
+    
+
 }

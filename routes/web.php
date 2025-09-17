@@ -92,6 +92,18 @@ Route::resource('devis', DevisController::class)->parameters(['devis' => 'devis'
 Route::get('devis/{id}/pdf', [DevisController::class, 'downloadPDF'])->name('devis.downloadPDF');
 
 
+
+Route::get('/devisf/corbeille', [DevisfController::class, 'corbeille'])
+      ->name('devisf.corbeille');
+
+// 2. Route dyal Restauration
+Route::put('/devisf/{id}/restore', [DevisfController::class, 'restore'])
+      ->name('devisf.restore');
+
+// 3. Route dyal Suppression Définitive
+Route::delete('/devisf/{id}/forceDelete', [DevisfController::class, 'forceDelete'])
+      ->name('devisf.forceDelete');
+
 Route::resource('devisf', DevisfController::class)->parameters(['devisf' => 'devisf']);
 
 Route::get('devisf/{id}/pdf', [DevisfController::class, 'downloadPDF'])->name('devisf.downloadPDF');

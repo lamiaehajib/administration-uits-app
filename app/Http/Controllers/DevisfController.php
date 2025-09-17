@@ -341,6 +341,37 @@ class DevisfController extends Controller
     
        
     }
+
+
+    public function corbeille()
+{
+    // Kanst3amlo onlyTrashed() bach njebdo GHI les devis li mamsou7in
+    $devisf = Devisf::onlyTrashed()
+                  ->orderBy('deleted_at', 'desc')
+                  ->get();
+
+    return view('devisf.corbeille', compact('devisf'));
+}
+
+// N°2. Restauration d'un Devis (I3ada l'Hayat)
+public function restore($id)
+{
+    // Kanjebdo Devis b ID men l'Corbeille (withTrashed) w kan3ayto 3la restore()
+    $devisf = Devisf::withTrashed()->findOrFail($id);
+    $devisf->restore();
+
+    return redirect()->route('devisf.corbeille')->with('success', 'Devis restauré avec succès!');
+}
+
+// N°3. Suppression Définitive (Mass7 Nnéha'i)
+public function forceDelete($id)
+{
+    // Kanjebdo Devis b ID men l'Corbeille w kan3ayto 3la forceDelete()
+    $devisf = Devisf::withTrashed()->findOrFail($id);
+    $devisf->forceDelete(); // Hadchi kaymassah men la base de données b neha'i!
+
+    return redirect()->route('devisf.corbeille')->with('success', 'Devis supprimé définitivement!');
+}
     
 
 }

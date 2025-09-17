@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Devisf extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
      // اسم الجدول
 protected $primaryKey = 'id'; // المفتاح الأساسي (إذا كان مختلفًا عن 'id')
 public $incrementing = true; // إذا كان المفتاح الأساسي عددًا صحيحًا

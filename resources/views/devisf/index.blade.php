@@ -65,6 +65,10 @@ input.form-control {
         </form>
 
         <div class="d-flex justify-content-between align-items-center mb-4">
+
+            <a href="{{ route('devisf.corbeille') }}" class="btn btn-danger">
+    <i class="fa fa-trash"></i> Corbeille
+</a>
             <a href="{{ route('devisf.create') }}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Ajouter un Devis Formation
             </a>

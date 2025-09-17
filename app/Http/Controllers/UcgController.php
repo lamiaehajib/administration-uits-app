@@ -101,4 +101,35 @@ class UcgController extends Controller
 
         return $pdf->download('reçu_garantie.pdf');
     }
+
+
+    public function corbeille()
+{
+    // Kanst3amlo onlyTrashed() bach njebdo GHI les éléments li mamsou7in
+    $ucg = Ucg::onlyTrashed()
+                  ->orderBy('deleted_at', 'desc')
+                  ->get();
+
+    return view('ucgs.corbeille', compact('ucg'));
+}
+
+// N°2. Restauration d'un Élément (I3ada l'Hayat)
+public function restore($id)
+{
+    // Kanjebdo l-élément b ID men l'Corbeille (withTrashed) w kan3ayto 3la restore()
+    $ucg = Ucg::withTrashed()->findOrFail($id);
+    $ucg->restore();
+
+    return redirect()->route('ucg.corbeille')->with('success', 'Élément restauré avec succès!');
+}
+
+// N°3. Suppression Définitive (Mass7 Nnéha'i)
+public function forceDelete($id)
+{
+    // Kanjebdo l-élément b ID men l'Corbeille w kan3ayto 3la forceDelete()
+    $ucg = Ucg::withTrashed()->findOrFail($id);
+    $ucg->forceDelete(); // Hadchi kaymassah men la base de données b neha'i!
+
+    return redirect()->route('ucg.corbeille')->with('success', 'Élément supprimé définitivement!');
+}
 }

@@ -39,6 +39,9 @@
        }
    </style>
     <div class="container my-5">
+        <a href="{{ route('ucg.corbeille') }}" class="btn btn-danger">
+    <i class="fa fa-trash"></i> Corbeille
+</a>
         <form method="GET" action="{{ route('ucgs.index') }}" class="mb-4">
             <div class="input-group">
                 <input 

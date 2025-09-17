@@ -283,6 +283,32 @@ public function duplicate(Devis $devis)
     return $pdf->download('devis_' . $devis->devis_num . '-' . $clientName . '-' . $titre . '.pdf');
 }
 
+    public function restore($id)
+    {
+        // Kanjebdo Devis men Corbeille w kan3ayto 3la restore()
+        $devis = Devis::withTrashed()->findOrFail($id);
+        $devis->restore();
 
+        return redirect()->route('devis.corbeille')->with('success', 'Devis tte-rja3 men Corbeille b naja7!');
+    }
+
+    public function forceDelete($id)
+    {
+        // Kanjebdo Devis men Corbeille w kan3ayto 3la forceDelete()
+        $devis = Devis::withTrashed()->findOrFail($id);
+        $devis->forceDelete(); // Hadchi kaymassah men la base de données!
+
+        return redirect()->route('devis.corbeille')->with('success', 'Devis tte-mssa7 b chkel néha\'i!');
+    }
+
+
+    public function corbeille()
+    {
+        // Kanst3amlo onlyTrashed() bach njebdo GHI les devis li fihom deleted_at m3emmer
+        $devis = Devis::onlyTrashed()->orderBy('deleted_at', 'desc')->get();
+
+        // Khassna ndirou wa7ed View jdida bach n'affichiw had les devis
+        return view('devis.corbeille', compact('devis'));
+    }
 
 }

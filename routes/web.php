@@ -53,6 +53,17 @@ Route::middleware('auth')->group(function () {
     Route::resource('users', UserController::class);
 Route::resource('roles', RoleController::class);
 
+
+  Route::put('/devis/{id}/restore', [DevisController::class, 'restore'])
+      ->name('devis.restore');
+
+Route::delete('/devis/{id}/forceDelete', [DevisController::class, 'forceDelete'])
+      ->name('devis.forceDelete');
+
+      
+Route::get('/devis/corbeille', [DevisController::class, 'corbeille'])
+      ->name('devis.corbeille');
+
 Route::resource('attestations', AttestationController::class);
 
 Route::get('/attestations/pdf/{id}', [AttestationController::class, 'generatePDF'])->name('attestations.pdf');
@@ -132,5 +143,12 @@ Route::get('/devisf/{devisf}/duplicate', [App\Http\Controllers\DevisfController:
 Route::get('/factures/{facture}/duplicate', [App\Http\Controllers\FactureController::class, 'duplicate'])->name('factures.duplicate');
 
 Route::get('/facturefs/{facturef}/duplicate', [App\Http\Controllers\FacturefController::class, 'duplicate'])->name('facturefs.duplicate');
+
+
+
+Route::get('/devis/{devis}', [DevisController::class, 'show'])
+      ->name('devis.show')
+      ->withTrashed();
+    
 
 require __DIR__.'/auth.php';

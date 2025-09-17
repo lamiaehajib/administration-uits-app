@@ -73,7 +73,9 @@ input.form-control {
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         @endif
-
+<a href="{{ route('devis.corbeille') }}" class="btn btn-danger">
+    <i class="fa fa-trash"></i> Corbeille
+</a>
         <!-- Search Form -->
         <div class="text-end mb-4">
         <a href="{{ route('devis.create') }}" class="btn btn-primary ms-3"><i class="fas fa-plus-circle"></i> Ajouter un Devis</a>

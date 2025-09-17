@@ -94,7 +94,7 @@
                            
                             <td class="text-center">
                                 <div class="d-flex gap-2">
-                                    <a href="{{ route('ucgs.pdf', $ucg->id) }}" class="btn btn-primary btn-sm" title="Télécharger">
+                                    <a href="{{ route('ucg.pdf', $ucg->id) }}" class="btn btn-primary btn-sm" title="Télécharger">
                                         <i class="fas fa-file-pdf"></i> 
                                     </a>
                                     <a href="{{ route('ucgs.edit', $ucg->id) }}" class="btn btn-warning btn-sm" title="Modifier">

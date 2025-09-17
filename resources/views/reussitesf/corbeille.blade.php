@@ -1,3 +1,4 @@
+<x-app-layout>
 <h2 class="text-danger"><i class="fa fa-trash"></i> Corbeille des Réussites (F)</h2>
 
 <p class="alert alert-info">Cette liste contient tous les éléments de Réussite qui ont été supprimés. Vous pouvez soit les restaurer, soit les supprimer définitivement.</p>
@@ -48,3 +49,4 @@
         @endif
     </tbody>
 </table>
+</x-app-layout>

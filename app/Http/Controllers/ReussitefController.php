@@ -120,7 +120,7 @@ class ReussitefController extends Controller
                   ->orderBy('deleted_at', 'desc')
                   ->get();
 
-    return view('reussitef.corbeille', compact('reussitef'));
+    return view('reussitesf.corbeille', compact('reussitef'));
 }
 
 // N°2. Restauration d'un Élément (I3ada l'Hayat)
@@ -130,7 +130,7 @@ public function restore($id)
     $reussitef = Reussitef::withTrashed()->findOrFail($id);
     $reussitef->restore();
 
-    return redirect()->route('reussitef.corbeille')->with('success', 'Élément restauré avec succès!');
+    return redirect()->route('reussitesf.corbeille')->with('success', 'Élément restauré avec succès!');
 }
 
 // N°3. Suppression Définitive (Mass7 Nnéha'i)
@@ -140,7 +140,7 @@ public function forceDelete($id)
     $reussitef = Reussitef::withTrashed()->findOrFail($id);
     $reussitef->forceDelete(); // Hadchi kaymassah men la base de données b neha'i!
 
-    return redirect()->route('reussitef.corbeille')->with('success', 'Élément supprimé définitivement!');
+    return redirect()->route('reussitesf.corbeille')->with('success', 'Élément supprimé définitivement!');
 }
     
 

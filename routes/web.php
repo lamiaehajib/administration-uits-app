@@ -96,7 +96,7 @@ Route::put('/reussitef/{id}/restore', [ReussitefController::class, 'restore'])
 // 3. Route dyal Suppression Définitive
 Route::delete('/reussitef/{id}/forceDelete', [ReussitefController::class, 'forceDelete'])
       ->name('reussitef.forceDelete');
-      
+
 Route::resource('reussitesf', ReussitefController::class);
 Route::get('/reussitesf/{id}/pdf', [ReussitefController::class, 'downloadPDF'])->name('reussitesf.pdf');
 
@@ -174,5 +174,7 @@ Route::get('/devis/{devis}', [DevisController::class, 'show'])
       ->name('devis.show')
       ->withTrashed();
     
+
+
 
 require __DIR__.'/auth.php';

@@ -21,6 +21,10 @@
                 <td>{{ $item->tele }} / {{ $item->gmail }}</td>
                 <td>{{ $item->deleted_at->format('Y-m-d H:i') }}</td>
                 <td>
+                    <a href="{{ route('reussitesf.pdf', $item->id) }}" class="btn btn-warning btn-sm" title="Télécharger Reçu">
+                        <i class="fa fa-file-pdf"></i> PDF
+                    </a>
+
                     <form method="POST" action="{{ route('reussitef.restore', $item->id) }}" style="display:inline-block;">
                         @csrf
                         @method('PUT')

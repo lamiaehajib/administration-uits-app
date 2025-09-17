@@ -104,11 +104,15 @@ class ReussitefController extends Controller
     public function downloadPDF($id)
     {
         set_time_limit(300);
-    ini_set('memory_limit', '256M');
-        $reussite = Reussitef::findOrFail($id);
+        ini_set('memory_limit', '256M');
 
-        $pdf =  pdf::loadView('reussitesf.pdf', compact('reussite'))
-        ->setPaper('a5', 'portrait');;
+        // ⬅️ Khassna nzidou withTrashed() bach ychouf hta li mamsou7in!
+        $reussite = Reussitef::withTrashed()->findOrFail($id);
+        // Hadchi kayضمن ann l-élément ytle3 wakha ykoun f Corbeille
+
+        $pdf = pdf::loadView('reussitesf.pdf', compact('reussite'))
+            ->setPaper('a5', 'portrait');
+
         return $pdf->download('reçu_formation.pdf');
     }
 
@@ -130,7 +134,7 @@ public function restore($id)
     $reussitef = Reussitef::withTrashed()->findOrFail($id);
     $reussitef->restore();
 
-    return redirect()->route('reussitesf.corbeille')->with('success', 'Élément restauré avec succès!');
+    return redirect()->route('reussitef.corbeille')->with('success', 'Élément restauré avec succès!');
 }
 
 // N°3. Suppression Définitive (Mass7 Nnéha'i)
@@ -140,7 +144,7 @@ public function forceDelete($id)
     $reussitef = Reussitef::withTrashed()->findOrFail($id);
     $reussitef->forceDelete(); // Hadchi kaymassah men la base de données b neha'i!
 
-    return redirect()->route('reussitesf.corbeille')->with('success', 'Élément supprimé définitivement!');
+    return redirect()->route('reussitef.corbeille')->with('success', 'Élément supprimé définitivement!');
 }
     
 

@@ -1,5 +1,5 @@
 <x-app-layout>
-<h2 class="text-danger"><i class="fa fa-trash"></i> Corbeille des Devis (F)</h2>
+<h2 class="text-danger"><i class="fa fa-trash"></i> Corbeille des Devis (Formation)</h2>
 
 <p class="alert alert-info">Cette liste contient tous les devis supprimés. Vous pouvez soit les restaurer, soit les supprimer définitivement.</p>
 

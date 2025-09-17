@@ -85,6 +85,18 @@ Route::resource('ucgs', UcgController::class);
 Route::get('ucgs/{ucg}/pdf', [UcgController::class, 'generatePDF'])->name('ucgs.pdf');
 
 
+
+Route::get('/reussitef/corbeille', [ReussitefController::class, 'corbeille'])
+      ->name('reussitef.corbeille');
+
+// 2. Route dyal Restauration
+Route::put('/reussitef/{id}/restore', [ReussitefController::class, 'restore'])
+      ->name('reussitef.restore');
+
+// 3. Route dyal Suppression Définitive
+Route::delete('/reussitef/{id}/forceDelete', [ReussitefController::class, 'forceDelete'])
+      ->name('reussitef.forceDelete');
+      
 Route::resource('reussitesf', ReussitefController::class);
 Route::get('/reussitesf/{id}/pdf', [ReussitefController::class, 'downloadPDF'])->name('reussitesf.pdf');
 

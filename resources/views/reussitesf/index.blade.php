@@ -62,6 +62,9 @@
     
     <div class="py-4">
         <div class="container">
+            <a href="{{ route('reussitef.corbeille') }}" class="btn btn-danger">
+    <i class="fa fa-trash"></i> Corbeille
+</a>
             <a href="{{ route('reussitesf.create') }}" class="btn btn-success mb-4">
                 <i class="fas fa-plus-circle me-2"></i> Ajouter un Reçu de formation
             </a>

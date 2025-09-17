@@ -10,10 +10,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Devisf extends Model
 {
     use HasFactory, SoftDeletes;
-     // اسم الجدول
-protected $primaryKey = 'id'; // المفتاح الأساسي (إذا كان مختلفًا عن 'id')
-public $incrementing = true; // إذا كان المفتاح الأساسي عددًا صحيحًا
-protected $keyType = 'int'; // نوع المفتاح الأسا
+  
+protected $primaryKey = 'id'; 
+public $incrementing = true; 
+protected $keyType = 'int'; 
     protected $table = 'devisf';
 
     protected $fillable = [

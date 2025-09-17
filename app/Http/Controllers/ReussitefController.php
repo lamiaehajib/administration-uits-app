@@ -113,6 +113,35 @@ class ReussitefController extends Controller
     }
 
     
+    public function corbeille()
+{
+    // Kanst3amlo onlyTrashed() bach njebdo GHI les éléments li mamsou7in
+    $reussitef = Reussitef::onlyTrashed()
+                  ->orderBy('deleted_at', 'desc')
+                  ->get();
+
+    return view('reussitef.corbeille', compact('reussitef'));
+}
+
+// N°2. Restauration d'un Élément (I3ada l'Hayat)
+public function restore($id)
+{
+    // Kanjebdo l-élément b ID men l'Corbeille (withTrashed) w kan3ayto 3la restore()
+    $reussitef = Reussitef::withTrashed()->findOrFail($id);
+    $reussitef->restore();
+
+    return redirect()->route('reussitef.corbeille')->with('success', 'Élément restauré avec succès!');
+}
+
+// N°3. Suppression Définitive (Mass7 Nnéha'i)
+public function forceDelete($id)
+{
+    // Kanjebdo l-élément b ID men l'Corbeille w kan3ayto 3la forceDelete()
+    $reussitef = Reussitef::withTrashed()->findOrFail($id);
+    $reussitef->forceDelete(); // Hadchi kaymassah men la base de données b neha'i!
+
+    return redirect()->route('reussitef.corbeille')->with('success', 'Élément supprimé définitivement!');
+}
     
 
 }

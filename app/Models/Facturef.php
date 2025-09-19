@@ -4,10 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class Facturef extends Model
 {
-    use HasFactory;
+    use HasFactory , SoftDeletes;
 
     // تحديد اسم الجدول
     protected $table = 'facturefs';

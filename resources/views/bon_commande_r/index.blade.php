@@ -206,6 +206,9 @@
 
         <!-- Header with Create Button -->
         <div class="d-flex justify-content-between align-items-center mb-4">
+            <a href="{{ route('boncommandes.corbeille') }}" class="btn btn-danger">
+    <i class="fa fa-trash"></i> Corbeille
+</a>
             <a href="{{ route('bon_commande_r.create') }}" class="btn btn-create">
                 <i class="fas fa-plus"></i> Créer un Bon de Commande
             </a>

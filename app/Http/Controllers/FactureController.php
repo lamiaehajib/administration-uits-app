@@ -291,5 +291,35 @@ class FactureController extends Controller
     
 }
 
+public function corbeille()
+{
+    // Kanst3amlo onlyTrashed() bach njebdo GHI les factures li mamsou7in
+    $factures = Facture::onlyTrashed()
+                  ->orderBy('deleted_at', 'desc')
+                  ->get();
+
+    return view('factures.corbeille', compact('factures'));
+}
+
+// N°2. Restauration d'une Facture (I3ada l'Hayat)
+public function restore($id)
+{
+    // Kanjebdo l-facture b ID men l'Corbeille (withTrashed) w kan3ayto 3la restore()
+    $facture = Facture::withTrashed()->findOrFail($id);
+    $facture->restore();
+
+    return redirect()->route('factures.corbeille')->with('success', 'Facture restaurée avec succès!');
+}
+
+// N°3. Suppression Définitive (Mass7 Nnéha'i)
+public function forceDelete($id)
+{
+    // Kanjebdo l-facture b ID men l'Corbeille w kan3ayto 3la forceDelete()
+    $facture = Facture::withTrashed()->findOrFail($id);
+    $facture->forceDelete(); // Hadchi kaymassah men la base de données b neha'i!
+
+    return redirect()->route('factures.corbeille')->with('success', 'Facture supprimée définitivement!');
+}
+
 
 }

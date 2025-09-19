@@ -211,8 +211,8 @@
                 id: 'bonDeCommandeButton',
                 title: 'Bon.Commande',
                 links: [
-                    { href: '{{ route('bon_de_commande.index') }}', label: 'Bon de Commande', icon: 'fas fa-file-contract', color: '#FF9800' },
-                    { href: '{{ route('bon_commande_r.index') }}', label: 'Bon de Commande r', icon: 'fas fa-file-invoice-dollar', color: '#C2185B' },
+                    { href: '{{ route('bon_de_commande.index') }}', label: 'Bon de Commande reçus', icon: 'fas fa-file-contract', color: '#FF9800' },
+                    { href: '{{ route('bon_commande_r.index') }}', label: 'Bon de Commande envoyés', icon: 'fas fa-file-invoice-dollar', color: '#C2185B' },
                 ]
             },
 

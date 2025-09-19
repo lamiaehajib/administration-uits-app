@@ -3,9 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class BonCommandeR extends Model
 {
+     use SoftDeletes;
     protected $table = 'bon_commande_r';
 
     protected $fillable = [

@@ -110,12 +110,13 @@ class BonCommandeRController extends Controller
 
     // عرض تفاصيل أمر شراء معين
     public function show(BonCommandeR $bonCommandeR)
-    {
-        $bonCommandeR->load(['items', 'user']);
-        $pdf = FacadePdf::loadView('bon_commande_r.show', compact('bonCommandeR'))->setPaper('a4', 'portrait');
-        return $pdf->stream('bon_commande_r.pdf');
-    }
-
+{
+    // L-Bon ghadi yji wakha ykoun mamsouh, 7it l-Route m3eddla
+    $bonCommandeR->load(['items', 'user']);
+    
+    $pdf = FacadePdf::loadView('bon_commande_r.show', compact('bonCommandeR'))->setPaper('a4', 'portrait');
+    return $pdf->stream('bon_commande_r.pdf');
+}
     // عرض نموذج لتعديل أمر شراء معين
     public function edit(BonCommandeR $bonCommandeR)
     {
@@ -221,4 +222,35 @@ class BonCommandeRController extends Controller
 
         return $pdf->download('bon_commande_' . $bonCommandeR->bon_num . '-' . $prestataire . '-' . $titre . '.pdf');
     }
+
+    public function corbeille()
+{
+    // Kanst3amlo onlyTrashed() bach njebdo GHI les bons de commande li mamsou7in
+    $bons = BonCommandeR::onlyTrashed()
+                  ->orderBy('deleted_at', 'desc')
+                  ->get();
+
+    return view('bon_commande_r.corbeille', compact('bons'));
+}
+
+// N°2. Restauration d'un Bon de Commande (I3ada l'Hayat)
+public function restore($id)
+{
+    // Kanjebdo l-Bon b ID men l'Corbeille (withTrashed) w kan3ayto 3la restore()
+    $bon = BonCommandeR::withTrashed()->findOrFail($id);
+    $bon->restore();
+
+    return redirect()->route('boncommandes.corbeille')->with('success', 'Bon de commande restauré avec succès!');
+}
+
+// N°3. Suppression Définitive (Mass7 Nnéha'i)
+public function forceDelete($id)
+{
+    // Kanjebdo l-Bon b ID men l'Corbeille w kan3ayto 3la forceDelete()
+    $bon = BonCommandeR::withTrashed()->findOrFail($id);
+    $bon->forceDelete(); // Hadchi kaymassah men la base de données b neha'i!
+
+    return redirect()->route('boncommandes.corbeille')->with('success', 'Bon de commande supprimé définitivement!');
+}
+
 }

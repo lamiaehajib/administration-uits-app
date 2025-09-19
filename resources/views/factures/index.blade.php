@@ -65,6 +65,9 @@ input.form-control {
 
 
         <div class="d-flex justify-content-between align-items-center mb-4">
+            <a href="{{ route('factures.corbeille') }}" class="btn btn-danger">
+    <i class="fa fa-trash"></i> Corbeille
+</a>
             <a href="{{ route('factures.create') }}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Ajouter un facture
             </a>

@@ -135,10 +135,33 @@ Route::resource('devisf', DevisfController::class)->parameters(['devisf' => 'dev
 Route::get('devisf/{id}/pdf', [DevisfController::class, 'downloadPDF'])->name('devisf.downloadPDF');
 
 
+
+Route::get('/factures/corbeille', [FactureController::class, 'corbeille'])
+      ->name('factures.corbeille');
+
+// 2. Route dyal Restauration
+Route::put('/factures/{id}/restore', [FactureController::class, 'restore'])
+      ->name('factures.restore');
+
+// 3. Route dyal Suppression Définitive
+Route::delete('/factures/{id}/forceDelete', [FactureController::class, 'forceDelete'])
+      ->name('factures.forceDelete');
 Route::resource('factures', FactureController::class)->parameters(['facture' => 'facture']);
 
 Route::get('factures/{id}/pdf', [FactureController::class, 'downloadPDF'])->name('factures.downloadPDF');
 
+
+Route::get('/facturef/corbeille', [FacturefController::class, 'corbeille'])
+      ->name('facturef.corbeille');
+
+// 2. Route dyal Restauration
+Route::put('/facturef/{id}/restore', [FacturefController::class, 'restore'])
+      ->name('facturef.restore');
+
+// 3. Route dyal Suppression Définitive
+Route::delete('/facturef/{id}/forceDelete', [FacturefController::class, 'forceDelete'])
+      ->name('facturef.forceDelete');
+      
 Route::resource('facturefs', FacturefController::class);
 
 // Specific routes for downloading PDF
@@ -162,6 +185,22 @@ Route::resource('bon_de_commande', BonDeCommandeController::class);
 Route::get('bon_de_commande/{bon_de_commande}/download', [BonDeCommandeController::class, 'download'])->name('bon_de_commande.download');
 
 
+
+// 1. Route dyal Affichage Corbeille
+Route::get('/boncommandes/corbeille', [BonCommandeRController::class, 'corbeille'])
+      ->name('boncommandes.corbeille');
+
+// 2. Route dyal Restauration
+Route::put('/boncommandes/{id}/restore', [BonCommandeRController::class, 'restore'])
+      ->name('boncommandes.restore');
+
+// 3. Route dyal Suppression Définitive
+Route::delete('/boncommandes/{id}/forceDelete', [BonCommandeRController::class, 'forceDelete'])
+      ->name('boncommandes.forceDelete');
+
+      Route::get('/bon_commande_r/{bonCommandeR}', [BonCommandeRController::class, 'show'])
+      ->name('bon_commande_r.show')
+      ->withTrashed();
 
 Route::resource('bon_commande_r', BonCommandeRController::class);
 Route::get('bon_commande_r/{id}/pdf', [BonCommandeRController::class, 'downloadPDF'])->name('bon_commande_r.pdf');
@@ -188,7 +227,12 @@ Route::get('/devis/{devis}', [DevisController::class, 'show'])
       ->name('devis.show')
       ->withTrashed();
     
+Route::get('/factures/{facture}', [FactureController::class, 'show'])
+      ->name('factures.show')
+      ->withTrashed(); 
 
-
+Route::get('/facturefs/{facturef}', [FacturefController::class, 'show'])
+      ->name('facturefs.show')
+      ->withTrashed();
 
 require __DIR__.'/auth.php';

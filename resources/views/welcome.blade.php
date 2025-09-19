@@ -145,22 +145,30 @@
         <img width="70px" height="70px" src="{{ asset('images/red.png') }}" alt="Logo" class="ma-jak"/>
         <img width="70px" height="70px" src="{{ asset('images/red.png') }}" alt="Logo" class="ma-ak"/>
         <!-- Email Address -->
-        <div class="form-group">
-         
-          <x-input-label for="email" :value="('Email')" class="form-label" />
-          <x-text-input id="email" class="form-input" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-          <x-input-error :messages="$errors->get('email')" class="form-error" />
-        </div>
+       <div class="form-group">
+    <x-input-label for="email" :value="('Email')" class="form-label" />
+    <x-text-input 
+        id="email" 
+        class="form-input" 
+        type="email" 
+        name="email" 
+        :value="old('email')" 
+        required 
+        autocomplete="username" 
+        /> 
+    <x-input-error :messages="$errors->get('email')" class="form-error" />
+</div>
   
         <!-- Password -->
         <div class="form-group">
-          <x-input-label for="password" :value="('mot de passe')" class="form-label" />
-          <x-text-input id="password" class="form-input"
-                          type="password"
-                          name="password"
-                          required autocomplete="current-password" />
-          <x-input-error :messages="$errors->get('password')" class="form-error" />
-        </div>
+    <x-input-label for="password" :value="('mot de passe')" class="form-label" />
+    <x-text-input id="password" class="form-input"
+        type="password"
+        name="password"
+        required 
+        autocomplete="current-password" />
+    <x-input-error :messages="$errors->get('password')" class="form-error" />
+</div>
   
         <!-- Remember Me -->
         <div class="remember-me">

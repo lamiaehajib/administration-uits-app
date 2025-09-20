@@ -7,7 +7,7 @@
     "require": {
         "php": "^8.0.2",
         "barryvdh/laravel-dompdf": "^2.2",
-      "doctrine/dbal": "^3.2",
+        "doctrine/dbal": "^3.2",
         "dompdf/dompdf": "^2.0",
         "guzzlehttp/guzzle": "^7.2",
         "intervention/image": "^3.11",
@@ -15,7 +15,9 @@
         "laravel/sanctum": "^3.0",
         "laravel/tinker": "^2.7",
         "laravelcollective/html": "^6.4",
-        "spatie/laravel-permission": "^6.10"
+        "spatie/laravel-backup": "^8.2",
+        "spatie/laravel-permission": "^6.10",
+        "yaza/laravel-google-drive-storage": "^2.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",

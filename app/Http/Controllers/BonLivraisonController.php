@@ -119,7 +119,7 @@ public function store(Request $request)
         return $pdf->stream('bon_livraison.pdf');
     }
 
-    // Show form to edit a specific delivery note
+    
     public function edit(BonLivraison $bonLivraison)
     {
         return view('bon_livraisons.edit', compact('bonLivraison'));

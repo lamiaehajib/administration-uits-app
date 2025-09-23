@@ -167,6 +167,12 @@
             </button>
             @endcan
 
+             @can('role-list')
+            <button>
+                <a href="{{ route('download.backup') }}"><i class="fas fa-user-shield"></i></a>
+                <span><a href="{{ route('download.backup') }}">backup</a></span>
+            </button>
+            @endcan
             <!-- Profile dropdown -->
             <div class="dropdown-container">
                 <button class="icon" id="profileButton">

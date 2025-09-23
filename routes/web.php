@@ -4,6 +4,7 @@ use App\Http\Controllers\AchatController;
 use App\Http\Controllers\AttestationAllinoneController;
 use App\Http\Controllers\AttestationController;
 use App\Http\Controllers\AttestationFormationController;
+use App\Http\Controllers\BackupController;
 use App\Http\Controllers\BonCommandeRController;
 use App\Http\Controllers\BonDeCommandeController;
 use App\Http\Controllers\BonLivraisonController;
@@ -234,5 +235,7 @@ Route::get('/factures/{facture}', [FactureController::class, 'show'])
 Route::get('/facturefs/{facturef}', [FacturefController::class, 'show'])
       ->name('facturefs.show')
       ->withTrashed();
+
+      Route::get('/download-backup', [BackupController::class, 'downloadBackup'])->name('download.backup');
 
 require __DIR__.'/auth.php';

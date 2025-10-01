@@ -65,6 +65,10 @@
                 <span style="font-weight: 500;text-transform: uppercase;">Montant payé :</span>
                 <span class="dotted-line">{{ $reussite->montant_paye }} DH</span>
             </div>
+              <div class="section" style="display: flex; justify-content: space-between;">
+    <span  style="font-weight: 500;text-transform: uppercase;">Mode de Paiement :</span>
+    <span class="dotted-line">{{ $reussite->mode_paiement }}</span>
+</div>
             <div class="section" style="display: flex; justify-content: space-between;">
                 <span style="font-weight: 500;text-transform: uppercase;">Reste a payé :</span>
                 <span class="dotted-line">{{ $reussite->rest }}DH</span>
@@ -110,6 +114,10 @@
     <div class="section" style="display: flex; justify-content: space-between;">
         <span  style="font-weight: 500;text-transform: uppercase;">Montant payé:</span>
         <span class="dotted-line">{{ $reussite->montant_paye }}DH</span>
+    </div>
+    <div class="section" style="display: flex; justify-content: space-between;">
+        <span  style="font-weight: 500;text-transform: uppercase;">Mode de Paiement :</span>
+        <span class="dotted-line">{{ $reussite->mode_paiement }}</span>
     </div>
     <div class="section" style="display: flex; justify-content: space-between;">
         <span  style="font-weight: 500;text-transform: uppercase;">Nom de la formation:</span>

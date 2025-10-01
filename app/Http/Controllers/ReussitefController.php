@@ -34,6 +34,7 @@ class ReussitefController extends Controller
 
     public function store(Request $request)
     {
+        // 1. 👈 Ajout de la validation pour 'mode_paiement'
         $request->validate([
             'nom' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
@@ -44,6 +45,7 @@ class ReussitefController extends Controller
             'CIN' => 'nullable|string',
             'tele' => 'nullable|string',
             'gmail' => 'nullable|email',
+            'mode_paiement' => 'required|in:espèce,virement,chèque', // Doit être obligatoire et parmi les valeurs définies
         ]);
     
         Reussitef::create([
@@ -56,6 +58,8 @@ class ReussitefController extends Controller
             'CIN' => $request->input('CIN'),
             'tele' => $request->input('tele'),
             'gmail' => $request->input('gmail'),
+            // 2. 👈 Ajout du champ dans la création
+            'mode_paiement' => $request->input('mode_paiement'), 
             'user_id' => auth()->id(), // إضافة user_id المرتبط بالمستخدم الحالي
         ]);
     
@@ -63,18 +67,19 @@ class ReussitefController extends Controller
     }
 
     public function edit($id)
-{
-    // البحث عن العنصر حسب المعرف (id)
-    $reussite = Reussitef::findOrFail($id);
+    {
+        
+        $reussite = Reussitef::findOrFail($id);
 
-    // عرض صفحة التعديل وتمرير البيانات إليها
-    return view('reussitesf.edit', compact('reussite'));
-}
+        
+        return view('reussitesf.edit', compact('reussite'));
+    }
 
     
 
     public function update(Request $request, $id)
     {
+        // 1. 👈 Ajout de la validation pour 'mode_paiement'
         $request->validate([
             'nom' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
@@ -82,13 +87,32 @@ class ReussitefController extends Controller
             'montant_paye' => 'required|numeric',
             'rest' => 'nullable|numeric',
             'date_paiement' => 'required|date',
-            'CIN' => 'nullable|string',   // Validation for CIN (optional, as it's nullable)
-            'tele' => 'nullable|string',  // Validation for telephone number (optional, as it's nullable)
+            'CIN' => 'nullable|string', 
+            'tele' => 'nullable|string', 
             'gmail' => 'nullable|email',
+            'mode_paiement' => 'required|in:espèce,virement,chèque', // Doit être obligatoire et parmi les valeurs définies
         ]);
 
         $reussite = Reussitef::findOrFail($id);
-        $reussite->update($request->all());
+        
+        // 2. 👈 Changement pour passer explicitement les données validées
+        // Pour être plus sûr et gérer les champs individuellement :
+        $reussite->update([
+            'nom' => $request->input('nom'),
+            'prenom' => $request->input('prenom'),
+            'formation' => $request->input('formation'),
+            'montant_paye' => $request->input('montant_paye'),
+            'rest' => $request->input('rest'),
+            'date_paiement' => $request->input('date_paiement'),
+            'CIN' => $request->input('CIN'),
+            'tele' => $request->input('tele'),
+            'gmail' => $request->input('gmail'),
+            'mode_paiement' => $request->input('mode_paiement'), // Ajout de mode_paiement ici
+            // 'user_id' n'a pas besoin d'être mis à jour ici
+        ]);
+
+        // Alternative : Utiliser $request->all() s'il n'y a pas d'autres champs non fillable que user_id et que user_id n'est pas dans le formulaire.
+        // $reussite->update($request->all());
 
         return redirect()->route('reussitesf.index')->with('success', 'Réussite mise à jour avec succès.');
     }
@@ -118,34 +142,34 @@ class ReussitefController extends Controller
 
     
     public function corbeille()
-{
-    // Kanst3amlo onlyTrashed() bach njebdo GHI les éléments li mamsou7in
-    $reussitef = Reussitef::onlyTrashed()
-                  ->orderBy('deleted_at', 'desc')
-                  ->get();
+    {
+        // Kanst3amlo onlyTrashed() bach njebdo GHI les éléments li mamsou7in
+        $reussitef = Reussitef::onlyTrashed()
+                      ->orderBy('deleted_at', 'desc')
+                      ->get();
 
-    return view('reussitesf.corbeille', compact('reussitef'));
-}
+        return view('reussitesf.corbeille', compact('reussitef'));
+    }
 
-// N°2. Restauration d'un Élément (I3ada l'Hayat)
-public function restore($id)
-{
-    // Kanjebdo l-élément b ID men l'Corbeille (withTrashed) w kan3ayto 3la restore()
-    $reussitef = Reussitef::withTrashed()->findOrFail($id);
-    $reussitef->restore();
+    // N°2. Restauration d'un Élément (I3ada l'Hayat)
+    public function restore($id)
+    {
+        // Kanjebdo l-élément b ID men l'Corbeille (withTrashed) w kan3ayto 3la restore()
+        $reussitef = Reussitef::withTrashed()->findOrFail($id);
+        $reussitef->restore();
 
-    return redirect()->route('reussitef.corbeille')->with('success', 'Élément restauré avec succès!');
-}
+        return redirect()->route('reussitef.corbeille')->with('success', 'Élément restauré avec succès!');
+    }
 
-// N°3. Suppression Définitive (Mass7 Nnéha'i)
-public function forceDelete($id)
-{
-    // Kanjebdo l-élément b ID men l'Corbeille w kan3ayto 3la forceDelete()
-    $reussitef = Reussitef::withTrashed()->findOrFail($id);
-    $reussitef->forceDelete(); // Hadchi kaymassah men la base de données b neha'i!
+    // N°3. Suppression Définitive (Mass7 Nnéha'i)
+    public function forceDelete($id)
+    {
+        // Kanjebdo l-élément b ID men l'Corbeille w kan3ayto 3la forceDelete()
+        $reussitef = Reussitef::withTrashed()->findOrFail($id);
+        $reussitef->forceDelete(); // Hadchi kaymassah men la base de données b neha'i!
 
-    return redirect()->route('reussitef.corbeille')->with('success', 'Élément supprimé définitivement!');
-}
+        return redirect()->route('reussitef.corbeille')->with('success', 'Élément supprimé définitivement!');
+    }
     
 
 }

@@ -20,6 +20,7 @@ class Reussitef extends Model
         'gmail',
         'rest',
         'user_id',
+         'mode_paiement',
     ];
 
     public function Dashboard()

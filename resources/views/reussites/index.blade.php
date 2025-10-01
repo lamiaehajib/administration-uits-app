@@ -79,6 +79,7 @@ input.form-control {
                         <th>Prénom</th>
                         <th>Durée de Stage</th>
                         <th>Montant Payé</th>
+                        
                         <th>Restant</th>
                         <th>Date de Paiement</th>
                         <th>Prochaine Paiement</th>
@@ -96,6 +97,7 @@ input.form-control {
                             <td>{{ $reussite->prenom }}</td>
                             <td>{{ $reussite->duree_stage }}</td>
                             <td>{{ $reussite->montant_paye }} DH</td>
+                           
                             <td>{{ $reussite->rest }} DH</td>
                             <td>{{ $reussite->date_paiement }}</td>
                             <td>{{ $reussite->prochaine_paiement ?? 'N/A' }}</td>

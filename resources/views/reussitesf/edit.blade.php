@@ -139,6 +139,22 @@
                         @enderror
                     </div>
 
+
+                     {{-- 🟢 NOUVEAU CHAMP: Mode de Paiement (Select) avec valeur pré-sélectionnée --}}
+            <div class="mb-4">
+                <label for="mode_paiement">Mode de Paiement :</label>
+                <select id="mode_paiement" name="mode_paiement" required>
+                    <option value="" disabled {{ old('mode_paiement', $reussite->mode_paiement) == '' ? 'selected' : '' }}>Choisir le mode</option>
+                    <option value="espèce" {{ old('mode_paiement', $reussite->mode_paiement) == 'espèce' ? 'selected' : '' }}>Espèce</option>
+                    <option value="virement" {{ old('mode_paiement', $reussite->mode_paiement) == 'virement' ? 'selected' : '' }}>Virement</option>
+                    <option value="chèque" {{ old('mode_paiement', $reussite->mode_paiement) == 'chèque' ? 'selected' : '' }}>Chèque</option>
+                </select>
+                @error('mode_paiement')
+                    <p class="error">{{ $message }}</p>
+                @enderror
+            </div>
+            {{-- 🟢 Fin du nouveau champ --}}
+
                     <div class="mb-4">
                         <label for="date_paiement" class="block text-gray-700">Date de Paiement :</label>
                         <input type="date" id="date_paiement" name="date_paiement" value="{{ old('date_paiement', $reussite->date_paiement) }}" 

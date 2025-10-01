@@ -137,6 +137,8 @@
                     @enderror
                 </div>
 
+               
+
                 <div class="mb-4">
                     <label for="rest" class="block text-gray-700">rest:</label>
                     <input type="number" id="rest" name="rest" value="{{ old('rest', $reussite->rest) }}" step="0.01"

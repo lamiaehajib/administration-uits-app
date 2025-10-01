@@ -57,6 +57,22 @@
                         </div>
                         @enderror
                     </div>
+                    
+                    {{-- 🟢 NOUVEAU CHAMP: Mode de Paiement (Select) --}}
+                <div class="mb-4">
+                    <label for="mode_paiement" class="form-label">Mode de Paiement :</label>
+                    <select id="mode_paiement" name="mode_paiement" class="form-control" required>
+                        <option value="" disabled {{ old('mode_paiement') == '' ? 'selected' : '' }}>Choisir le mode</option>
+                        <option value="espèce" {{ old('mode_paiement') == 'espèce' ? 'selected' : '' }}>Espèce</option>
+                        <option value="virement" {{ old('mode_paiement') == 'virement' ? 'selected' : '' }}>Virement</option>
+                        <option value="chèque" {{ old('mode_paiement') == 'chèque' ? 'selected' : '' }}>Chèque</option>
+                    </select>
+                    @error('mode_paiement')
+                        <p class="text-danger mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+                {{-- 🟢 Fin du nouveau champ --}}
+
 
                     <div class="mb-3">
                         <label for="date_paiement" class="form-label">Date de Paiement :</label>

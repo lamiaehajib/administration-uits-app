@@ -82,6 +82,7 @@
                         <th>Prénom</th>
                         <th>Formation</th>
                         <th>Montant Payé</th>
+                        <th>Mode de Paiement </th>
                         <th>Date de Paiement</th>
                         <th>Prochaine Paiement</th>
                         <th>Rest</th>
@@ -99,6 +100,7 @@
                             <td>{{ $fomationr->prenom }}</td>
                             <td>{{ $fomationr->formation }}</td>
                             <td>{{ $fomationr->montant_paye }}</td>
+                             <td>{{ $fomationr->mode_paiement }}</td>
                             <td>{{ $fomationr->date_paiement }}</td>
                             <td>{{ $fomationr->prochaine_paiement ?? 'N/A' }}</td>
                             <td>{{ $fomationr->rest }} DH</td>

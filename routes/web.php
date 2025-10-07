@@ -182,8 +182,6 @@ Route::get('/rapport-ventes', [ProduitController::class, 'exportPDF'])->name('ra
 
 
 
-Route::resource('bon_de_commande', BonDeCommandeController::class);
-Route::get('bon_de_commande/{bon_de_commande}/download', [BonDeCommandeController::class, 'download'])->name('bon_de_commande.download');
 
 
 
@@ -206,6 +204,11 @@ Route::delete('/boncommandes/{id}/forceDelete', [BonCommandeRController::class, 
 Route::resource('bon_commande_r', BonCommandeRController::class);
 Route::get('bon_commande_r/{id}/pdf', [BonCommandeRController::class, 'downloadPDF'])->name('bon_commande_r.pdf');
 
+
+
+
+Route::resource('bon_de_commande', BonDeCommandeController::class);
+Route::get('bon_de_commande/{bon_de_commande}/download', [BonDeCommandeController::class, 'download'])->name('bon_de_commande.download');
 
 Route::resource('bon_livraisons', BonLivraisonController::class);
 Route::get('bon_livraisons/{id}/download', [BonLivraisonController::class, 'downloadPDF'])->name('bon_livraisons.download');

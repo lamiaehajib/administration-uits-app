@@ -197,14 +197,12 @@ Route::put('/boncommandes/{id}/restore', [BonCommandeRController::class, 'restor
 Route::delete('/boncommandes/{id}/forceDelete', [BonCommandeRController::class, 'forceDelete'])
       ->name('boncommandes.forceDelete');
 
-      Route::get('/bon_commande_r/{bonCommandeR}', [BonCommandeRController::class, 'show'])
-      ->name('bon_commande_r.show')
-      ->withTrashed();
+    
 
-Route::resource('bon_commande_r', BonCommandeRController::class);
+
 Route::get('bon_commande_r/{id}/pdf', [BonCommandeRController::class, 'downloadPDF'])->name('bon_commande_r.pdf');
 
-
+Route::resource('bon_commande_r', BonCommandeRController::class);
 
 
 Route::resource('bon_de_commande', BonDeCommandeController::class);

@@ -13,7 +13,7 @@ class AttestationAllinoneController extends Controller
         // Récupérer le terme de recherche
         $search = $request->input('search');
     
-        // Appliquer la recherche et pagination
+       
         $attestation = Attestationallinone::when($search, function ($query, $search) {
                 return $query->where('personne_name', 'like', "%{$search}%")
                              ->orWhere('numero_de_serie', 'like', "%{$search}%");

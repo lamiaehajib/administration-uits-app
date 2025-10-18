@@ -27,23 +27,23 @@
 
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Ubuntu', sans-serif;
             margin: 0;
             background: #f8f9fa;
         }
 
         h3 {
             color: #D32F2F;
-            font-family: 'Roboto', sans-serif;
+            font-family: 'Ubuntu', sans-serif;
             font-weight: bold;
             margin-top: 20px;
             text-transform: uppercase;
         }
 
         .hight {
-            background: linear-gradient(135deg, #f60404, #000000);
+            background: linear-gradient(135deg, #C2185B, #D32F2F);
             -webkit-background-clip: text;
-            color: transparent;
+            -webkit-text-fill-color: transparent;
             font-weight: bold;
         }
 
@@ -63,30 +63,36 @@
             display: flex;
             flex: 1;
             width: 100%;
+            gap: 30px; /* GRAND ESPACE entre navigation et contenu */
+            padding: 0;
         }
 
         /* Navigation styles */
         .navigation {
-            width: 250px;
+            width: 280px;
             background-color: #ffffff;
             color: #fff;
-            padding: 20px;
+            padding: 0;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            box-shadow: 2px 0 20px rgba(0,0,0,0.1);
+            border-right: 3px solid #C2185B;
+            flex-shrink: 0; /* Empêche la navigation de rétrécir */
         }
 
         /* Content styles */
         .main-content {
             flex: 1;
-            padding: 20px;
+            padding: 0;
             overflow-y: auto;
+            background: #f8f9fa;
+            min-width: 0; /* Permet au contenu de rétrécir correctement */
         }
 
         .bg-primary {
             --bs-bg-opacity: 1;
-            background: linear-gradient(135deg, #f60404, #000000) !important;
+            background: linear-gradient(135deg, #C2185B, #D32F2F) !important;
             text-align: center;
             text-transform: uppercase;
         }
@@ -99,15 +105,41 @@
         }
 
         /* Responsive */
+        @media (max-width: 1200px) {
+            .content-wrapper {
+                gap: 20px;
+            }
+            
+            .navigation {
+                width: 240px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .content-wrapper {
+                gap: 15px;
+            }
+            
+            .navigation {
+                width: 70px;
+            }
+        }
+
         @media (max-width: 768px) {
+            .content-wrapper {
+                flex-direction: column;
+                gap: 0;
+            }
+
             .navigation {
                 width: 100%;
                 position: fixed;
                 bottom: 0;
                 left: 0;
                 z-index: 999;
-                padding: 10px;
                 height: auto;
+                border-right: none;
+                border-top: 3px solid #C2185B;
             }
 
             .main-content {
@@ -132,7 +164,7 @@
                 @include('layouts.navigation')
             </div>
 
-            <!-- Contenu principal à droite -->
+            <!-- Contenu principal à droite avec GRAND ESPACE -->
             <div class="main-content">
                 <main>
                     {{ $slot }}

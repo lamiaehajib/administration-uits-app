@@ -44,6 +44,7 @@
             overflow-x: hidden;
             border-right: 3px solid var(--color-primary);
             z-index: 1000;
+            margin-right: 30px; /* Grand espace à droite */
         }
 
         .sidebar::-webkit-scrollbar {
@@ -533,7 +534,7 @@
             @endcan
         </div>
 
-        {{-- <!-- Profile Button -->
+        <!-- Profile Button -->
         <div class="dropdown-container">
             <button class="icon" id="profileButton">
                 <i class='bx bx-user'></i>
@@ -542,7 +543,7 @@
             <form id="logoutForm" method="POST" action="{{ route('logout') }}" style="display: none;">
                 @csrf
             </form>
-        </div> --}}
+        </div>
     </nav>
 
     <!-- Scripts -->

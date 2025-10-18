@@ -336,7 +336,7 @@
                                 <td class="align-middle">
                                     <div class="d-flex gap-1 justify-content-center">
                                         <!-- PDF -->
-                                        <a href="{{ route('attestations_allinone.generatePDF', $attestation) }}" 
+                                        <a href="{{ route('attestations_allinone.pdf', $attestation) }}" 
                                            class="action-btn bg-primary text-white" 
                                            title="Télécharger PDF">
                                             <i class="fas fa-file-pdf"></i>

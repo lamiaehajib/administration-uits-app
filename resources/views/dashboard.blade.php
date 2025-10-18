@@ -1,747 +1,590 @@
 <x-app-layout>
-    <style>
-        /* Style général pour les boutons */
-.div-flex {
-    display: flex;
-    gap: 15px; /* Espace entre les boutons */
-    align-items: center;
-    justify-content: center; /* Alignement des boutons */
-    padding: 10px;
-    margin-top: 34px;
-}
-
-.has-borderr {
-    display: flex;
-    align-items: center;
-    background-color: #ffffff;
-    color: #f7f7f7;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    padding: 10px 15px;
-    font-size: 16px;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     
-}
-
-.has-border:hover {
-    background-color: #f5f5f5;
-    border-color: #bbb;
-    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-}
-
-.has-border i {
-    margin-right: 8px; /* Espace entre l'icône et le texte */
-    font-size: 18px;
-}
-
-.has-border span {
-    font-weight: 500;
-    text-transform: capitalize;
-}
-
-.has-border a {
-    color: inherit;
-    text-decoration: none;
-    margin-left: 5px; /* Espacement si plusieurs liens */
-}
-
-/* Adaptation pour mobile */
-@media (max-width: 768px) {
-    .div-flex {
-        flex-direction: column;
-        gap: 10px;
-    }
-}
-
-
-        .swal-popup {
-            background-color: #f9f9f9;
+    <style>
+        :root {
+            --color-primary: #C2185B;
+            --color-secondary: #D32F2F;
+            --color-accent: #ef4444;
         }
 
-        .swal-html-container a {
-            text-decoration: none;
-            color: #007bff;
-            margin-bottom: 10px;
-            display: block;
-            font-size: 14px;
+        .dashboard-container {
+            background: #f8f9fa;
+            min-height: 100vh;
+            padding: 20px;
         }
 
-        .swal-html-container a:hover {
-            color: #0056b3;
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 20px rgba(194, 24, 91, 0.3);
         }
 
-        .swal-confirm-btn {
-            background-color: #D32F2F;
-            color: #fff;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .swal-confirm-btn:hover {
-            background-color: #b71c1c;
-        }
-        a {
-            text-decoration: none !important;
-            color: #ffffff;
+        .dashboard-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
             text-transform: uppercase;
         }
-        span{
-            text-transform: uppercase;
+
+        .dashboard-header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1rem;
         }
-        .card-container {
-  display: flex;
-  gap: 30px;
-  justify-content: center;
-}
 
-.card {
-    width: 496px;
-    height: 401px;
-    perspective: 1500px;
-    border: none;
-}
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
 
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            border-left: 5px solid;
+            position: relative;
+            overflow: hidden;
+        }
 
-.card .card-content {
-  width: 100%;
-  height: 100%;
-  background-color: #fff;
-  border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  transition: transform 0.5s;
-  transform-style: preserve-3d;
-  
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, rgba(194, 24, 91, 0.1), rgba(211, 47, 47, 0.1));
+            border-radius: 0 15px 0 100%;
+        }
 
-    position: absolute;
-}
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
 
+        .stat-card.pink { border-left-color: var(--color-primary); }
+        .stat-card.red { border-left-color: var(--color-secondary); }
+        .stat-card.accent { border-left-color: var(--color-accent); }
 
+        .stat-card .icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: white;
+        }
 
+        .stat-card.pink .icon { background: linear-gradient(135deg, var(--color-primary), #E91E63); }
+        .stat-card.red .icon { background: linear-gradient(135deg, var(--color-secondary), #F44336); }
+        .stat-card.accent .icon { background: linear-gradient(135deg, var(--color-accent), #dc2626); }
 
-.card-content h2 {
-  font-size: 24px;
-  color: #333;
-  margin-bottom: 20px;
-  text-transform: uppercase;
-    border-bottom: 1px dashed #d2d1d1;
-    width: 300px;
-    margin-left: 100px;
-    margin-top: 32px;
-}
+        .stat-card h3 {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
 
-.card-container {
-    display: flex;
-    gap: 114px;
-    margin-bottom: 57px;
-    justify-content: center;
-}
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #212529;
+            margin: 0 0 5px 0;
+        }
 
-.card-content::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(235deg, #d81c1c21, #fefefe33);
-  border-radius: 15px;
-  z-index: -1;
-}
-.info-text {
-        font-size: 1.2em;
-        color: #444;
-        margin: 10px 0;
-        font-family: Arial, sans-serif;
-    }
+        .stat-card .subtitle {
+            font-size: 0.85rem;
+            color: #28a745;
+            font-weight: 500;
+        }
 
-    .highlight {
-        background: linear-gradient(135deg, #f60404, #000000);
-    -webkit-background-clip: text;
-    color: transparent;  /* Rend le texte transparent pour afficher uniquement le dégradé */
-    font-weight: bold;
-    }
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
 
-    .custom-btn {
-        background: linear-gradient(135deg, #f60404, #000000);
-        color: white;
-        padding: 10px 20px;
-        text-decoration: none;
-        border-radius: 5px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        transition: background-color 0.3s ease;
-        margin-left: 83px;
-    }
+        .chart-container h2 {
+            font-size: 1.3rem;
+            color: var(--color-secondary);
+            margin: 0 0 20px 0;
+            font-weight: 700;
+            text-transform: uppercase;
+            border-bottom: 3px solid var(--color-primary);
+            padding-bottom: 10px;
+        }
 
-    .custom-btn:hover {
-        background-color: #21867a;
-    }
+        .charts-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
 
-    .hight{
-     background: linear-gradient(135deg, #f60404, #000000);
-    -webkit-background-clip: text;
-    color: transparent;  /* Rend le texte transparent pour afficher uniquement le dégradé */
-    font-weight: bold;
-    text-align: center;
-}
-.div-car{
+        .activity-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
 
-}
-div#div-attestation {
-    margin-left: 300px;
-}
-div#card-div {
-    width: 400px;
-}
+        .activity-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            transition: background 0.3s ease;
+        }
 
-    /* .search-form {
-        max-width: 500px;
-        margin: auto;
-        padding: 15px;
-    }
-    .search-form .input-group {
-        overflow: hidden;
-    }
-    .search-form .form-control {
-        border-radius: 0;
-        height: 45px;
-    }
-    .search-form .btn-primary {
-        background-color: #007bff;
-        border: none;
-        border-radius: 0;
-        padding: 0 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 45px;
-    }
-    .search-form .btn-primary:hover {
-        background-color: #0056b3;
-    } */
+        .activity-item:hover {
+            background: #f8f9fa;
+        }
 
-    .search-form {
-        display: flex;
-    align-items: center;
-    background-color: #fff;
-    width: 68%;
-    text-align: center;
-    margin-left: 100px;
-    border-radius: 6px;
-}
+        .activity-item:last-child {
+            border-bottom: none;
+        }
 
-.input-wrapper {
-    flex: 1;
-}
+        .activity-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+            font-size: 1.2rem;
+        }
 
-.search-form input.form-control {
-    width: 92%;
-    border: none;
-    height: 38px;
-}
-.search-form button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+        .activity-icon.pink { background: linear-gradient(135deg, var(--color-primary), #E91E63); }
+        .activity-icon.red { background: linear-gradient(135deg, var(--color-secondary), #F44336); }
+        .activity-icon.accent { background: linear-gradient(135deg, var(--color-accent), #dc2626); }
 
-button.btn-nin {
-    margin-right: 23px;
-    height: 26px;
-    color: #8f0606;
-    width: 40px;
-    margin-top: 10px;
-    background: none;
-    border:none;
-}
-i.fas.fa-search {
-    font-size: 28px;
-}
-.d-fl{
-    margin-top: 10px;
-}
-.my-4 {
-    margin-top: -0.5rem !important;
-    margin-bottom: 1.5rem !important;
-}
-/* CSS */
-.modal {
-    display: none; /* Hides modal by default */
-    position: fixed;
-    z-index: 999;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-}
+        .activity-details {
+            flex: 1;
+        }
 
-.modal-content {
-    background-color: white;
-    margin: 15% auto;
-    padding: 20px;
-    border-radius: 10px;
-    width: 80%;
-    max-width: 500px;
-    position: relative;
-}
+        .activity-type {
+            font-weight: 600;
+            color: var(--color-secondary);
+            font-size: 0.9rem;
+        }
 
-.close-btn {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 20px;
-    cursor: pointer;
-}
+        .activity-description {
+            color: #6c757d;
+            font-size: 0.85rem;
+            margin-top: 3px;
+        }
 
-.btn-open-search {
-    margin: 20px;
-    padding: 10px 20px;
-    background-color: #007BFF;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
+        .activity-amount {
+            font-weight: 700;
+            color: #212529;
+            font-size: 1.1rem;
+        }
 
-.btn-open-search:hover {
-    background-color: #0056b3;
-}
-#clasd-m{
-   
-   background: none; 
-}
+        .activity-date {
+            color: #adb5bd;
+            font-size: 0.75rem;
+            margin-top: 3px;
+        }
 
-.daily-reussites-count {
-    text-transform: uppercase;
-}
-.btnsearch{
-background: none;
-border: none;
-}
-button#open-search-modal {
-    width: 40px;
-    height: 21px;
-    background: no-repeat;
-    border: none;
-    font-size: 41px;
-}
-#span-ji {
-    font-size: 27px;
-}
-
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+            .dashboard-header h1 {
+                font-size: 1.8rem;
+            }
+        }
     </style>
-    <div class="container my-4">
-    <div class="card shadow-lg border-0" style="background-color: black; color: white; height: 204px !important; display: flex; flex-direction: column; justify-content: space-between;    width: 100% !important;
-    margin-top: 0px !important;">
-        <div class="card-header text-center" style="background: #cedce7;
-        background: -webkit-linear-gradient(45deg,  #cedce7 0%,#596a72 100%);
-        background: -o-linear-gradient(45deg,  #cedce7 0%,#596a72 100%);
-        background: linear-gradient(45deg,  #cedce7 0%,#596a72 100%);
-        background: linear-gradient(178deg,rgb(18, 17, 17),#f60404,#f60404,rgb(13, 13, 13)); color: white;">
-            <h1 class="font-semibold">
-                <?php
-                    $hour = \Carbon\Carbon::now()->format('H');
-                    $greeting = ($hour >= 6 && $hour < 19) ? 'Bonjour' : 'Bonsoir';
-                ?>
-                {{ $greeting }}, {{ Auth::user()->name }}
-            </h1>
+
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <h1><i class="fas fa-chart-line"></i> Tableau de Bord</h1>
+            <p><i class="fas fa-calendar-alt"></i> {{ now()->format('d/m/Y') }} - Vue d'ensemble de votre activité</p>
         </div>
-       
 
+        <!-- Cards statistiques principales -->
+        <div class="stats-grid">
+            <!-- Reçus Stage -->
+            <div class="stat-card pink">
+                <div class="icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <h3>Reçus Stage</h3>
+                <div class="value">{{ $totalReussites }}</div>
+                <div class="subtitle">
+                    <i class="fas fa-arrow-up"></i> {{ $reussitesCurrentMonth }} ce mois
+                </div>
+                <small style="color: #6c757d; display: block; margin-top: 10px;">
+                    <i class="fas fa-coins"></i> {{ number_format($revenusReussites, 2) }} DH
+                </small>
+            </div>
 
+            <!-- Reçus Formation -->
+            <div class="stat-card red">
+                <div class="icon">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <h3>Reçus Formation</h3>
+                <div class="value">{{ $totalReussitesf }}</div>
+                <div class="subtitle">
+                    <i class="fas fa-arrow-up"></i> {{ $reussitesfCurrentMonth }} ce mois
+                </div>
+                <small style="color: #6c757d; display: block; margin-top: 10px;">
+                    <i class="fas fa-coins"></i> {{ number_format($revenusReussitesf, 2) }} DH
+                </small>
+            </div>
 
-<div class="div-flex">
-        <button type="button" id="arecuButton" class="has-borderr">
-            <i class="fas fa-receipt"></i>
-            <span> les reçus <i id="i-fetch" class="fa fa-chevron-down"></i></span>
-        </button>
+            <!-- Reçus UCG -->
+            <div class="stat-card accent">
+                <div class="icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h3>Reçus Garantie</h3>
+                <div class="value">{{ $totalUcgs }}</div>
+                <div class="subtitle">
+                    <i class="fas fa-arrow-up"></i> {{ $ucgsCurrentMonth }} ce mois
+                </div>
+                <small style="color: #6c757d; display: block; margin-top: 10px;">
+                    <i class="fas fa-coins"></i> {{ number_format($revenusUcgs, 2) }} DH
+                </small>
+            </div>
 
-        <button type="button" id="adevisButton" class="has-borderr">
-            <i class="fas fa-file-invoice"></i>
-            <span> les devis <i id="i-fetch" class="fa fa-chevron-down"></i></span>
-        </button>
+            <!-- Devis Projet -->
+            <div class="stat-card pink">
+                <div class="icon">
+                    <i class="fas fa-file-invoice"></i>
+                </div>
+                <h3>Devis Projet</h3>
+                <div class="value">{{ $totalDevis }}</div>
+                <div class="subtitle">
+                    <i class="fas fa-arrow-up"></i> {{ $devisCurrentMonth }} ce mois
+                </div>
+                <small style="color: #6c757d; display: block; margin-top: 10px;">
+                    <i class="fas fa-coins"></i> {{ number_format($devisValeurTotal, 2) }} DH
+                </small>
+            </div>
 
-        <button type="button" id="facturButton" class="has-borderr">
-           
-            <i class="fas fa-file-invoice-dollar"></i>
-            <span>les facture<i id="i-fetch" class="fa fa-chevron-down"></i></span>
-        </button>
-</div>
-         <div class="div-car">
-        <h3 class="hight">
-            les reçus
-        </h3>
-        <div class="card-container"> 
-            <!-- بطاقة Reçus de Formation -->
-            <div class="card">
-                <div class="card-content">
-                    <h2>Reçus de Formation
-                        <button data-open-modal="search-modal-formation" class="btnsearch">
-                            <i id="clasd-m" class="fas fa-search"></i>
-                        </button>
-                    </h2>
-                    <div id="search-modal-formation" class="modal">
-                        <div class="modal-content">
-                            <span class="close-btn">&times;</span>
-                            <form method="GET" action="{{ route('dashboard') }}" class="search-form">
-                                <div class="input-wrapper">
-                                    <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Rechercher dans Reçus de Formation">
-                                </div>
-                                <input type="hidden" name="filter" value="fomationre">
-                                <button class="btn-nin" type="submit">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                    <div class="daily-reussites-count">
-                        <h4>le nombre de reçus d'aujourd'hui:    <span id="span-ji" class="highlight">{{ $dailyfomationreCount }}</span></h4>
-                    </div>
-                    <!-- عرض النتائج -->
-                    @forelse($fomationre as $fomationr)
-                        <h5 class="info-text">- Nom et prénom : <span class="highlight">{{ $fomationr->nom }} {{ $fomationr->prenom }}</span></h5>
-                        <div style="display: flex; justify-content:center;">
-                            <h5 class="info-text">cin: <span class="highlight">{{ $fomationr->CIN }}</span></h5>
-                            <h5>
-                                <a href="{{ route('reussitesf.pdf', $fomationr->id) }}" class="btn btn-info custom-btn"><i class="fa fa-download"></i></a>
-                            </h5>
-                        </div>
+            <!-- Devis Formation -->
+            <div class="stat-card red">
+                <div class="icon">
+                    <i class="fas fa-file-contract"></i>
+                </div>
+                <h3>Devis Formation</h3>
+                <div class="value">{{ $totalDevisf }}</div>
+                <div class="subtitle">
+                    <i class="fas fa-arrow-up"></i> {{ $devisfCurrentMonth }} ce mois
+                </div>
+                <small style="color: #6c757d; display: block; margin-top: 10px;">
+                    <i class="fas fa-coins"></i> {{ number_format($devisfValeurTotal, 2) }} DH
+                </small>
+            </div>
+
+            <!-- Factures Projet -->
+            <div class="stat-card accent">
+                <div class="icon">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+                <h3>Factures Projet</h3>
+                <div class="value">{{ $totalFactures }}</div>
+                <div class="subtitle">
+                    <i class="fas fa-arrow-up"></i> {{ $facturesCurrentMonth }} ce mois
+                </div>
+                <small style="color: #6c757d; display: block; margin-top: 10px;">
+                    <i class="fas fa-coins"></i> {{ number_format($facturesRevenu, 2) }} DH
+                </small>
+            </div>
+
+            <!-- Factures Formation -->
+            <div class="stat-card pink">
+                <div class="icon">
+                    <i class="fas fa-money-check-alt"></i>
+                </div>
+                <h3>Factures Formation</h3>
+                <div class="value">{{ $totalFacturesf }}</div>
+                <div class="subtitle">
+                    <i class="fas fa-arrow-up"></i> {{ $facturesfCurrentMonth }} ce mois
+                </div>
+                <small style="color: #6c757d; display: block; margin-top: 10px;">
+                    <i class="fas fa-coins"></i> {{ number_format($facturesfRevenu, 2) }} DH
+                </small>
+            </div>
+
+            <!-- Revenu Total -->
+            <div class="stat-card red" style="grid-column: span 2;">
+                <div class="icon" style="width: 80px; height: 80px; font-size: 2.5rem;">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <h3>Revenu Total</h3>
+                <div class="value" style="font-size: 2.5rem;">{{ number_format($revenuTotal, 2) }} DH</div>
+                <div class="subtitle">
+                    <i class="fas fa-chart-line"></i> Performance globale
+                </div>
+            </div>
+        </div>
+
+        <!-- Graphiques -->
+        <div class="charts-row">
+            <!-- Évolution mensuelle -->
+            <div class="chart-container" style="grid-column: span 2;">
+                <h2><i class="fas fa-chart-area"></i> Évolution des Revenus (6 derniers mois)</h2>
+                <canvas id="monthlyRevenueChart" height="80"></canvas>
+            </div>
+        </div>
+
+        <div class="charts-row">
+            <!-- Répartition des revenus -->
+            <div class="chart-container">
+                <h2><i class="fas fa-chart-pie"></i> Répartition des Revenus</h2>
+                <canvas id="revenueTypeChart"></canvas>
+            </div>
+
+            <!-- Documents par catégorie -->
+            <div class="chart-container">
+                <h2><i class="fas fa-chart-bar"></i> Documents par Catégorie</h2>
+                <canvas id="documentCountChart"></canvas>
+            </div>
+        </div>
+
+        <div class="charts-row">
+            <!-- Top clients -->
+            <div class="chart-container">
+                <h2><i class="fas fa-users"></i> Top 5 Clients</h2>
+                <canvas id="topClientsChart"></canvas>
+            </div>
+
+            <!-- Activités récentes -->
+            <div class="chart-container">
+                <h2><i class="fas fa-history"></i> Activités Récentes</h2>
+                <ul class="activity-list">
+                    @forelse($recentActivities as $index => $activity)
+                        <li class="activity-item">
+                            <div class="activity-icon {{ $index % 3 == 0 ? 'pink' : ($index % 3 == 1 ? 'red' : 'accent') }}">
+                                <i class="fas fa-{{ $activity['type'] == 'Reçu Stage' ? 'receipt' : ($activity['type'] == 'Facture Projet' ? 'file-invoice-dollar' : 'money-check-alt') }}"></i>
+                            </div>
+                            <div class="activity-details">
+                                <div class="activity-type">{{ $activity['type'] }}</div>
+                                <div class="activity-description">{{ Str::limit($activity['description'], 40) }}</div>
+                                <div class="activity-date">{{ $activity['date']->diffForHumans() }}</div>
+                            </div>
+                            <div class="activity-amount">
+                                {{ number_format($activity['amount'], 2) }} DH
+                            </div>
+                        </li>
                     @empty
-                        <p>Aucune donnée trouvée.</p>
+                        <li class="activity-item">
+                            <p class="text-muted text-center w-100">Aucune activité récente</p>
+                        </li>
                     @endforelse
-                    <div class="d-fl">
-                        <nav aria-label="Page navigation">
-                            {{ $fomationre->links('pagination.custom') }}
-                        </nav>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- بطاقة Reçus de Stage -->
-            <div class="card">
-                <div class="card-content">
-                    <div class="cas-mar">
-                        <h2 class="h-stage">Reçus de Stage
-                            <button data-open-modal="search-modal-stage" class="btnsearch">
-                                <i id="clasd-m" class="fas fa-search"></i>
-                            </button>
-                        </h2>
-                    </div>
-                    <div id="search-modal-stage" class="modal">
-                        <div class="modal-content">
-                            <span class="close-btn">&times;</span>
-                            <form method="GET" action="{{ route('dashboard') }}" class="search-form">
-                                <div class="input-wrapper">
-                                    <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Rechercher dans Reçus de Stage">
-                                </div>
-                                <input type="hidden" name="filter" value="reussites">
-                                <button class="btn-nin" type="submit">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                    <div class="daily-reussites-count">
-                        <h4>le nombre de reçus d'aujourd'hui:      <span id="span-ji" class="highlight">{{ $dailyReussitesCount }}</span></h4>
-                    </div>
-                    <!-- عرض النتائج -->
-                    @forelse($reussites as $reussite)
-                        <h5 class="info-text">Nom et prénom : <span class="highlight">{{ $reussite->nom }} {{ $reussite->prenom }}</span></h5>
-                        <div style="display: flex; justify-content:center;">
-                            <h5 class="info-text">cin: <span class="highlight">{{ $reussite->CIN }}</span></h5>
-                            <h5>
-                                <a href="{{ route('reussites.pdf', $reussite->id) }}" class="btn btn-info custom-btn"><i class="fa fa-download"></i></a>
-                            </h5>
-                        </div>
-                    @empty
-                        <p>Aucune donnée trouvée. </p>
-                    @endforelse
-                    <div class="d-fl">
-                        <nav aria-label="Page navigation">
-                            {{ $reussites->links('pagination.custom') }}
-                        </nav>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-
-        <div class="card-container">
-    <!-- بطاقة Devis -->
-    <div class="card">
-        <div class="card-content">
-            <h2>Devis
-                <button data-open-modal="search-modal-devis" class="btnsearch">
-                    <i id="clasd-m" class="fas fa-search"></i>
-                </button>
-            </h2>
-            <div id="search-modal-devis" class="modal">
-                <div class="modal-content">
-                    <span class="close-btn">&times;</span>
-                    <form method="GET" action="{{ route('dashboard') }}" class="search-form">
-                        <div class="input-wrapper">
-                            <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Rechercher dans Devis">
-                        </div>
-                        <input type="hidden" name="filter" value="devis">
-                        <button class="btn-nin" type="submit">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </form>
-                </div>
-            </div>
-            <div class="daily-reussites-count">
-                <h4>le nombre de devis d'aujourd'hui: <span id="span-ji" class="highlight">{{ $dailyDevisCount }}</span></h4>
-            </div>
-            
-            @forelse($devis as $devi)
-    <h5 class="info-text">Devis N°: <span class="highlight">{{ $devi->devis_num }}</span></h5>
-    <div style="display: flex; justify-content:center;">
-        <h5 class="info-text">Client: <span class="highlight">{{ $devi->client }}</span></h5>
-        <h5>
-            <a href="{{ route('devis.downloadPDF', $devi->id) }}" class="btn btn-info custom-btn"><i class="fa fa-download"></i></a>
-        </h5>
-    </div>
-@empty
-    <p>Aucune donnée trouvée.</p>
-@endforelse
-            <div class="d-fl">
-                <nav aria-label="Page navigation">
-                    {{ $devis->links('pagination.custom') }}
-                </nav>
+                </ul>
             </div>
         </div>
     </div>
 
- 
-    <div class="card">
-        <div class="card-content">
-            <h2>Factures
-                <button data-open-modal="search-modal-factures" class="btnsearch">
-                    <i id="clasd-m" class="fas fa-search"></i>
-                </button>
-            </h2>
-            <div id="search-modal-factures" class="modal">
-                <div class="modal-content">
-                    <span class="close-btn">&times;</span>
-                    <form method="GET" action="{{ route('dashboard') }}" class="search-form">
-                        <div class="input-wrapper">
-                            <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Rechercher dans Factures">
-                        </div>
-                        <input type="hidden" name="filter" value="factures">
-                        <button class="btn-nin" type="submit">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </form>
-                </div>
-            </div>
-            <div class="daily-reussites-count">
-                <h4>le nombre de factures d'aujourd'hui: <span id="span-ji" class="highlight">{{ $dailyFacturesCount }}</span></h4>
-            </div>
-            
-            @forelse($factures as $facture)
-                <h5 class="info-text">Facture N°: <span class="highlight">{{ $facture->facture_num }}</span></h5>
-                <div style="display: flex; justify-content:center;">
-                    <h5 class="info-text">client: <span class="highlight">{{ $facture->client }}</span></h5>
-                    <h5>
-                        <a href="{{ route('factures.downloadPDF', $facture->id) }}" class="btn btn-info custom-btn"><i class="fa fa-download"></i></a>
-                       
-                    </h5>
-                </div>
-            @empty
-                <p>Aucune donnée trouvée.</p>
-            @endforelse
-            <div class="d-fl">
-                <nav aria-label="Page navigation">
-                    {{ $factures->links('pagination.custom') }}
-                </nav>
-            </div>
-        </div>
-    </div>
-</div>
+    <script>
+        // Configuration des couleurs
+        const colors = {
+            primary: '#C2185B',
+            secondary: '#D32F2F',
+            accent: '#ef4444',
+            gradients: {
+                pink: ['#C2185B', '#E91E63'],
+                red: ['#D32F2F', '#F44336'],
+                accent: ['#ef4444', '#dc2626']
+            }
+        };
 
+        // Graphique : Évolution mensuelle des revenus
+        const monthlyCtx = document.getElementById('monthlyRevenueChart').getContext('2d');
+        const monthlyData = @json($monthlyRevenue);
         
-        </div>
-            
+        new Chart(monthlyCtx, {
+            type: 'line',
+            data: {
+                labels: monthlyData.map(item => item.month),
+                datasets: [{
+                    label: 'Revenus (DH)',
+                    data: monthlyData.map(item => item.revenue),
+                    borderColor: colors.primary,
+                    backgroundColor: 'rgba(194, 24, 91, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: colors.primary,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            font: { size: 14, weight: 'bold' },
+                            color: '#212529'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        padding: 12,
+                        titleFont: { size: 14 },
+                        bodyFont: { size: 13 }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString() + ' DH';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Graphique : Répartition des revenus
+        const revenueTypeCtx = document.getElementById('revenueTypeChart').getContext('2d');
+        const revenueTypeData = @json($revenueByType);
         
+        new Chart(revenueTypeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: revenueTypeData.map(item => item.type),
+                datasets: [{
+                    data: revenueTypeData.map(item => item.amount),
+                    backgroundColor: [
+                        colors.primary,
+                        colors.secondary,
+                        colors.accent,
+                        '#E91E63',
+                        '#F44336'
+                    ],
+                    borderWidth: 3,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            font: { size: 12 }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + context.parsed.toLocaleString() + ' DH';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Graphique : Documents par catégorie
+        const documentCountCtx = document.getElementById('documentCountChart').getContext('2d');
+        const documentCountData = @json($documentCounts);
         
-   <div>
-    <script>
-        document.getElementById('facturButton').addEventListener('click', function () {
-            Swal.fire({
-            title: 'Liste des Factures',
-            html: `
-                <a href="{{ route('factures.index') }}" style="display:block; margin-bottom: 15px; color: #C2185B; font-size: 18px; text-decoration: none; background-color: #f8f0f3; padding: 10px 15px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
-                    <i class="fas fa-file-invoice-dollar" style="color: #C2185B;"></i> factures de projet
-                   
-                </a>
-                <a href="{{ route('facturefs.index') }}" style="display:block; margin-bottom: 15px; color: #4CAF50; font-size: 18px; text-decoration: none; background-color: #f1f8f0c2; padding: 10px 15px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
-                    <i class="fas fa-file-invoice-dollar" style="color: #35c218;"></i> factures de formation
-                   
-                </a>
-            `,
-            showCloseButton: true,
-            focusConfirm: false,
-            confirmButtonText: 'Fermer',
-            customClass: {
-                popup: 'swal-popup',
-                title: 'swal-title',
-                htmlContainer: 'swal-html-container',
-                closeButton: 'swal-close-btn',
-                confirmButton: 'swal-confirm-btn'
+        new Chart(documentCountCtx, {
+            type: 'bar',
+            data: {
+                labels: documentCountData.map(item => item.category),
+                datasets: [{
+                    label: 'Nombre de documents',
+                    data: documentCountData.map(item => item.count),
+                    backgroundColor: [
+                        colors.primary,
+                        colors.secondary,
+                        colors.accent,
+                        '#C2185B',
+                        '#D32F2F',
+                        '#ef4444',
+                        '#E91E63'
+                    ],
+                    borderWidth: 0,
+                    borderRadius: 8
+                }]
             },
-            background: '#ffffff',
-            iconColor: '#C2185B',
-            buttonsStyling: false,
-            didOpen: () => {
-                const popup = document.querySelector('.swal-popup');
-                const title = document.querySelector('.swal-title');
-                
-                // Apply custom styles to the title
-                title.style.display = 'block';
-                title.style.marginBottom = '30px';
-                title.style.borderBottom = '2px dashed #cfcfcf';
-                title.style.textTransform = 'uppercase';
-
-                popup.style.padding = '30px';
-                popup.style.borderRadius = '15px';
-                popup.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.1)';
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 }
+                    }
+                }
             }
-
-            });
         });
-    </script>
 
-
-
-    <script>
-        document.getElementById('arecuButton').addEventListener('click', function () {
-            Swal.fire({
-            title: 'Liste des Reçus',
-            html: `
-                <a href="{{ route('reussites.index') }}" style="display:block; margin-bottom: 15px; color: #C2185B; font-size: 18px; text-decoration: none; background-color: #f8f0f3; padding: 10px 15px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
-                    <i class="fas fa-file-alt" style="color: #C2185B;"></i> Reçu de Stage
-                </a>
-                <a href="{{ route('reussitesf.index') }}"  style="display:block; margin-bottom: 15px; color: #4CAF50; font-size: 18px; text-decoration: none; background-color: #f0fff4; padding: 10px 15px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
-                    <i class="fas fa-file-alt" style="color: #4CAF50;"></i> Reçu de Formation
-                </a>
-                 <a href="{{ route('ucgs.index') }}"  style="display:block; margin-bottom: 15px; color: #4CAF50; font-size: 18px; text-decoration: none; background-color: #f0fff4; padding: 10px 15px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
-                    <i class="fas fa-file-alt" style="color: #4CAF50;"></i> Reçu de ucgs
-                </a>
-            `,
-            showCloseButton: true,
-            focusConfirm: false,
-            confirmButtonText: 'Fermer',
-            customClass: {
-                popup: 'swal-popup',
-                title: 'swal-title',
-                htmlContainer: 'swal-html-container',
-                closeButton: 'swal-close-btn',
-                confirmButton: 'swal-confirm-btn'
+        // Graphique : Top clients
+        const topClientsCtx = document.getElementById('topClientsChart').getContext('2d');
+        const topClientsData = @json($topClients);
+        
+        new Chart(topClientsCtx, {
+            type: 'horizontalBar',
+            data: {
+                labels: topClientsData.map(item => item.client),
+                datasets: [{
+                    label: 'Chiffre d\'affaires (DH)',
+                    data: topClientsData.map(item => item.revenue),
+                    backgroundColor: colors.secondary,
+                    borderRadius: 8
+                }]
             },
-            background: '#ffffff',
-            iconColor: '#C2185B',
-            buttonsStyling: false,
-            didOpen: () => {
-                const popup = document.querySelector('.swal-popup');
-                const title = document.querySelector('.swal-title');
-                
-                // Apply custom styles to the title
-                title.style.display = 'block';
-                title.style.marginBottom = '30px';
-                title.style.borderBottom = '2px dashed #cfcfcf';
-                title.style.textTransform = 'uppercase';
-
-                popup.style.padding = '30px';
-                popup.style.borderRadius = '15px';
-                popup.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.1)';
-            }
-
-            });
-        });
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        document.getElementById('adevisButton').addEventListener('click', function () {
-            Swal.fire({
-            title: 'Liste des Devis',
-            html: `
-                <a href="{{ route('devis.index') }}" style="display:block; margin-bottom: 15px; color: #C2185B; font-size: 18px; text-decoration: none; background-color: #f8f0f3; padding: 10px 15px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
-                    <i class="fas fa-file-alt" style="color: #C2185B; margin-right: 10px;"></i> Devis de projet
-                </a>
-                <a href="{{ route('devisf.index') }}" style="display:block; margin-bottom: 15px; color: #4CAF50; font-size: 18px; text-decoration: none; background-color: #f0fff4; padding: 10px 15px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
-                    <i class="fas fa-file-alt" style="color: #4CAF50; margin-right: 10px;"></i> Devis de Formation
-                </a>
-            `,
-            showCloseButton: true,
-            focusConfirm: false,
-            confirmButtonText: 'Fermer',
-            customClass: {
-                popup: 'swal-popup',
-                title: 'swal-title',
-                htmlContainer: 'swal-html-container',
-                closeButton: 'swal-close-btn',
-                confirmButton: 'swal-confirm-btn'
-            },
-            background: '#ffffff',
-            iconColor: '#C2185B',
-            buttonsStyling: false,
-            didOpen: () => {
-                const popup = document.querySelector('.swal-popup');
-                const title = document.querySelector('.swal-title');
-                
-                // Apply custom styles to the title
-                title.style.display = 'block';
-                title.style.marginBottom = '30px';
-                title.style.borderBottom = '2px dashed #cfcfcf';
-                title.style.textTransform = 'uppercase';
-
-                popup.style.padding = '30px';
-                popup.style.borderRadius = '15px';
-                popup.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.1)';
-            }
-            });
-        });
-    </script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-    // التعامل مع النقر على أزرار فتح النوافذ
-    document.querySelectorAll("[data-open-modal]").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-            const modalId = btn.getAttribute("data-open-modal");
-            const modal = document.getElementById(modalId);
-            if (modal) {
-                modal.style.display = "block";
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString() + ' DH';
+                            }
+                        }
+                    }
+                }
             }
         });
-    });
-
-    // التعامل مع أزرار الإغلاق
-    document.querySelectorAll(".close-btn").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-            const modal = btn.closest(".modal");
-            if (modal) {
-                modal.style.display = "none";
-            }
-        });
-    });
-
-    // إغلاق النموذج عند النقر خارج النوافذ
-    window.addEventListener("click", function (event) {
-        document.querySelectorAll(".modal").forEach(function (modal) {
-            if (event.target === modal) {
-                modal.style.display = "none";
-            }
-        });
-    });
-});
-
-
     </script>
 </x-app-layout>

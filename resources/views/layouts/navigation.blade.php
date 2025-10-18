@@ -421,6 +421,7 @@
         .sidebar-menu button {
             animation: slideIn 0.3s ease forwards;
         }
+        
 
         .sidebar-menu button:nth-child(1) { animation-delay: 0.05s; }
         .sidebar-menu button:nth-child(2) { animation-delay: 0.1s; }
@@ -534,16 +535,7 @@
             @endcan
         </div>
 
-        <!-- Profile Button -->
-        <div class="dropdown-container">
-            <button class="icon" id="profileButton">
-                <i class='bx bx-user'></i>
-                <p class="p-fetch">Profile <i id="i-fetch" class="fa fa-chevron-down"></i></p>
-            </button>
-            <form id="logoutForm" method="POST" action="{{ route('logout') }}" style="display: none;">
-                @csrf
-            </form>
-        </div>
+        
     </nav>
 
     <!-- Scripts -->

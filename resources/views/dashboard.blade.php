@@ -12,20 +12,20 @@
         .dashboard-container {
             background: #f8f9fa;
             min-height: 100vh;
-            padding: 20px;
+            padding: 15px;
         }
 
         .dashboard-header {
             background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
             color: white;
-            padding: 30px;
-            border-radius: 15px;
-            margin-bottom: 30px;
+            padding: 25px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
             box-shadow: 0 8px 20px rgba(194, 24, 91, 0.3);
         }
 
         .dashboard-header h1 {
-            font-size: 2.5rem;
+            font-size: 1.8rem;
             font-weight: 700;
             margin: 0;
             text-transform: uppercase;
@@ -34,20 +34,20 @@
         .dashboard-header p {
             margin: 10px 0 0 0;
             opacity: 0.9;
-            font-size: 1.1rem;
+            font-size: 0.95rem;
         }
 
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            gap: 15px;
+            margin-bottom: 20px;
         }
 
         .stat-card {
             background: white;
-            border-radius: 15px;
-            padding: 25px;
+            border-radius: 12px;
+            padding: 20px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.08);
             transition: all 0.3s ease;
             border-left: 5px solid;
@@ -60,10 +60,10 @@
             position: absolute;
             top: 0;
             right: 0;
-            width: 100px;
-            height: 100px;
+            width: 80px;
+            height: 80px;
             background: linear-gradient(135deg, rgba(194, 24, 91, 0.1), rgba(211, 47, 47, 0.1));
-            border-radius: 0 15px 0 100%;
+            border-radius: 0 12px 0 100%;
         }
 
         .stat-card:hover {
@@ -76,14 +76,14 @@
         .stat-card.accent { border-left-color: var(--color-accent); }
 
         .stat-card .icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 12px;
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.8rem;
-            margin-bottom: 15px;
+            font-size: 1.5rem;
+            margin-bottom: 12px;
             color: white;
         }
 
@@ -92,80 +92,87 @@
         .stat-card.accent .icon { background: linear-gradient(135deg, var(--color-accent), #dc2626); }
 
         .stat-card h3 {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: #6c757d;
-            margin: 0 0 10px 0;
+            margin: 0 0 8px 0;
             text-transform: uppercase;
             font-weight: 600;
             letter-spacing: 0.5px;
         }
 
         .stat-card .value {
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: 700;
             color: #212529;
             margin: 0 0 5px 0;
         }
 
         .stat-card .subtitle {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: #28a745;
             font-weight: 500;
         }
 
+        .stat-card small {
+            color: #6c757d;
+            display: block;
+            margin-top: 8px;
+            font-size: 0.8rem;
+        }
+
         .chart-container {
             background: white;
-            border-radius: 15px;
-            padding: 25px;
+            border-radius: 12px;
+            padding: 20px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            margin-bottom: 30px;
-            height: 400px; /* Hauteur fixe pour les graphiques */
+            margin-bottom: 20px;
+            height: 380px;
         }
 
         .chart-container.full-width {
-            height: 350px; /* Plus petit pour le graphique ligne */
+            height: 320px;
         }
 
         .chart-container h2 {
-            font-size: 1.3rem;
+            font-size: 1.1rem;
             color: var(--color-secondary);
-            margin: 0 0 20px 0;
+            margin: 0 0 15px 0;
             font-weight: 700;
             text-transform: uppercase;
             border-bottom: 3px solid var(--color-primary);
-            padding-bottom: 10px;
+            padding-bottom: 8px;
         }
 
         .chart-wrapper {
             position: relative;
-            height: calc(100% - 60px); /* Hauteur moins le titre */
+            height: calc(100% - 50px);
             width: 100%;
         }
 
         .charts-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-            gap: 30px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
         }
 
         .charts-row-full {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
+            gap: 20px;
+            margin-bottom: 20px;
         }
 
         .activity-list {
             list-style: none;
             padding: 0;
             margin: 0;
-            max-height: 320px;
+            max-height: 300px;
             overflow-y: auto;
         }
 
         .activity-list::-webkit-scrollbar {
-            width: 6px;
+            width: 5px;
         }
 
         .activity-list::-webkit-scrollbar-track {
@@ -181,7 +188,7 @@
         .activity-item {
             display: flex;
             align-items: center;
-            padding: 15px;
+            padding: 12px;
             border-bottom: 1px solid #e9ecef;
             transition: background 0.3s ease;
         }
@@ -195,15 +202,15 @@
         }
 
         .activity-icon {
-            width: 45px;
-            height: 45px;
-            border-radius: 10px;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 15px;
+            margin-right: 12px;
             color: white;
-            font-size: 1.2rem;
+            font-size: 1rem;
             flex-shrink: 0;
         }
 
@@ -219,13 +226,13 @@
         .activity-type {
             font-weight: 600;
             color: var(--color-secondary);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         .activity-description {
             color: #6c757d;
-            font-size: 0.85rem;
-            margin-top: 3px;
+            font-size: 0.8rem;
+            margin-top: 2px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -234,32 +241,213 @@
         .activity-amount {
             font-weight: 700;
             color: #212529;
-            font-size: 1.1rem;
-            margin-left: 15px;
+            font-size: 1rem;
+            margin-left: 10px;
             white-space: nowrap;
         }
 
         .activity-date {
             color: #adb5bd;
-            font-size: 0.75rem;
-            margin-top: 3px;
+            font-size: 0.7rem;
+            margin-top: 2px;
         }
 
-        @media (max-width: 1200px) {
+        /* Responsive pour tablettes */
+        @media (max-width: 1024px) {
             .charts-row {
                 grid-template-columns: 1fr;
             }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            }
         }
 
+        /* Responsive pour mobiles */
         @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 10px;
+            }
+
+            .dashboard-header {
+                padding: 20px 15px;
+                border-radius: 10px;
+                margin-bottom: 15px;
+            }
+
+            .dashboard-header h1 {
+                font-size: 1.4rem;
+            }
+
+            .dashboard-header h1 i {
+                display: none;
+            }
+
+            .dashboard-header p {
+                font-size: 0.85rem;
+            }
+
             .stats-grid {
                 grid-template-columns: 1fr;
+                gap: 12px;
+                margin-bottom: 15px;
             }
-            .dashboard-header h1 {
-                font-size: 1.8rem;
+
+            .stat-card {
+                padding: 15px;
+                border-radius: 10px;
             }
+
+            .stat-card .icon {
+                width: 45px;
+                height: 45px;
+                font-size: 1.3rem;
+                margin-bottom: 10px;
+            }
+
+            .stat-card h3 {
+                font-size: 0.8rem;
+            }
+
+            .stat-card .value {
+                font-size: 1.6rem;
+            }
+
+            .stat-card .subtitle {
+                font-size: 0.75rem;
+            }
+
+            .stat-card small {
+                font-size: 0.75rem;
+                margin-top: 6px;
+            }
+
             .chart-container {
-                height: 350px;
+                padding: 15px;
+                border-radius: 10px;
+                margin-bottom: 15px;
+                height: 300px;
+            }
+
+            .chart-container.full-width {
+                height: 280px;
+            }
+
+            .chart-container h2 {
+                font-size: 0.95rem;
+                margin-bottom: 12px;
+                padding-bottom: 6px;
+            }
+
+            .chart-container h2 i {
+                font-size: 0.9rem;
+            }
+
+            .chart-wrapper {
+                height: calc(100% - 45px);
+            }
+
+            .charts-row {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .activity-list {
+                max-height: 250px;
+            }
+
+            .activity-item {
+                padding: 10px 8px;
+            }
+
+            .activity-icon {
+                width: 35px;
+                height: 35px;
+                font-size: 0.9rem;
+                margin-right: 10px;
+            }
+
+            .activity-type {
+                font-size: 0.8rem;
+            }
+
+            .activity-description {
+                font-size: 0.75rem;
+            }
+
+            .activity-amount {
+                font-size: 0.9rem;
+                margin-left: 8px;
+            }
+
+            .activity-date {
+                font-size: 0.65rem;
+            }
+        }
+
+        /* Responsive pour très petits écrans */
+        @media (max-width: 480px) {
+            .dashboard-container {
+                padding: 8px;
+            }
+
+            .dashboard-header {
+                padding: 15px 12px;
+            }
+
+            .dashboard-header h1 {
+                font-size: 1.2rem;
+            }
+
+            .dashboard-header p {
+                font-size: 0.8rem;
+            }
+
+            .stat-card {
+                padding: 12px;
+            }
+
+            .stat-card .icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1.1rem;
+            }
+
+            .stat-card .value {
+                font-size: 1.4rem;
+            }
+
+            .chart-container {
+                padding: 12px;
+                height: 280px;
+            }
+
+            .chart-container.full-width {
+                height: 260px;
+            }
+
+            .chart-container h2 {
+                font-size: 0.9rem;
+                margin-bottom: 10px;
+            }
+
+            .activity-item {
+                flex-wrap: wrap;
+                padding: 8px;
+            }
+
+            .activity-amount {
+                flex-basis: 100%;
+                margin-left: 47px;
+                margin-top: 5px;
+                text-align: left;
+            }
+        }
+
+        /* Optimisation du scroll sur mobile */
+        @media (max-width: 768px) {
+            .activity-list::-webkit-scrollbar {
+                width: 3px;
             }
         }
     </style>
@@ -283,7 +471,7 @@
                 <div class="subtitle">
                     <i class="fas fa-arrow-up"></i> {{ $reussitesCurrentMonth }} ce mois
                 </div>
-                <small style="color: #6c757d; display: block; margin-top: 10px;">
+                <small>
                     <i class="fas fa-coins"></i> {{ number_format($revenusReussites, 2) }} DH
                 </small>
             </div>
@@ -298,7 +486,7 @@
                 <div class="subtitle">
                     <i class="fas fa-arrow-up"></i> {{ $reussitesfCurrentMonth }} ce mois
                 </div>
-                <small style="color: #6c757d; display: block; margin-top: 10px;">
+                <small>
                     <i class="fas fa-coins"></i> {{ number_format($revenusReussitesf, 2) }} DH
                 </small>
             </div>
@@ -313,7 +501,7 @@
                 <div class="subtitle">
                     <i class="fas fa-arrow-up"></i> {{ $ucgsCurrentMonth }} ce mois
                 </div>
-                <small style="color: #6c757d; display: block; margin-top: 10px;">
+                <small>
                     <i class="fas fa-coins"></i> {{ number_format($revenusUcgs, 2) }} DH
                 </small>
             </div>
@@ -328,7 +516,7 @@
                 <div class="subtitle">
                     <i class="fas fa-arrow-up"></i> {{ $devisCurrentMonth }} ce mois
                 </div>
-                <small style="color: #6c757d; display: block; margin-top: 10px;">
+                <small>
                     <i class="fas fa-coins"></i> {{ number_format($devisValeurTotal, 2) }} DH
                 </small>
             </div>
@@ -343,7 +531,7 @@
                 <div class="subtitle">
                     <i class="fas fa-arrow-up"></i> {{ $devisfCurrentMonth }} ce mois
                 </div>
-                <small style="color: #6c757d; display: block; margin-top: 10px;">
+                <small>
                     <i class="fas fa-coins"></i> {{ number_format($devisfValeurTotal, 2) }} DH
                 </small>
             </div>
@@ -358,7 +546,7 @@
                 <div class="subtitle">
                     <i class="fas fa-arrow-up"></i> {{ $facturesCurrentMonth }} ce mois
                 </div>
-                <small style="color: #6c757d; display: block; margin-top: 10px;">
+                <small>
                     <i class="fas fa-coins"></i> {{ number_format($facturesRevenu, 2) }} DH
                 </small>
             </div>
@@ -373,18 +561,18 @@
                 <div class="subtitle">
                     <i class="fas fa-arrow-up"></i> {{ $facturesfCurrentMonth }} ce mois
                 </div>
-                <small style="color: #6c757d; display: block; margin-top: 10px;">
+                <small>
                     <i class="fas fa-coins"></i> {{ number_format($facturesfRevenu, 2) }} DH
                 </small>
             </div>
 
             <!-- Revenu Total -->
             <div class="stat-card red">
-                <div class="icon" style="width: 80px; height: 80px; font-size: 2.5rem;">
+                <div class="icon" style="width: 60px; height: 60px; font-size: 2rem;">
                     <i class="fas fa-wallet"></i>
                 </div>
                 <h3>Revenu Total</h3>
-                <div class="value" style="font-size: 2.5rem;">{{ number_format($revenuTotal, 2) }} DH</div>
+                <div class="value" style="font-size: 2rem;">{{ number_format($revenuTotal, 2) }} DH</div>
                 <div class="subtitle">
                     <i class="fas fa-chart-line"></i> Performance globale
                 </div>
@@ -394,7 +582,7 @@
         <!-- Graphique Évolution mensuelle (pleine largeur) -->
         <div class="charts-row-full">
             <div class="chart-container full-width">
-                <h2><i class="fas fa-chart-area"></i> Évolution des Revenus (6 derniers mois)</h2>
+                <h2><i class="fas fa-chart-area"></i> Évolution des Revenus</h2>
                 <div class="chart-wrapper">
                     <canvas id="monthlyRevenueChart"></canvas>
                 </div>
@@ -405,7 +593,7 @@
         <div class="charts-row">
             <!-- Répartition des revenus -->
             <div class="chart-container">
-                <h2><i class="fas fa-chart-pie"></i> Répartition des Revenus</h2>
+                <h2><i class="fas fa-chart-pie"></i> Répartition</h2>
                 <div class="chart-wrapper">
                     <canvas id="revenueTypeChart"></canvas>
                 </div>
@@ -413,7 +601,7 @@
 
             <!-- Documents par catégorie -->
             <div class="chart-container">
-                <h2><i class="fas fa-chart-bar"></i> Documents par Catégorie</h2>
+                <h2><i class="fas fa-chart-bar"></i> Documents</h2>
                 <div class="chart-wrapper">
                     <canvas id="documentCountChart"></canvas>
                 </div>
@@ -431,7 +619,7 @@
 
             <!-- Activités récentes -->
             <div class="chart-container">
-                <h2><i class="fas fa-history"></i> Activités Récentes</h2>
+                <h2><i class="fas fa-history"></i> Activités</h2>
                 <ul class="activity-list">
                     @forelse($recentActivities as $index => $activity)
                         <li class="activity-item">
@@ -440,7 +628,7 @@
                             </div>
                             <div class="activity-details">
                                 <div class="activity-type">{{ $activity['type'] }}</div>
-                                <div class="activity-description">{{ Str::limit($activity['description'], 40) }}</div>
+                                <div class="activity-description">{{ Str::limit($activity['description'], 35) }}</div>
                                 <div class="activity-date">{{ $activity['date']->diffForHumans() }}</div>
                             </div>
                             <div class="activity-amount">
@@ -449,7 +637,7 @@
                         </li>
                     @empty
                         <li class="activity-item">
-                            <p class="text-muted text-center w-100">Aucune activité récente</p>
+                            <p class="text-muted text-center w-100">Aucune activité</p>
                         </li>
                     @endforelse
                 </ul>
@@ -462,13 +650,13 @@
         const colors = {
             primary: '#C2185B',
             secondary: '#D32F2F',
-            accent: '#ef4444',
-            gradients: {
-                pink: ['#C2185B', '#E91E63'],
-                red: ['#D32F2F', '#F44336'],
-                accent: ['#ef4444', '#dc2626']
-            }
+            accent: '#ef4444'
         };
+
+        // Configuration responsive pour les graphiques
+        const isMobile = window.innerWidth < 768;
+        const chartFontSize = isMobile ? 9 : 11;
+        const legendFontSize = isMobile ? 10 : 13;
 
         // Graphique : Évolution mensuelle des revenus
         const monthlyCtx = document.getElementById('monthlyRevenueChart').getContext('2d');
@@ -477,20 +665,20 @@
         new Chart(monthlyCtx, {
             type: 'line',
             data: {
-                labels: monthlyData.map(item => item.month),
+                labels: monthlyData.map(item => isMobile ? item.month.substring(0, 3) : item.month),
                 datasets: [{
                     label: 'Revenus (DH)',
                     data: monthlyData.map(item => item.revenue),
                     borderColor: colors.primary,
                     backgroundColor: 'rgba(194, 24, 91, 0.1)',
-                    borderWidth: 3,
+                    borderWidth: 2,
                     fill: true,
                     tension: 0.4,
                     pointBackgroundColor: colors.primary,
                     pointBorderColor: '#fff',
                     pointBorderWidth: 2,
-                    pointRadius: 6,
-                    pointHoverRadius: 8
+                    pointRadius: isMobile ? 4 : 6,
+                    pointHoverRadius: isMobile ? 6 : 8
                 }]
             },
             options: {
@@ -498,19 +686,19 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        display: true,
+                        display: !isMobile,
                         position: 'top',
                         labels: {
-                            font: { size: 13, weight: 'bold' },
+                            font: { size: legendFontSize, weight: 'bold' },
                             color: '#212529',
-                            padding: 15
+                            padding: isMobile ? 8 : 15
                         }
                     },
                     tooltip: {
                         backgroundColor: 'rgba(0,0,0,0.8)',
-                        padding: 12,
-                        titleFont: { size: 13 },
-                        bodyFont: { size: 12 },
+                        padding: isMobile ? 8 : 12,
+                        titleFont: { size: isMobile ? 11 : 13 },
+                        bodyFont: { size: isMobile ? 10 : 12 },
                         callbacks: {
                             label: function(context) {
                                 return 'Revenus: ' + context.parsed.y.toLocaleString() + ' DH';
@@ -523,9 +711,9 @@
                         beginAtZero: true,
                         ticks: {
                             callback: function(value) {
-                                return value.toLocaleString() + ' DH';
+                                return isMobile ? value.toLocaleString() : value.toLocaleString() + ' DH';
                             },
-                            font: { size: 11 }
+                            font: { size: chartFontSize }
                         },
                         grid: {
                             color: 'rgba(0,0,0,0.05)'
@@ -533,7 +721,8 @@
                     },
                     x: {
                         ticks: {
-                            font: { size: 11 }
+                            font: { size: chartFontSize },
+                            maxRotation: isMobile ? 45 : 0
                         },
                         grid: {
                             display: false
@@ -560,9 +749,9 @@
                         '#E91E63',
                         '#F44336'
                     ],
-                    borderWidth: 3,
+                    borderWidth: 2,
                     borderColor: '#fff',
-                    hoverOffset: 15
+                    hoverOffset: isMobile ? 8 : 15
                 }]
             },
             options: {
@@ -572,16 +761,16 @@
                     legend: {
                         position: 'bottom',
                         labels: {
-                            padding: 12,
-                            font: { size: 11 },
-                            boxWidth: 12,
-                            boxHeight: 12
+                            padding: isMobile ? 8 : 12,
+                            font: { size: isMobile ? 9 : 11 },
+                            boxWidth: isMobile ? 10 : 12,
+                            boxHeight: isMobile ? 10 : 12
                         }
                     },
                     tooltip: {
                         backgroundColor: 'rgba(0,0,0,0.8)',
-                        padding: 12,
-                        bodyFont: { size: 12 },
+                        padding: isMobile ? 8 : 12,
+                        bodyFont: { size: isMobile ? 10 : 12 },
                         callbacks: {
                             label: function(context) {
                                 let label = context.label || '';
@@ -605,7 +794,7 @@
             data: {
                 labels: documentCountData.map(item => item.category),
                 datasets: [{
-                    label: 'Nombre de documents',
+                    label: 'Documents',
                     data: documentCountData.map(item => item.count),
                     backgroundColor: [
                         colors.primary,
@@ -617,8 +806,8 @@
                         '#E91E63'
                     ],
                     borderWidth: 0,
-                    borderRadius: 8,
-                    maxBarThickness: 50
+                    borderRadius: isMobile ? 5 : 8,
+                    maxBarThickness: isMobile ? 35 : 50
                 }]
             },
             options: {
@@ -628,8 +817,8 @@
                     legend: { display: false },
                     tooltip: {
                         backgroundColor: 'rgba(0,0,0,0.8)',
-                        padding: 10,
-                        bodyFont: { size: 12 }
+                        padding: isMobile ? 8 : 10,
+                        bodyFont: { size: isMobile ? 10 : 12 }
                     }
                 },
                 scales: {
@@ -637,7 +826,7 @@
                         beginAtZero: true,
                         ticks: { 
                             stepSize: 1,
-                            font: { size: 11 }
+                            font: { size: chartFontSize }
                         },
                         grid: {
                             color: 'rgba(0,0,0,0.05)'
@@ -645,7 +834,7 @@
                     },
                     x: {
                         ticks: {
-                            font: { size: 10 },
+                            font: { size: isMobile ? 8 : 10 },
                             maxRotation: 45,
                             minRotation: 45
                         },
@@ -666,11 +855,11 @@
             data: {
                 labels: topClientsData.map(item => item.client),
                 datasets: [{
-                    label: 'Chiffre d\'affaires (DH)',
+                    label: 'CA (DH)',
                     data: topClientsData.map(item => item.revenue),
                     backgroundColor: colors.secondary,
-                    borderRadius: 8,
-                    maxBarThickness: 40
+                    borderRadius: isMobile ? 5 : 8,
+                    maxBarThickness: isMobile ? 30 : 40
                 }]
             },
             options: {
@@ -681,8 +870,8 @@
                     legend: { display: false },
                     tooltip: {
                         backgroundColor: 'rgba(0,0,0,0.8)',
-                        padding: 10,
-                        bodyFont: { size: 12 },
+                        padding: isMobile ? 8 : 10,
+                        bodyFont: { size: isMobile ? 10 : 12 },
                         callbacks: {
                             label: function(context) {
                                 return 'CA: ' + context.parsed.x.toLocaleString() + ' DH';
@@ -695,9 +884,9 @@
                         beginAtZero: true,
                         ticks: {
                             callback: function(value) {
-                                return value.toLocaleString() + ' DH';
+                                return isMobile ? value.toLocaleString() : value.toLocaleString() + ' DH';
                             },
-                            font: { size: 10 }
+                            font: { size: isMobile ? 8 : 10 }
                         },
                         grid: {
                             color: 'rgba(0,0,0,0.05)'

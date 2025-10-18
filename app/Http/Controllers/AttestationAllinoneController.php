@@ -5,24 +5,80 @@ namespace App\Http\Controllers;
 use App\Models\Attestationallinone;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AttestationAllinoneController extends Controller
 {
-    public function index(Request $request)
+       public function index(Request $request)
     {
-        // Récupérer le terme de recherche
+        // Récupérer les paramètres de recherche et filtres
         $search = $request->input('search');
-    
-       
-        $attestation = Attestationallinone::when($search, function ($query, $search) {
-                return $query->where('personne_name', 'like', "%{$search}%")
-                             ->orWhere('numero_de_serie', 'like', "%{$search}%");
+        $perPage = $request->input('per_page', 10);
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortOrder = $request->input('sort_order', 'desc');
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $afficherCachet = $request->input('afficher_cachet');
+
+        // Statistiques globales
+        $stats = [
+            'total' => Attestationallinone::count(),
+            'today' => Attestationallinone::whereDate('created_at', today())->count(),
+            'this_month' => Attestationallinone::whereMonth('created_at', now()->month)
+                           ->whereYear('created_at', now()->year)->count(),
+            'with_cachet' => Attestationallinone::where('afficher_cachet', true)->count(),
+        ];
+
+        // Query builder avec filtres avancés
+        $attestationsQuery = Attestationallinone::query()
+            ->with('user') // Eager loading pour optimiser
+            ->when($search, function ($query, $search) {
+                return $query->where(function($q) use ($search) {
+                    $q->where('personne_name', 'like', "%{$search}%")
+                      ->orWhere('numero_de_serie', 'like', "%{$search}%")
+                      ->orWhere('cin', 'like', "%{$search}%");
+                });
             })
-            ->orderBy('created_at', 'desc') 
-            ->paginate(10); // Pagination, 10 résultats par page
-    
-        return view('attestations_allinone.index', compact('attestation', 'search'));
+            ->when($dateFrom, function ($query, $dateFrom) {
+                return $query->whereDate('created_at', '>=', $dateFrom);
+            })
+            ->when($dateTo, function ($query, $dateTo) {
+                return $query->whereDate('created_at', '<=', $dateTo);
+            })
+            ->when($afficherCachet !== null, function ($query) use ($afficherCachet) {
+                return $query->where('afficher_cachet', $afficherCachet);
+            })
+            ->orderBy($sortBy, $sortOrder);
+
+        // Pagination
+        $attestations = $attestationsQuery->paginate($perPage)->withQueryString();
+
+        // Graphique des données (dernier 7 jours)
+        $chartData = Attestationallinone::select(
+                DB::raw('DATE(created_at) as date'),
+                DB::raw('COUNT(*) as count')
+            )
+            ->where('created_at', '>=', now()->subDays(7))
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->get();
+
+        // Retourner la vue avec toutes les données
+        return view('attestations_allinone.index', compact(
+            'attestations',
+            'search',
+            'stats',
+            'chartData',
+            'perPage',
+            'sortBy',
+            'sortOrder',
+            'dateFrom',
+            'dateTo',
+            'afficherCachet'
+        ));
     }
+
+    
     
 
     public function create()

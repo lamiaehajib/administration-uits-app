@@ -198,9 +198,7 @@
                             <th class="py-4 fw-bold text-uppercase" style="font-size: 13px;">
                                 <i class="fas fa-shield-alt me-2"></i>Rôles
                             </th>
-                            <th class="py-4 fw-bold text-uppercase" style="font-size: 13px;">
-                                <i class="fas fa-signal me-2"></i>Statut
-                            </th>
+                            
                             <th class="py-4 fw-bold text-uppercase" style="font-size: 13px;">
                                 <i class="fas fa-calendar me-2"></i>Date Création
                             </th>
@@ -240,19 +238,7 @@
                                         @endforeach
                                     @endif
                                 </td>
-                                <td class="py-4">
-                                    @if($user->email_verified_at)
-                                        <span class="badge rounded-pill px-3 py-2 fw-bold shadow-sm" style="background: linear-gradient(135deg, #28a745, #20c997); color: white;">
-                                            <i class="fas fa-check-circle me-1"></i>
-                                            Actif
-                                        </span>
-                                    @else
-                                        <span class="badge bg-secondary rounded-pill px-3 py-2 fw-bold shadow-sm">
-                                            <i class="fas fa-times-circle me-1"></i>
-                                            Inactif
-                                        </span>
-                                    @endif
-                                </td>
+                               
                                 <td class="py-4">
                                     <div class="fw-semibold">
                                         <i class="far fa-calendar-alt me-2" style="color: #C2185B;"></i>

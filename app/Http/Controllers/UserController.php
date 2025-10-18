@@ -34,27 +34,60 @@ class UserController extends Controller
      */
 
      public function index(Request $request)
-     {
-         // Récupérer le mot-clé de recherche
-         $search = $request->input('search');
-     
-         // Construire la requête avec recherche
-         $query = User::orderBy('id', 'DESC');
-         
-         if (!empty($search)) {
-             $query->where(function ($q) use ($search) {
-                 $q->where('name', 'like', '%' . $search . '%'); // Exemple : recherche par nom
-                   
-             })
-             ->orderBy('created_at', 'desc') ;
-         }
-     
-         // Paginer les résultats
-         $data = $query->paginate(10);
-     
-         return view('users.index', compact('data'))
-             ->with('i', ($request->input('page', 1) - 1) * 5);
-     }
+{
+    // Récupérer les paramètres de recherche et filtrage
+    $search = $request->input('search');
+    $roleFilter = $request->input('role');
+    $statusFilter = $request->input('status');
+    $sortBy = $request->input('sort_by', 'created_at');
+    $sortOrder = $request->input('sort_order', 'desc');
+    $perPage = $request->input('per_page', 10);
+
+    // Construire la requête avec recherche avancée
+    $query = User::with('roles');
+    
+    // Recherche multi-critères
+    if (!empty($search)) {
+        $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', '%' . $search . '%')
+              ->orWhere('email', 'like', '%' . $search . '%')
+              ->orWhere('id', 'like', '%' . $search . '%');
+        });
+    }
+
+    // Filtre par rôle
+    if (!empty($roleFilter)) {
+        $query->whereHas('roles', function ($q) use ($roleFilter) {
+            $q->where('name', $roleFilter);
+        });
+    }
+
+    // Filtre par statut (actif/inactif)
+    if (!empty($statusFilter)) {
+        if ($statusFilter === 'active') {
+            $query->whereNotNull('email_verified_at');
+        } elseif ($statusFilter === 'inactive') {
+            $query->whereNull('email_verified_at');
+        }
+    }
+
+    // Tri dynamique
+    $query->orderBy($sortBy, $sortOrder);
+
+    // Statistiques
+    $totalUsers = User::count();
+    $activeUsers = User::whereNotNull('email_verified_at')->count();
+    $recentUsers = User::where('created_at', '>=', now()->subDays(30))->count();
+
+    // Paginer les résultats
+    $data = $query->paginate($perPage)->withQueryString();
+
+    // Récupérer tous les rôles pour le filtre
+    $roles = Role::pluck('name', 'name')->all();
+
+    return view('users.index', compact('data', 'roles', 'totalUsers', 'activeUsers', 'recentUsers'))
+        ->with('i', ($request->input('page', 1) - 1) * $perPage);
+}
 
     
 

@@ -316,41 +316,61 @@
         .sidebar-menu button:nth-child(8) { animation-delay: 0.4s; }
 
         /* ======================================= */
-        /* RESPONSIVE : TABLETTES (768px - 992px)  */
+        /* NOUVEAU RESPONSIVE : ENTRE MOBILE & DESKTOP (769px - 992px) */
+        /* Garde l'icône et le texte, mais réduit la taille du sidebar */
         /* ======================================= */
-        @media (max-width: 992px) {
+        @media (min-width: 769px) and (max-width: 992px) {
             :root {
-                --sidebar-width: 70px;
+                --sidebar-width: 200px;
             }
             
-            .sidebar-logo-text,
-            .sidebar-menu span,
+            .sidebar {
+                width: var(--sidebar-width);
+                margin-right: 15px;
+            }
+
+            .sidebar-logo-text {
+                display: none;
+            }
+            
+            .sidebar-menu span {
+                display: block;
+                margin-left: 0;
+                flex: 1;
+                text-align: left;
+            }
+
             .sidebar-section-title,
             .p-fetch {
                 display: none;
             }
             
             .sidebar-menu button {
-                justify-content: center;
-                padding: 14px;
+                justify-content: flex-start;
+                gap: 10px;
+                padding: 15px 12px;
+                transform: translateX(0);
+            }
+
+            .sidebar-menu button:hover {
+                transform: translateX(5px) scale(1.02);
             }
             
             .sidebar-menu button i {
                 margin: 0;
-                font-size: 1.5rem;
+                font-size: 1.3rem;
+                width: 28px;
             }
             
             .sidebar-menu button #i-fetch {
-                display: none;
+                display: inline-block;
+                margin-left: auto;
+                font-size: 0.75rem;
             }
 
             .sidebar-logo {
-                justify-content: center;
-                padding: 20px 10px;
-            }
-
-            .sidebar-divider {
-                margin: 15px 5px;
+                justify-content: flex-start;
+                padding: 25px 15px;
             }
         }
 
@@ -371,15 +391,43 @@
             .sidebar.active {
                 transform: translateX(0);
             }
+
+            .sidebar-logo-text,
+            .sidebar-menu span,
+            .sidebar-section-title {
+                display: block;
+            }
+            
+            .sidebar-menu button {
+                justify-content: flex-start;
+                gap: 15px;
+                padding: 15px 18px;
+                transform: translateX(0);
+            }
+            
+            .sidebar-menu button:hover {
+                transform: translateX(8px) scale(1.02);
+            }
+
+            .sidebar-menu button i {
+                width: 28px;
+            }
+
+            .sidebar-logo {
+                justify-content: flex-start;
+                padding: 25px 20px;
+            }
+
+            .sidebar-divider {
+                margin: 20px 10px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Sidebar Overlay for Mobile -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <nav class="sidebar" id="sidebar">
-        <!-- Logo Section -->
         <div class="sidebar-logo">
             <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQYbYMpwVNrGj39HPPcodSyE7KPLB7UqM1Ny6WFAQx1Q3pld0TUf9xj6am2DYspgZPXQ58&usqp=CAU" alt="Logo">
             <div class="sidebar-logo-text">
@@ -389,7 +437,6 @@
         </div>
 
         <div class="sidebar-menu">
-            <!-- Accueil -->
             <button type="button" class="active">
                 <a href="{{ route('dashboard') }}">
                     <i class='bx bx-home'></i>
@@ -397,55 +444,51 @@
                 </a>
             </button>
 
-            <!-- Responsable Admin -->
             <button type="button">
-                <i class='bx bx-group'></i>
-                <span><a href="{{ route('users.index') }}">Responsable Admin</a></span>
+                <a href="{{ route('users.index') }}">
+                    <i class='bx bx-group'></i>
+                    <span>Responsable Admin</span>
+                </a>
             </button>
 
             <div class="sidebar-divider"></div>
             <div class="sidebar-section-title">Documents</div>
 
-            <!-- Attestations -->
             <button type="button" id="attestationsButton">
                 <i class="fas fa-certificate"></i>
                 <span>Attestations <i id="i-fetch" class="fa fa-chevron-down"></i></span>
             </button>
             
-            <!-- Reçus -->
             <button type="button" id="recuButton">
                 <i class="fas fa-receipt"></i>
                 <span>Les Reçus <i id="i-fetch" class="fa fa-chevron-down"></i></span>
             </button>
 
-            <!-- Devis -->
             <button type="button" id="devisButton">
                 <i class="fas fa-file-invoice"></i>
                 <span>Les Devis <i id="i-fetch" class="fa fa-chevron-down"></i></span>
             </button>
 
-            <!-- Bon de Commande -->
             <button type="button" id="bonDeCommandeButton">
                 <i class="fas fa-file-contract"></i>
                 <span>Bon.Commande <i id="i-fetch" class="fa fa-chevron-down"></i></span>
             </button>
 
-            <!-- Factures -->
             <button type="button" id="facturButto">
                 <i class="fas fa-file-invoice-dollar"></i>
                 <span>Les Factures <i id="i-fetch" class="fa fa-chevron-down"></i></span>
             </button>
 
-            <!-- Bon de Livraisons -->
             <button type="button">
-                <i class="fas fa-shipping-fast"></i>
-                <span><a href="{{ route('bon_livraisons.index') }}">Bon de Livraisons</a></span>
+                <a href="{{ route('bon_livraisons.index') }}">
+                    <i class="fas fa-shipping-fast"></i>
+                    <span>Bon de Livraisons</span>
+                </a>
             </button>
             
             <div class="sidebar-divider"></div>
             <div class="sidebar-section-title">Produits & Stocks</div>
 
-            <!-- Produits UCGS -->
             <button type="button" id="produitButto">
                 <i class="fas fa-box"></i>
                 <span>Produit UCGS <i id="i-fetch" class="fa fa-chevron-down"></i></span>
@@ -454,25 +497,26 @@
             <div class="sidebar-divider"></div>
             <div class="sidebar-section-title">Administration</div>
 
-            <!-- Rôles -->
             @can('role-list')
             <button>
-                <i class="fas fa-user-shield"></i>
-                <span><a href="{{ route('roles.index') }}">Rôles</a></span>
+                <a href="{{ route('roles.index') }}">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Rôles</span>
+                </a>
             </button>
             @endcan
 
-            <!-- Backup -->
             @can('role-list')
             <button>
-                <i class="fas fa-download"></i>
-                <span><a href="{{ route('download.backup') }}">Backup</a></span>
+                <a href="{{ route('download.backup') }}">
+                    <i class="fas fa-download"></i>
+                    <span>Backup</span>
+                </a>
             </button>
             @endcan
         </div>
     </nav>
 
-    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         // Configuration des boutons et leurs liens
@@ -579,6 +623,20 @@
                 link.closest('button').classList.add('active');
             }
         });
+        
+        // Fonctionnalité pour la sidebar mobile/overlay
+        document.getElementById('sidebarOverlay').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.remove('active');
+            document.getElementById('sidebarOverlay').classList.remove('active');
+        });
+        
+        // Exemple d'un bouton pour ouvrir la sidebar (à ajouter dans votre header HTML)
+        /*
+        document.getElementById('menuToggleBtn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.add('active');
+            document.getElementById('sidebarOverlay').classList.add('active');
+        });
+        */
     </script>
 </body>
 </html>

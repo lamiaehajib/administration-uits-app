@@ -58,36 +58,27 @@
             min-height: 100vh;
         }
 
-        /* Container pour navigation et contenu */
-        .content-wrapper {
+        /* Container pour header et contenu avec sidebar */
+        .main-container {
             display: flex;
             flex: 1;
             width: 100%;
-            gap: 30px; /* GRAND ESPACE entre navigation et contenu */
-            padding: 0;
+            overflow: hidden;
         }
 
-        /* Navigation styles */
-        .navigation {
-            width: 280px;
-            background-color: #ffffff;
-            color: #fff;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            box-shadow: 2px 0 20px rgba(0,0,0,0.1);
-            border-right: 3px solid #C2185B;
-            flex-shrink: 0; /* Empêche la navigation de rétrécir */
+        /* La sidebar (navigation) est maintenant incluse via header */
+        .sidebar-container {
+            flex-shrink: 0;
         }
 
         /* Content styles */
         .main-content {
             flex: 1;
-            padding: 0;
+            padding: 30px;
             overflow-y: auto;
             background: #f8f9fa;
-            min-width: 0; /* Permet au contenu de rétrécir correctement */
+            min-width: 0;
+            margin-left: 0; /* L'espace est géré par le sidebar */
         }
 
         .bg-primary {
@@ -105,46 +96,26 @@
         }
 
         /* Responsive */
-        @media (max-width: 1200px) {
-            .content-wrapper {
-                gap: 20px;
-            }
-            
-            .navigation {
-                width: 240px;
-            }
-        }
-
         @media (max-width: 992px) {
-            .content-wrapper {
-                gap: 15px;
-            }
-            
-            .navigation {
-                width: 70px;
+            .main-content {
+                padding: 20px;
             }
         }
 
         @media (max-width: 768px) {
-            .content-wrapper {
+            .main-container {
                 flex-direction: column;
-                gap: 0;
-            }
-
-            .navigation {
-                width: 100%;
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                z-index: 999;
-                height: auto;
-                border-right: none;
-                border-top: 3px solid #C2185B;
             }
 
             .main-content {
                 padding: 15px;
-                padding-bottom: 80px;
+                padding-bottom: 20px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .main-content {
+                padding: 12px;
             }
         }
     </style>
@@ -154,17 +125,17 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <div class="app-layout">
-        <!-- Header en haut -->
+        <!-- Header en haut (contient le menu burger pour ouvrir la sidebar) -->
         @include('layouts.header')
 
-        <!-- Container pour navigation et contenu -->
-        <div class="content-wrapper">
-            <!-- Navigation à gauche -->
-            <div class="navigation">
+        <!-- Container principal avec sidebar et contenu -->
+        <div class="main-container">
+            <!-- Sidebar Navigation (incluse séparément) -->
+            <div class="sidebar-container">
                 @include('layouts.navigation')
             </div>
 
-            <!-- Contenu principal à droite avec GRAND ESPACE -->
+            <!-- Contenu principal -->
             <div class="main-content">
                 <main>
                     {{ $slot }}
@@ -172,5 +143,53 @@
             </div>
         </div>
     </div>
+
+    <!-- Script pour connecter le burger du header avec la sidebar -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ======================================= 
+            // TOGGLE MENU BURGER POUR SIDEBAR
+            // ======================================= 
+            const menuBurgerBtn = document.getElementById('menuBurgerBtn');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+            if (menuBurgerBtn && sidebar) {
+                // Ouvrir/Fermer la sidebar
+                menuBurgerBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    menuBurgerBtn.classList.toggle('active');
+                    sidebar.classList.toggle('active');
+                    if (sidebarOverlay) {
+                        sidebarOverlay.classList.toggle('active');
+                    }
+                });
+            }
+
+            // Fermer la sidebar en cliquant sur l'overlay
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', function() {
+                    if (menuBurgerBtn) {
+                        menuBurgerBtn.classList.remove('active');
+                    }
+                    sidebar.classList.remove('active');
+                    sidebarOverlay.classList.remove('active');
+                });
+            }
+
+            // Fermer la sidebar avec touche Escape
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && sidebar && sidebar.classList.contains('active')) {
+                    if (menuBurgerBtn) {
+                        menuBurgerBtn.classList.remove('active');
+                    }
+                    sidebar.classList.remove('active');
+                    if (sidebarOverlay) {
+                        sidebarOverlay.classList.remove('active');
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>

@@ -1,5 +1,12 @@
 <header class="modern-header">
     <div class="header-container">
+        <!-- Bouton Menu Burger (à gauche avant le logo) -->
+        <button class="menu-burger" id="menuBurgerBtn">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
         <!-- Logo et titre -->
         <div class="header-left">
             <div class="logo-wrapper">
@@ -172,6 +179,53 @@
         padding: 0 30px;
         height: var(--header-height);
         max-width: 100%;
+        position: relative;
+        gap: 15px;
+    }
+
+    /* ======================================= */
+    /* BOUTON MENU BURGER                      */
+    /* ======================================= */
+    .menu-burger {
+        display: none;
+        flex-direction: column;
+        justify-content: space-around;
+        width: 32px;
+        height: 28px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        z-index: 10;
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .menu-burger span {
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        transform-origin: center;
+    }
+
+    .menu-burger:hover span {
+        background: var(--color-primary);
+    }
+
+    /* Animation du burger quand actif */
+    .menu-burger.active span:nth-child(1) {
+        transform: translateY(9px) rotate(45deg);
+    }
+
+    .menu-burger.active span:nth-child(2) {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    .menu-burger.active span:nth-child(3) {
+        transform: translateY(-9px) rotate(-45deg);
     }
 
     /* ======================================= */
@@ -670,6 +724,10 @@
             height: var(--header-height-mobile);
         }
 
+        .menu-burger {
+            display: flex;
+        }
+
         .header-center {
             display: none;
         }
@@ -707,6 +765,15 @@
         .header-container {
             padding: 0 15px;
             gap: 8px;
+        }
+
+        .menu-burger {
+            width: 28px;
+            height: 24px;
+        }
+
+        .menu-burger span {
+            height: 2.5px;
         }
 
         .header-right {
@@ -791,6 +858,11 @@
             padding: 0 12px;
         }
 
+        .menu-burger {
+            width: 26px;
+            height: 22px;
+        }
+
         .logo-img {
             width: 35px;
             height: 35px;
@@ -853,6 +925,15 @@
     @media (max-width: 400px) {
         .header-container {
             padding: 0 10px;
+        }
+
+        .menu-burger {
+            width: 24px;
+            height: 20px;
+        }
+
+        .menu-burger span {
+            height: 2px;
         }
 
         .logo-wrapper {
@@ -996,4 +1077,5 @@
             }
         });
     }
+
 </script>

@@ -6,9 +6,7 @@
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQYbYMpwVNrGj39HPPcodSyE7KPLB7UqM1Ny6WFAQx1Q3pld0TUf9xj6am2DYspgZPXQ58&usqp=CAU" type="image/png">
-
-    <title>Navigation Moderne - GESTION</title>
+    
     <style>
         :root {
             --color-primary: #C2185B;
@@ -29,6 +27,30 @@
             background-color: #f8f9fa;
         }
 
+        /* ======================================= */
+        /* SIDEBAR OVERLAY (pour mobile)           */
+        /* ======================================= */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* ======================================= */
+        /* SIDEBAR                                 */
+        /* ======================================= */
         .sidebar {
             width: var(--sidebar-width);
             height: 100vh;
@@ -43,8 +65,9 @@
             overflow-y: auto;
             overflow-x: hidden;
             border-right: 3px solid var(--color-primary);
-            z-index: 1000;
-            margin-right: 30px; /* Grand espace à droite */
+            z-index: 999;
+            margin-right: 30px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .sidebar::-webkit-scrollbar {
@@ -267,48 +290,34 @@
             border-radius: 2px;
         }
 
-        /* Dropdown container */
-        .dropdown-container {
-            width: 100%;
-            padding: 0 15px 15px 15px;
-            margin-top: auto;
-        }
-
-        .dropdown-container button {
-            background: linear-gradient(135deg, var(--color-secondary), var(--color-accent));
-            color: white;
-            box-shadow: 0 4px 15px rgba(211, 47, 47, 0.4);
-        }
-
-        .dropdown-container button:hover {
-            background: linear-gradient(135deg, var(--color-accent), var(--color-secondary));
-            transform: translateX(8px) scale(1.02);
-            box-shadow: 0 6px 20px rgba(211, 47, 47, 0.5);
-        }
-
-        .dropdown-container .p-fetch {
-            margin: 0;
-            font-size: 0.9rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 1200px) {
-            :root {
-                --sidebar-width: 240px;
+        /* Animation d'entrée */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
             }
-            
-            .sidebar-menu button {
-                padding: 13px 15px;
-            }
-            
-            .sidebar-menu span {
-                font-size: 0.85rem;
+            to {
+                opacity: 1;
+                transform: translateX(0);
             }
         }
 
+        .sidebar-menu button {
+            animation: slideIn 0.3s ease forwards;
+        }
+
+        .sidebar-menu button:nth-child(1) { animation-delay: 0.05s; }
+        .sidebar-menu button:nth-child(2) { animation-delay: 0.1s; }
+        .sidebar-menu button:nth-child(3) { animation-delay: 0.15s; }
+        .sidebar-menu button:nth-child(4) { animation-delay: 0.2s; }
+        .sidebar-menu button:nth-child(5) { animation-delay: 0.25s; }
+        .sidebar-menu button:nth-child(6) { animation-delay: 0.3s; }
+        .sidebar-menu button:nth-child(7) { animation-delay: 0.35s; }
+        .sidebar-menu button:nth-child(8) { animation-delay: 0.4s; }
+
+        /* ======================================= */
+        /* RESPONSIVE : TABLETTES (768px - 992px)  */
+        /* ======================================= */
         @media (max-width: 992px) {
             :root {
                 --sidebar-width: 70px;
@@ -321,8 +330,7 @@
                 display: none;
             }
             
-            .sidebar-menu button,
-            .dropdown-container button {
+            .sidebar-menu button {
                 justify-content: center;
                 padding: 14px;
             }
@@ -346,99 +354,27 @@
             }
         }
 
+        /* ======================================= */
+        /* RESPONSIVE : MOBILE (max 768px)         */
+        /* ======================================= */
         @media (max-width: 768px) {
             .sidebar {
                 position: fixed;
-                left: -280px;
-                z-index: 9999;
-                transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                left: 0;
+                top: 0;
+                z-index: 999;
+                transform: translateX(-100%);
+                width: 280px;
+                margin-right: 0;
             }
             
             .sidebar.active {
-                left: 0;
-            }
-
-            .sidebar-overlay {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0,0,0,0.5);
-                z-index: 9998;
-                opacity: 0;
-                transition: opacity 0.3s ease;
-            }
-
-            .sidebar-overlay.active {
-                display: block;
-                opacity: 1;
-            }
-
-            .mobile-menu-toggle {
-                display: block;
-                position: fixed;
-                top: 20px;
-                left: 20px;
-                z-index: 10000;
-                background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
-                color: white;
-                border: none;
-                width: 50px;
-                height: 50px;
-                border-radius: 12px;
-                font-size: 1.5rem;
-                cursor: pointer;
-                box-shadow: 0 4px 15px rgba(194, 24, 91, 0.4);
-                transition: all 0.3s ease;
-            }
-
-            .mobile-menu-toggle:hover {
-                transform: scale(1.1);
-                box-shadow: 0 6px 20px rgba(194, 24, 91, 0.5);
-            }
-        }
-
-        @media (min-width: 769px) {
-            .mobile-menu-toggle {
-                display: none;
-            }
-        }
-
-        /* Animation d'entrée */
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
                 transform: translateX(0);
             }
         }
-
-        .sidebar-menu button {
-            animation: slideIn 0.3s ease forwards;
-        }
-        
-
-        .sidebar-menu button:nth-child(1) { animation-delay: 0.05s; }
-        .sidebar-menu button:nth-child(2) { animation-delay: 0.1s; }
-        .sidebar-menu button:nth-child(3) { animation-delay: 0.15s; }
-        .sidebar-menu button:nth-child(4) { animation-delay: 0.2s; }
-        .sidebar-menu button:nth-child(5) { animation-delay: 0.25s; }
-        .sidebar-menu button:nth-child(6) { animation-delay: 0.3s; }
-        .sidebar-menu button:nth-child(7) { animation-delay: 0.35s; }
-        .sidebar-menu button:nth-child(8) { animation-delay: 0.4s; }
     </style>
 </head>
 <body>
-    <!-- Mobile Menu Toggle -->
-    <button class="mobile-menu-toggle" id="mobileMenuToggle">
-        <i class="fas fa-bars"></i>
-    </button>
-
     <!-- Sidebar Overlay for Mobile -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
@@ -534,8 +470,6 @@
             </button>
             @endcan
         </div>
-
-        
     </nav>
 
     <!-- Scripts -->
@@ -596,20 +530,6 @@
                     { href: '{{ route('produits.totals') }}', label: 'Totaux', icon: 'fas fa-calculator', color: '#754E1A' },
                 ]
             },
-            { 
-                id: 'profileButton', 
-                title: 'Options du Profile', 
-                links: [
-                    { href: '{{ route('profile.edit') }}', label: 'Mon Profile', icon: 'bx bx-user-circle', color: '#C2185B' },
-                    { 
-                        href: '#', 
-                        label: 'Déconnexion', 
-                        icon: 'bx bx-log-out', 
-                        color: '#ef4444', 
-                        onclick: 'showLogoutConfirmation()'
-                    }
-                ]
-            },
         ];
 
         // Ajouter les événements click sur les boutons
@@ -620,7 +540,7 @@
                     Swal.fire({
                         title: `<strong style="background: linear-gradient(135deg, #C2185B, #D32F2F); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${button.title}</strong>`,
                         html: button.links.map(link => `
-                            <a href="${link.href}" ${link.onclick ? `onclick="${link.onclick}"` : ''} 
+                            <a href="${link.href}" 
                                style="display:flex; align-items:center; gap:15px; margin-bottom: 12px; color: ${link.color}; 
                                       font-size: 16px; text-decoration: none; background: linear-gradient(135deg, ${link.color}15, ${link.color}25); 
                                       padding: 14px 18px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); 
@@ -651,80 +571,6 @@
                 });
             }
         });
-
-        // Fonction de confirmation de déconnexion
-        function showLogoutConfirmation() {
-            Swal.fire({
-                title: '<strong>Êtes-vous sûr ?</strong>',
-                html: '<p style="color: #6c757d; margin-top: 10px;">Vous allez vous déconnecter du système !</p>',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#D32F2F',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: '<i class="fas fa-sign-out-alt"></i> Oui, déconnexion !',
-                cancelButtonText: '<i class="fas fa-times"></i> Annuler',
-                customClass: {
-                    confirmButton: 'custom-confirm-btn',
-                    cancelButton: 'custom-cancel-btn'
-                },
-                buttonsStyling: false,
-                didOpen: () => {
-                    const style = document.createElement('style');
-                    style.textContent = `
-                        .custom-confirm-btn, .custom-cancel-btn {
-                            padding: 12px 30px;
-                            border-radius: 10px;
-                            font-weight: 600;
-                            font-size: 14px;
-                            margin: 5px;
-                            transition: all 0.3s ease;
-                            border: none;
-                            cursor: pointer;
-                        }
-                        .custom-confirm-btn {
-                            background: linear-gradient(135deg, #D32F2F, #ef4444);
-                            color: white;
-                        }
-                        .custom-confirm-btn:hover {
-                            transform: translateY(-2px);
-                            box-shadow: 0 4px 15px rgba(211, 47, 47, 0.4);
-                        }
-                        .custom-cancel-btn {
-                            background: #e9ecef;
-                            color: #495057;
-                        }
-                        .custom-cancel-btn:hover {
-                            background: #dee2e6;
-                            transform: translateY(-2px);
-                        }
-                    `;
-                    document.head.appendChild(style);
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById('logoutForm').submit();
-                }
-            });
-        }
-
-        // Mobile menu toggle
-        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-        const sidebar = document.getElementById('sidebar');
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
-
-        if (mobileMenuToggle) {
-            mobileMenuToggle.addEventListener('click', () => {
-                sidebar.classList.toggle('active');
-                sidebarOverlay.classList.toggle('active');
-            });
-        }
-
-        if (sidebarOverlay) {
-            sidebarOverlay.addEventListener('click', () => {
-                sidebar.classList.remove('active');
-                sidebarOverlay.classList.remove('active');
-            });
-        }
 
         // Highlight active page
         const currentPath = window.location.pathname;

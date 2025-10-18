@@ -61,7 +61,7 @@
         .devis-table th,
         .devis-table td {
             border: 2px dashed red;
-            padding: 10px;
+            padding: 4px;
             text-align: center;
         }
 
@@ -70,7 +70,7 @@
             color: rgb(255, 255, 255);
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 14px
+            font-size: 12px
         }
 
         .devis-table tbody td {
@@ -89,8 +89,9 @@
         .totals-table th,
         .totals-table td {
             border: 2px dashed red;
-            padding: 6px;
+            padding: 3px;
             text-align: left;
+             font-size: 12px
         }
 
         .totals {

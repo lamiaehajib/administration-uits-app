@@ -221,7 +221,7 @@
             @foreach ($facturef->items as $item)
                 <tr>
                     <td>{{ $facturef->ref }}</td>
-                    <td>{{ $item->libelle }}</td>
+                    <td>{!! nl2br(e($item->libelle)) !!}</td>
                     <td>
                         @if (!empty($item->nombre_collaborateurs))
                             {{ $item->nombre_collaborateurs }} personnes

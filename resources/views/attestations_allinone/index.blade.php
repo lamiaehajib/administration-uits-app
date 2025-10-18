@@ -384,22 +384,17 @@
                     </table>
                 </div>
 
-                <!-- Pagination -->
-                @if($attestations->hasPages())
-                <div class="card-footer bg-light border-0 py-3">
-                    <div class="row align-items-center">
-                        <div class="col-md-6 mb-3 mb-md-0">
-                            <p class="mb-0 text-muted">
-                                <i class="fas fa-info-circle me-1"></i>
-                                Affichage de <strong class="text-danger">{{ $attestations->firstItem() }}</strong> 
-                                à <strong class="text-danger">{{ $attestations->lastItem() }}</strong> 
-                                sur <strong class="text-danger">{{ $attestations->total() }}</strong> résultats
-                            </p>
+                  @if($attestations->hasPages())
+                <div class="bg-gradient-to-r from-pink-50 to-red-50 px-6 py-4 border-t border-gray-200">
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="text-sm text-gray-600">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Affichage de <span class="font-semibold text-[#C2185B]">{{ $attestations->firstItem() }}</span> 
+                            à <span class="font-semibold text-[#D32F2F]">{{ $attestations->lastItem() }}</span> 
+                            sur <span class="font-semibold text-[#ef4444]">{{ $attestations->total() }}</span> résultats
                         </div>
-                        <div class="col-md-6">
-                            <div class="d-flex justify-content-md-end">
-                                {{ $attestations->links() }}
-                            </div>
+                        <div>
+                            {{ $attestations->links() }}
                         </div>
                     </div>
                 </div>

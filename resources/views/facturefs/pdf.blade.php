@@ -75,6 +75,7 @@
 
         .devis-table tbody td {
             font-weight: bold;
+              font-size: 12px
         }
 
         .totals-table {

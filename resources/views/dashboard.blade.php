@@ -119,6 +119,11 @@
             padding: 25px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.08);
             margin-bottom: 30px;
+            height: 400px; /* Hauteur fixe pour les graphiques */
+        }
+
+        .chart-container.full-width {
+            height: 350px; /* Plus petit pour le graphique ligne */
         }
 
         .chart-container h2 {
@@ -131,9 +136,22 @@
             padding-bottom: 10px;
         }
 
+        .chart-wrapper {
+            position: relative;
+            height: calc(100% - 60px); /* Hauteur moins le titre */
+            width: 100%;
+        }
+
         .charts-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .charts-row-full {
+            display: grid;
+            grid-template-columns: 1fr;
             gap: 30px;
             margin-bottom: 30px;
         }
@@ -142,6 +160,22 @@
             list-style: none;
             padding: 0;
             margin: 0;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .activity-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .activity-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .activity-list::-webkit-scrollbar-thumb {
+            background: var(--color-primary);
+            border-radius: 10px;
         }
 
         .activity-item {
@@ -170,6 +204,7 @@
             margin-right: 15px;
             color: white;
             font-size: 1.2rem;
+            flex-shrink: 0;
         }
 
         .activity-icon.pink { background: linear-gradient(135deg, var(--color-primary), #E91E63); }
@@ -178,6 +213,7 @@
 
         .activity-details {
             flex: 1;
+            min-width: 0;
         }
 
         .activity-type {
@@ -190,12 +226,17 @@
             color: #6c757d;
             font-size: 0.85rem;
             margin-top: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .activity-amount {
             font-weight: 700;
             color: #212529;
             font-size: 1.1rem;
+            margin-left: 15px;
+            white-space: nowrap;
         }
 
         .activity-date {
@@ -204,15 +245,21 @@
             margin-top: 3px;
         }
 
+        @media (max-width: 1200px) {
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
         @media (max-width: 768px) {
             .stats-grid {
                 grid-template-columns: 1fr;
             }
-            .charts-row {
-                grid-template-columns: 1fr;
-            }
             .dashboard-header h1 {
                 font-size: 1.8rem;
+            }
+            .chart-container {
+                height: 350px;
             }
         }
     </style>
@@ -332,7 +379,7 @@
             </div>
 
             <!-- Revenu Total -->
-            <div class="stat-card red" style="grid-column: span 2;">
+            <div class="stat-card red">
                 <div class="icon" style="width: 80px; height: 80px; font-size: 2.5rem;">
                     <i class="fas fa-wallet"></i>
                 </div>
@@ -344,26 +391,32 @@
             </div>
         </div>
 
-        <!-- Graphiques -->
-        <div class="charts-row">
-            <!-- Évolution mensuelle -->
-            <div class="chart-container" style="grid-column: span 2;">
+        <!-- Graphique Évolution mensuelle (pleine largeur) -->
+        <div class="charts-row-full">
+            <div class="chart-container full-width">
                 <h2><i class="fas fa-chart-area"></i> Évolution des Revenus (6 derniers mois)</h2>
-                <canvas id="monthlyRevenueChart" height="80"></canvas>
+                <div class="chart-wrapper">
+                    <canvas id="monthlyRevenueChart"></canvas>
+                </div>
             </div>
         </div>
 
+        <!-- Graphiques en 2 colonnes -->
         <div class="charts-row">
             <!-- Répartition des revenus -->
             <div class="chart-container">
                 <h2><i class="fas fa-chart-pie"></i> Répartition des Revenus</h2>
-                <canvas id="revenueTypeChart"></canvas>
+                <div class="chart-wrapper">
+                    <canvas id="revenueTypeChart"></canvas>
+                </div>
             </div>
 
             <!-- Documents par catégorie -->
             <div class="chart-container">
                 <h2><i class="fas fa-chart-bar"></i> Documents par Catégorie</h2>
-                <canvas id="documentCountChart"></canvas>
+                <div class="chart-wrapper">
+                    <canvas id="documentCountChart"></canvas>
+                </div>
             </div>
         </div>
 
@@ -371,7 +424,9 @@
             <!-- Top clients -->
             <div class="chart-container">
                 <h2><i class="fas fa-users"></i> Top 5 Clients</h2>
-                <canvas id="topClientsChart"></canvas>
+                <div class="chart-wrapper">
+                    <canvas id="topClientsChart"></canvas>
+                </div>
             </div>
 
             <!-- Activités récentes -->
@@ -440,21 +495,27 @@
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: {
                         display: true,
                         position: 'top',
                         labels: {
-                            font: { size: 14, weight: 'bold' },
-                            color: '#212529'
+                            font: { size: 13, weight: 'bold' },
+                            color: '#212529',
+                            padding: 15
                         }
                     },
                     tooltip: {
                         backgroundColor: 'rgba(0,0,0,0.8)',
                         padding: 12,
-                        titleFont: { size: 14 },
-                        bodyFont: { size: 13 }
+                        titleFont: { size: 13 },
+                        bodyFont: { size: 12 },
+                        callbacks: {
+                            label: function(context) {
+                                return 'Revenus: ' + context.parsed.y.toLocaleString() + ' DH';
+                            }
+                        }
                     }
                 },
                 scales: {
@@ -463,7 +524,19 @@
                         ticks: {
                             callback: function(value) {
                                 return value.toLocaleString() + ' DH';
-                            }
+                            },
+                            font: { size: 11 }
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: { size: 11 }
+                        },
+                        grid: {
+                            display: false
                         }
                     }
                 }
@@ -488,24 +561,34 @@
                         '#F44336'
                     ],
                     borderWidth: 3,
-                    borderColor: '#fff'
+                    borderColor: '#fff',
+                    hoverOffset: 15
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: {
                         position: 'bottom',
                         labels: {
-                            padding: 15,
-                            font: { size: 12 }
+                            padding: 12,
+                            font: { size: 11 },
+                            boxWidth: 12,
+                            boxHeight: 12
                         }
                     },
                     tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        padding: 12,
+                        bodyFont: { size: 12 },
                         callbacks: {
                             label: function(context) {
-                                return context.label + ': ' + context.parsed.toLocaleString() + ' DH';
+                                let label = context.label || '';
+                                let value = context.parsed || 0;
+                                let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                let percentage = ((value / total) * 100).toFixed(1);
+                                return label + ': ' + value.toLocaleString() + ' DH (' + percentage + '%)';
                             }
                         }
                     }
@@ -534,19 +617,41 @@
                         '#E91E63'
                     ],
                     borderWidth: 0,
-                    borderRadius: 8
+                    borderRadius: 8,
+                    maxBarThickness: 50
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: true,
+                maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false }
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        padding: 10,
+                        bodyFont: { size: 12 }
+                    }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        ticks: { stepSize: 1 }
+                        ticks: { 
+                            stepSize: 1,
+                            font: { size: 11 }
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: { size: 10 },
+                            maxRotation: 45,
+                            minRotation: 45
+                        },
+                        grid: {
+                            display: false
+                        }
                     }
                 }
             }
@@ -557,22 +662,33 @@
         const topClientsData = @json($topClients);
         
         new Chart(topClientsCtx, {
-            type: 'horizontalBar',
+            type: 'bar',
             data: {
                 labels: topClientsData.map(item => item.client),
                 datasets: [{
                     label: 'Chiffre d\'affaires (DH)',
                     data: topClientsData.map(item => item.revenue),
                     backgroundColor: colors.secondary,
-                    borderRadius: 8
+                    borderRadius: 8,
+                    maxBarThickness: 40
                 }]
             },
             options: {
                 indexAxis: 'y',
                 responsive: true,
-                maintainAspectRatio: true,
+                maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false }
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        padding: 10,
+                        bodyFont: { size: 12 },
+                        callbacks: {
+                            label: function(context) {
+                                return 'CA: ' + context.parsed.x.toLocaleString() + ' DH';
+                            }
+                        }
+                    }
                 },
                 scales: {
                     x: {
@@ -580,7 +696,19 @@
                         ticks: {
                             callback: function(value) {
                                 return value.toLocaleString() + ' DH';
-                            }
+                            },
+                            font: { size: 10 }
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    },
+                    y: {
+                        ticks: {
+                            font: { size: 11 }
+                        },
+                        grid: {
+                            display: false
                         }
                     }
                 }

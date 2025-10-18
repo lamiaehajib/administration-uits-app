@@ -32,7 +32,7 @@
             </div>
 
             <!-- Notifications -->
-            <div class="header-item notification-wrapper">
+            {{-- <div class="header-item notification-wrapper">
                 <button class="icon-btn" id="notification-btn">
                     <i class="fas fa-bell"></i>
                     <span class="badge">3</span>
@@ -78,15 +78,15 @@
                         <a href="#" class="view-all">Voir toutes les notifications</a>
                     </div>
                 </div>
-            </div>
+            </div> --}}
 
             <!-- Messages -->
-            <div class="header-item">
+            {{-- <div class="header-item">
                 <button class="icon-btn">
                     <i class="fas fa-envelope"></i>
                     <span class="badge">5</span>
                 </button>
-            </div>
+            </div> --}}
 
             <!-- Raccourcis rapides -->
             <div class="header-item quick-actions-wrapper">

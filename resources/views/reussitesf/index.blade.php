@@ -498,6 +498,13 @@
                                     <i class="fas fa-sort ms-1"></i>
                                 </a>
                             </th>
+                              <th>
+                                <a href="{{ route('reussitesf.index', array_merge(request()->all(), ['sort_by' => 'date_paiement', 'sort_order' => request('sort_order') == 'asc' ? 'desc' : 'asc'])) }}" 
+                                   class="text-white text-decoration-none">
+                              Créé par
+                                    <i class="fas fa-sort ms-1"></i>
+                                </a>
+                            </th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -525,12 +532,14 @@
                                     <span class="badge badge-paye">Payé</span>
                                 @endif
                             </td>
+
                             <td>
                                 <span class="badge badge-{{ $reussite->mode_paiement }}">
                                     {{ ucfirst($reussite->mode_paiement) }}
                                 </span>
                             </td>
                             <td>{{ \Carbon\Carbon::parse($reussite->date_paiement)->format('d/m/Y') }}</td>
+                             <td>{{ $fomationr->user->name ?? 'Utilisateur inconnu' }}</td>
                             <td>
                                 <a href="{{ route('reussitesf.pdf', $reussite->id) }}" 
                                    class="action-btn btn-info" 

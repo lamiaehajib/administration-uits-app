@@ -539,7 +539,7 @@
                                 </span>
                             </td>
                             <td>{{ \Carbon\Carbon::parse($reussite->date_paiement)->format('d/m/Y') }}</td>
-                             <td>{{ $fomationr->user->name ?? 'Utilisateur inconnu' }}</td>
+                             <td>{{ $reussite->user->name ?? 'Utilisateur inconnu' }}</td>
                             <td>
                                 <a href="{{ route('reussitesf.pdf', $reussite->id) }}" 
                                    class="action-btn btn-info" 

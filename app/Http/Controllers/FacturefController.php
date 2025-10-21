@@ -11,22 +11,149 @@ use Carbon\Carbon;
 
 class FacturefController extends Controller
 {
-    public function index(Request $request)
-    {
-        // Récupérer le terme de recherche
-        $search = $request->input('search');
-    
-        // Appliquer la recherche et pagination
-        $facturefs = Facturef::with('items', 'importantInfo')
-            ->when($search, function ($query, $search) {
-                return $query->where('facturef_num', 'like', "%{$search}%")
-                             ->orWhere('client', 'like', "%{$search}%");
-            })
-            ->orderBy('created_at', 'desc') 
-            ->paginate(10); // Pagination de 10 factures par page
-    
-        return view('facturefs.index', compact('facturefs', 'search'));
+  public function index(Request $request)
+{
+    // 1. Récupérer tous les paramètres de recherche et filtres
+    $search = $request->input('search');
+    $dateFrom = $request->input('date_from');
+    $dateTo = $request->input('date_to');
+    $minAmount = $request->input('min_amount');
+    $maxAmount = $request->input('max_amount');
+    $currency = $request->input('currency');
+    $sortBy = $request->input('sort_by', 'created_at');
+    $sortOrder = $request->input('sort_order', 'desc');
+    $perPage = $request->input('per_page', 10);
+    $tvaFilter = $request->input('tva_filter');
+
+    // 2. Query de base avec relations
+    $query = Facturef::with(['items', 'importantInfo', 'user']);
+
+    // 3. Recherche globale (numéro facture, client, titre, téléphone, ICE)
+    if ($search) {
+        $query->where(function($q) use ($search) {
+            $q->where('facturef_num', 'like', "%{$search}%")
+              ->orWhere('client', 'like', "%{$search}%")
+              ->orWhere('titre', 'like', "%{$search}%")
+              ->orWhere('tele', 'like', "%{$search}%")
+              ->orWhere('ice', 'like', "%{$search}%");
+        });
     }
+
+    // 4. Filtre par période (date)
+    if ($dateFrom) {
+        $query->whereDate('date', '>=', $dateFrom);
+    }
+    if ($dateTo) {
+        $query->whereDate('date', '<=', $dateTo);
+    }
+
+    // 5. Filtre par montant (total TTC)
+    if ($minAmount) {
+        $query->where('total_ttc', '>=', $minAmount);
+    }
+    if ($maxAmount) {
+        $query->where('total_ttc', '<=', $maxAmount);
+    }
+
+    // 6. Filtre par devise (DH ou EUR)
+    if ($currency) {
+        $query->where('currency', $currency);
+    }
+
+    // 7. Filtre par TVA (0% ou 20%)
+    if ($tvaFilter !== null && $tvaFilter !== '') {
+        $query->where('tva', '>', 0)->when($tvaFilter == '0', function($q) {
+            return $q->orWhere('tva', 0);
+        });
+    }
+
+    // 8. Tri dynamique
+    $allowedSorts = ['created_at', 'date', 'facturef_num', 'client', 'total_ht', 'total_ttc'];
+    if (in_array($sortBy, $allowedSorts)) {
+        $query->orderBy($sortBy, $sortOrder);
+    }
+
+    // 9. Pagination avec conservation des paramètres
+    $facturefs = $query->paginate($perPage)->appends($request->all());
+
+    // 10. Statistiques avancées pour l'affichage
+    $stats = [
+        'total_factures' => Facturef::count(),
+        'total_amount_dh' => Facturef::where('currency', 'DH')->sum('total_ttc'),
+        'total_amount_eur' => Facturef::where('currency', 'EUR')->sum('total_ttc'),
+        'factures_this_month' => Facturef::whereMonth('date', Carbon::now()->month)
+                                         ->whereYear('date', Carbon::now()->year)
+                                         ->count(),
+        'amount_this_month' => Facturef::whereMonth('date', Carbon::now()->month)
+                                       ->whereYear('date', Carbon::now()->year)
+                                       ->sum('total_ttc'),
+        'avg_amount' => Facturef::avg('total_ttc'),
+        'top_clients' => Facturef::select('client', \DB::raw('COUNT(*) as count'), \DB::raw('SUM(total_ttc) as total'))
+                                 ->groupBy('client')
+                                 ->orderBy('total', 'desc')
+                                 ->limit(5)
+                                 ->get(),
+    ];
+
+    // 11. Export Excel si demandé
+    if ($request->has('export') && $request->export === 'excel') {
+        return $this->exportToExcel($query->get());
+    }
+
+    // 12. Export CSV si demandé
+    if ($request->has('export') && $request->export === 'csv') {
+        return $this->exportToCsv($query->get());
+    }
+
+    return view('facturefs.index', compact('facturefs', 'search', 'stats', 
+        'dateFrom', 'dateTo', 'minAmount', 'maxAmount', 'currency', 
+        'sortBy', 'sortOrder', 'perPage', 'tvaFilter'));
+}
+
+// Fonction helper pour export Excel
+private function exportToExcel($factures)
+{
+    $filename = 'factures_formation_' . Carbon::now()->format('Y-m-d_His') . '.xlsx';
+    
+    // Tu peux utiliser Laravel Excel package ici
+    // return Excel::download(new FacturefsExport($factures), $filename);
+}
+
+// Fonction helper pour export CSV
+private function exportToCsv($factures)
+{
+    $filename = 'factures_formation_' . Carbon::now()->format('Y-m-d_His') . '.csv';
+    
+    $headers = [
+        'Content-Type' => 'text/csv',
+        'Content-Disposition' => "attachment; filename=\"$filename\"",
+    ];
+
+    $callback = function() use ($factures) {
+        $file = fopen('php://output', 'w');
+        
+        // En-têtes CSV
+        fputcsv($file, ['N° Facture', 'Date', 'Client', 'Titre', 'Total HT', 'TVA', 'Total TTC', 'Devise']);
+        
+        // Données
+        foreach ($factures as $facture) {
+            fputcsv($file, [
+                $facture->facturef_num,
+                $facture->date,
+                $facture->client,
+                $facture->titre,
+                $facture->total_ht,
+                $facture->tva,
+                $facture->total_ttc,
+                $facture->currency,
+            ]);
+        }
+        
+        fclose($file);
+    };
+
+    return response()->stream($callback, 200, $headers);
+}
 
 
     public function duplicate(Facturef $facturef)

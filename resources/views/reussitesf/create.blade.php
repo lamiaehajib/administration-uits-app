@@ -122,7 +122,7 @@
 
                     <div class="text-center">
                         <button type="submit" class="btn btn-success">Ajouter</button>
-                        <a href="{{ route('reussites.index') }}" class="btn btn-secondary">Annuler</a>
+                        <a href="{{ route('reussitesf.index') }}" class="btn btn-secondary">Annuler</a>
                     </div>
                 </form>
             </div>

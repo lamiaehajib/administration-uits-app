@@ -8,20 +8,91 @@ use Illuminate\Http\Request;
 
 class UcgController extends Controller
 {
-    public function index(Request $request)
-    {
-        // البحث
-        $search = $request->input('search');
-        
-        $ucgs = Ucg::when($search, function($query, $search) {
-                return $query->where('nom', 'like', "%{$search}%")
-                             ->orWhere('prenom', 'like', "%{$search}%");
-            })
-            ->orderBy('created_at', 'desc') 
-            ->paginate(10); // 4 عناصر في كل صفحة
-    
-        return view('ucgs.index', compact('ucgs', 'search'));
-    }
+   public function index(Request $request)
+{
+    // Recherche avancée
+    $search = $request->input('search');
+    $dateDebut = $request->input('date_debut');
+    $dateFin = $request->input('date_fin');
+    $garantie = $request->input('garantie');
+    $montantMin = $request->input('montant_min');
+    $montantMax = $request->input('montant_max');
+    $sortBy = $request->input('sort_by', 'created_at');
+    $sortOrder = $request->input('sort_order', 'desc');
+    $perPage = $request->input('per_page', 10);
+
+    $ucgs = Ucg::query()
+        // Recherche par nom, prénom ou équipement
+        ->when($search, function($query, $search) {
+            return $query->where(function($q) use ($search) {
+                $q->where('nom', 'like', "%{$search}%")
+                  ->orWhere('prenom', 'like', "%{$search}%")
+                  ->orWhere('equipemen', 'like', "%{$search}%")
+                  ->orWhere('details', 'like', "%{$search}%");
+            });
+        })
+        // Filtrage par période
+        ->when($dateDebut, function($query, $dateDebut) {
+            return $query->whereDate('date_paiement', '>=', $dateDebut);
+        })
+        ->when($dateFin, function($query, $dateFin) {
+            return $query->whereDate('date_paiement', '<=', $dateFin);
+        })
+        // Filtrage par type de garantie
+        ->when($garantie, function($query, $garantie) {
+            return $query->where('recu_garantie', $garantie);
+        })
+        // Filtrage par montant
+        ->when($montantMin, function($query, $montantMin) {
+            return $query->where('montant_paye', '>=', $montantMin);
+        })
+        ->when($montantMax, function($query, $montantMax) {
+            return $query->where('montant_paye', '<=', $montantMax);
+        })
+        // Tri dynamique
+        ->orderBy($sortBy, $sortOrder)
+        ->paginate($perPage)
+        ->withQueryString(); // Garde les paramètres dans la pagination
+
+    // Statistiques
+    $stats = [
+        'total' => Ucg::count(),
+        'total_montant' => Ucg::sum('montant_paye'),
+        'montant_mois' => Ucg::whereMonth('date_paiement', now()->month)
+                             ->whereYear('date_paiement', now()->year)
+                             ->sum('montant_paye'),
+        'total_mois' => Ucg::whereMonth('date_paiement', now()->month)
+                           ->whereYear('date_paiement', now()->year)
+                           ->count(),
+        'par_garantie' => Ucg::selectRaw('recu_garantie, COUNT(*) as count, SUM(montant_paye) as total')
+                             ->groupBy('recu_garantie')
+                             ->get(),
+    ];
+
+    // Reçus expirant bientôt (dans les 30 prochains jours)
+    $expireBientot = Ucg::whereRaw('DATE_ADD(date_paiement, INTERVAL 
+        CASE 
+            WHEN recu_garantie = "90 jours" THEN 90
+            WHEN recu_garantie = "180 jours" THEN 180
+            WHEN recu_garantie = "360 jours" THEN 360
+        END DAY) BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 30 DAY)')
+        ->count();
+
+    return view('ucgs.index', compact(
+        'ucgs', 
+        'search', 
+        'dateDebut', 
+        'dateFin', 
+        'garantie', 
+        'montantMin', 
+        'montantMax',
+        'sortBy',
+        'sortOrder',
+        'perPage',
+        'stats',
+        'expireBientot'
+    ));
+}
     
 
     public function create()

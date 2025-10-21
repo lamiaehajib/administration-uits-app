@@ -10,21 +10,189 @@ use Carbon\Carbon;
 
 class DevisfController extends Controller
 {
-    public function index(Request $request)
-    {
-        // Get the search term from the request
-        $searchTerm = $request->input('search', '');
+  public function index(Request $request)
+{
+    $query = Devisf::with(['items', 'ImportantInfof', 'user']);
 
-        // Paginate and filter by search term (e.g., search by devis_num or client)
-        $devisf = Devisf::with('items', 'ImportantInfof')
-            ->where('devis_num', 'like', '%' . $searchTerm . '%')
-            ->orWhere('client', 'like', '%' . $searchTerm . '%')
-            ->orderBy('created_at', 'desc') 
-            ->paginate(10); // You can change the pagination number (10) based on your needs
-        
-        // Return the view with the devisf data and search term
-        return view('devisf.index', compact('devisf', 'searchTerm'));
+    // 1. Recherche Multi-Critères Avancée
+    if ($search = $request->input('search')) {
+        $query->where(function($q) use ($search) {
+            $q->where('devis_num', 'like', "%{$search}%")
+              ->orWhere('client', 'like', "%{$search}%")
+              ->orWhere('titre', 'like', "%{$search}%")
+              ->orWhere('contact', 'like', "%{$search}%")
+              ->orWhere('ref', 'like', "%{$search}%");
+        });
     }
+
+    // 2. Filtrage par Date (Plage de dates)
+    if ($request->filled('date_debut')) {
+        $query->whereDate('date', '>=', $request->date_debut);
+    }
+    if ($request->filled('date_fin')) {
+        $query->whereDate('date', '<=', $request->date_fin);
+    }
+
+    // 3. Filtrage par Période Rapide
+    if ($periode = $request->input('periode')) {
+        switch ($periode) {
+            case 'aujourdhui':
+                $query->whereDate('date', today());
+                break;
+            case 'cette_semaine':
+                $query->whereBetween('date', [now()->startOfWeek(), now()->endOfWeek()]);
+                break;
+            case 'ce_mois':
+                $query->whereMonth('date', now()->month)
+                      ->whereYear('date', now()->year);
+                break;
+            case 'ce_trimestre':
+                $query->whereBetween('date', [now()->firstOfQuarter(), now()->lastOfQuarter()]);
+                break;
+            case 'cette_annee':
+                $query->whereYear('date', now()->year);
+                break;
+            case 'mois_dernier':
+                $query->whereMonth('date', now()->subMonth()->month)
+                      ->whereYear('date', now()->subMonth()->year);
+                break;
+        }
+    }
+
+    // 4. Filtrage par Montant (Min/Max)
+    if ($request->filled('montant_min')) {
+        $query->where('total_ttc', '>=', $request->montant_min);
+    }
+    if ($request->filled('montant_max')) {
+        $query->where('total_ttc', '<=', $request->montant_max);
+    }
+
+    // 5. Filtrage par Devise
+    if ($request->filled('currency')) {
+        $query->where('currency', $request->currency);
+    }
+
+    // 6. Filtrage par Client
+    if ($request->filled('client_filter')) {
+        $query->where('client', $request->client_filter);
+    }
+
+    // 7. Tri Dynamique
+    $sortBy = $request->input('sort_by', 'created_at');
+    $sortOrder = $request->input('sort_order', 'desc');
+    
+    $allowedSorts = ['devis_num', 'date', 'client', 'total_ht', 'total_ttc', 'created_at'];
+    if (in_array($sortBy, $allowedSorts)) {
+        $query->orderBy($sortBy, $sortOrder);
+    }
+
+    // 8. Statistiques Globales (avant pagination)
+    $stats = [
+        'total_devis' => (clone $query)->count(),
+        'total_montant_ht' => (clone $query)->sum('total_ht'),
+        'total_montant_ttc' => (clone $query)->sum('total_ttc'),
+        'montant_moyen' => (clone $query)->avg('total_ttc'),
+        'devis_ce_mois' => (clone $query)->whereMonth('date', now()->month)
+                                         ->whereYear('date', now()->year)
+                                         ->count(),
+    ];
+
+    // 9. Statistiques par Devise
+    $statsByDevise = Devisf::selectRaw('currency, COUNT(*) as count, SUM(total_ttc) as total')
+        ->groupBy('currency')
+        ->get()
+        ->keyBy('currency');
+
+    // 10. Top 5 Clients (par montant total)
+    $topClients = Devisf::selectRaw('client, COUNT(*) as nb_devis, SUM(total_ttc) as total_montant')
+        ->groupBy('client')
+        ->orderBy('total_montant', 'desc')
+        ->limit(5)
+        ->get();
+
+    // 11. Graphique : Évolution mensuelle (12 derniers mois)
+    $evolutionMensuelle = Devisf::selectRaw('YEAR(date) as annee, MONTH(date) as mois, COUNT(*) as nombre, SUM(total_ttc) as montant')
+        ->where('date', '>=', now()->subMonths(12))
+        ->groupBy('annee', 'mois')
+        ->orderBy('annee', 'asc')
+        ->orderBy('mois', 'asc')
+        ->get();
+
+    // 12. Liste des Clients Uniques (pour le filtre)
+    $clientsList = Devisf::distinct('client')
+        ->orderBy('client')
+        ->pluck('client');
+
+    // 13. Export Excel/CSV (si demandé)
+    if ($request->input('export') === 'excel') {
+        return $this->exportExcel($query->get());
+    }
+    if ($request->input('export') === 'csv') {
+        return $this->exportCSV($query->get());
+    }
+
+    // 14. Pagination avec Nombre Variable
+    $perPage = $request->input('per_page', 10);
+    $perPage = in_array($perPage, [10, 25, 50, 100]) ? $perPage : 10;
+    $devisf = $query->paginate($perPage)->appends($request->except('page'));
+
+    // 15. Données pour les Graphiques
+    $chartData = [
+        'labels' => $evolutionMensuelle->map(function($item) {
+            return Carbon::create($item->annee, $item->mois)->format('M Y');
+        }),
+        'montants' => $evolutionMensuelle->pluck('montant'),
+        'nombres' => $evolutionMensuelle->pluck('nombre'),
+    ];
+
+    return view('devisf.index', compact(
+        'devisf',
+        'stats',
+        'statsByDevise',
+        'topClients',
+        'clientsList',
+        'chartData',
+        'evolutionMensuelle'
+    ));
+}
+
+// Fonction auxiliaire pour Export Excel
+private function exportExcel($devisf)
+{
+    // À implémenter avec PhpSpreadsheet ou Laravel Excel
+    // return Excel::download(new DevisExport($devisf), 'devis_formation.xlsx');
+}
+
+// Fonction auxiliaire pour Export CSV
+private function exportCSV($devisf)
+{
+    $filename = 'devis_formation_' . now()->format('Y-m-d') . '.csv';
+    $headers = [
+        'Content-Type' => 'text/csv',
+        'Content-Disposition' => "attachment; filename=\"$filename\"",
+    ];
+
+    $callback = function() use ($devisf) {
+        $file = fopen('php://output', 'w');
+        fputcsv($file, ['N° Devis', 'Date', 'Client', 'Titre', 'Montant HT', 'TVA', 'Montant TTC', 'Devise']);
+
+        foreach ($devisf as $devis) {
+            fputcsv($file, [
+                $devis->devis_num,
+                $devis->date,
+                $devis->client,
+                $devis->titre,
+                $devis->total_ht,
+                $devis->tva,
+                $devis->total_ttc,
+                $devis->currency,
+            ]);
+        }
+        fclose($file);
+    };
+
+    return response()->stream($callback, 200, $headers);
+}
 
     // عرض نموذج لإنشاء عرض جديد
 

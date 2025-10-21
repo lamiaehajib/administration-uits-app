@@ -422,10 +422,7 @@
                 <i class="fas fa-list"></i> Liste des Factures
             </h4>
             <div class="d-flex gap-2">
-                <a href="{{ route('factures.index', array_merge(request()->all(), ['export' => 'pdf_liste'])) }}" 
-                   class="btn btn-outline-primary btn-sm">
-                    <i class="fas fa-file-pdf"></i> PDF
-                </a>
+                
                 <a href="{{ route('factures.index', array_merge(request()->all(), ['export' => 'csv'])) }}" 
                    class="btn btn-outline-primary btn-sm">
                     <i class="fas fa-file-csv"></i> CSV
@@ -457,7 +454,7 @@
                         <td>{{ $facture->client }}</td>
                         <td>{{ Str::limit($facture->titre, 30) }}</td>
                         <td>{{ number_format($facture->total_ht, 2) }}</td>
-                         <td>{{ $facture->user->name ?? 'Utilisateur inconnu' }}</td>
+                        
                         <td>
                             @if($facture->tva > 0)
                                 <span class="badge badge-success">{{ number_format($facture->tva, 2) }}</span>
@@ -467,6 +464,7 @@
                         </td>
                         <td><strong>{{ number_format($facture->total_ttc, 2) }}</strong></td>
                         <td><span class="badge" style="background: var(--gradient-primary)">{{ $facture->currency }}</span></td>
+                         <td>{{ $facture->user->name ?? 'Utilisateur inconnu' }}</td>
                         <td>
                             <div class="d-flex gap-1 justify-content-center">
                                 <a href="{{ route('factures.show', $facture->id) }}" 

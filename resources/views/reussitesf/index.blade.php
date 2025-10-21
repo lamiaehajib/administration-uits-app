@@ -570,11 +570,10 @@
             <!-- Pagination -->
             <div class="d-flex justify-content-between align-items-center p-3">
                 <div class="text-muted small">
-                    Affichage de {{ $fomationre->firstItem() ?? 0 }} à {{ $fomationre->lastItem() ?? 0 }} 
-                    sur {{ $fomationre->total() }} résultats
+                    {{ $fomationre->total() }} résultats
                 </div>
                 <div>
-                    {{ $fomationre->links() }}
+                    {{ $fomationre->links('pagination.custom') }}
                 </div>
             </div>
         </div>

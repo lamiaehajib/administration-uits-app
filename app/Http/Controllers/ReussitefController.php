@@ -10,21 +10,144 @@ use Illuminate\Http\Request;
 
 class ReussitefController extends Controller
 {
-    public function index(Request $request)
-    {
-        $search = $request->input('search');
-    
-        // Ajout de recherche et pagination
-        $fomationre = Reussitef::when($search, function ($query, $search) {
-                return $query->where('nom', 'like', "%{$search}%")
-                             ->orWhere('prenom', 'like', "%{$search}%")
-                             ->orWhere('CIN', 'like', "%{$search}%");
-            })
-            ->orderBy('created_at', 'desc') 
-            ->paginate(10); // Pagination à 10 éléments par page
-    
-        return view('reussitesf.index', compact('fomationre', 'search'));
+   public function index(Request $request)
+{
+    $search = $request->input('search');
+    $formation = $request->input('formation');
+    $dateDebut = $request->input('date_debut');
+    $dateFin = $request->input('date_fin');
+    $modePaiement = $request->input('mode_paiement');
+    $statutPaiement = $request->input('statut_paiement'); // 'payé', 'reste', 'tout'
+    $sortBy = $request->input('sort_by', 'created_at'); // Colonne de tri
+    $sortOrder = $request->input('sort_order', 'desc'); // Ordre: asc ou desc
+    $perPage = $request->input('per_page', 10); // Nombre par page
+
+    $query = Reussitef::query();
+
+    // 🔍 Recherche multi-critères avancée
+    if ($search) {
+        $query->where(function($q) use ($search) {
+            $q->where('nom', 'like', "%{$search}%")
+              ->orWhere('prenom', 'like', "%{$search}%")
+              ->orWhere('CIN', 'like', "%{$search}%")
+              ->orWhere('tele', 'like', "%{$search}%")
+              ->orWhere('gmail', 'like', "%{$search}%");
+        });
     }
+
+    // 🎓 Filtrage par formation
+    if ($formation) {
+        $query->where('formation', $formation);
+    }
+
+    // 📅 Filtrage par période de paiement
+    if ($dateDebut) {
+        $query->whereDate('date_paiement', '>=', $dateDebut);
+    }
+    if ($dateFin) {
+        $query->whereDate('date_paiement', '<=', $dateFin);
+    }
+
+    // 💳 Filtrage par mode de paiement
+    if ($modePaiement) {
+        $query->where('mode_paiement', $modePaiement);
+    }
+
+    // 💰 Filtrage par statut de paiement (avec reste ou payé complètement)
+    if ($statutPaiement === 'reste') {
+        $query->where('rest', '>', 0);
+    } elseif ($statutPaiement === 'paye') {
+        $query->where(function($q) {
+            $q->where('rest', 0)
+              ->orWhereNull('rest');
+        });
+    }
+
+    // 📊 Statistiques avant pagination
+    $stats = [
+        'total_reussites' => (clone $query)->count(),
+        'total_montant_paye' => (clone $query)->sum('montant_paye'),
+        'total_reste' => (clone $query)->sum('rest'),
+        'avec_reste' => (clone $query)->where('rest', '>', 0)->count(),
+        'completement_payes' => (clone $query)->where(function($q) {
+            $q->where('rest', 0)->orWhereNull('rest');
+        })->count(),
+    ];
+
+    // 📈 Statistiques par mode de paiement
+    $statsPaiement = (clone $query)
+        ->selectRaw('mode_paiement, COUNT(*) as count, SUM(montant_paye) as total')
+        ->groupBy('mode_paiement')
+        ->get()
+        ->keyBy('mode_paiement');
+
+    // 🎓 Statistiques par formation
+    $statsFormations = (clone $query)
+        ->selectRaw('formation, COUNT(*) as count, SUM(montant_paye) as total')
+        ->groupBy('formation')
+        ->orderByDesc('count')
+        ->limit(5)
+        ->get();
+
+    // 🔄 Tri dynamique
+    $allowedSorts = ['created_at', 'nom', 'prenom', 'date_paiement', 'montant_paye', 'rest', 'formation'];
+    if (in_array($sortBy, $allowedSorts)) {
+        $query->orderBy($sortBy, $sortOrder);
+    } else {
+        $query->orderBy('created_at', 'desc');
+    }
+
+    // 📄 Pagination avec conservation des filtres
+    $fomationre = $query->paginate($perPage)->withQueryString();
+
+    // 📋 Liste des formations disponibles (pour le filtre dropdown)
+    $formationsDisponibles = Reussitef::select('formation')
+        ->distinct()
+        ->orderBy('formation')
+        ->pluck('formation');
+
+    // 🎯 Alertes intelligentes
+    $alertes = [];
+    
+    // Alerte pour les paiements en retard (plus de 30 jours avec reste)
+    $reusitesEnRetard = Reussitef::where('rest', '>', 0)
+        ->whereDate('date_paiement', '<=', now()->subDays(30))
+        ->count();
+    
+    if ($reusitesEnRetard > 0) {
+        $alertes[] = [
+            'type' => 'warning',
+            'message' => "{$reusitesEnRetard} paiement(s) avec reste depuis plus de 30 jours"
+        ];
+    }
+
+    // Alerte pour les nouveaux reçus du jour
+    $nouveauxAujourdhui = Reussitef::whereDate('created_at', today())->count();
+    if ($nouveauxAujourdhui > 0) {
+        $alertes[] = [
+            'type' => 'info',
+            'message' => "{$nouveauxAujourdhui} nouveau(x) reçu(s) ajouté(s) aujourd'hui"
+        ];
+    }
+
+    return view('reussitesf.index', compact(
+        'fomationre',
+        'search',
+        'formation',
+        'dateDebut',
+        'dateFin',
+        'modePaiement',
+        'statutPaiement',
+        'sortBy',
+        'sortOrder',
+        'perPage',
+        'stats',
+        'statsPaiement',
+        'statsFormations',
+        'formationsDisponibles',
+        'alertes'
+    ));
+}
     
 
     public function create()

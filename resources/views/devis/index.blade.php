@@ -217,6 +217,9 @@
             <a href="{{ route('devis.create') }}" class="btn btn-gradient">
                 <i class="fas fa-plus-circle me-2"></i> Nouveau Devis
             </a>
+            <a href="{{ route('devis.corbeille') }}" class="btn btn-danger">
+    <i class="fa fa-trash"></i> Corbeille
+</a>
         </div>
 
         <!-- Statistiques -->
@@ -500,7 +503,7 @@
 
         <!-- Pagination -->
         <div class="d-flex justify-content-center">
-            {{ $devis->links() }}
+            {{ $devis->links('pagination.custom') }}
         </div>
     </div>
 

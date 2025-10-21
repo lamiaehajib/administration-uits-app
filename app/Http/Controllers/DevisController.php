@@ -14,27 +14,130 @@ use Illuminate\Support\Str;
 class DevisController extends Controller
 {
     // عرض جميع العروض
-    public function index(Request $request)
+ public function index(Request $request)
 {
-    // البحث عن طريق الكلمات المفتاحية (مثلاً: العميل، الرقم، أو العنوان)
-    $query = Devis::with(['items', 'importantInfos']);
+    $query = Devis::with(['items', 'importantInfos', 'user']);
 
-    if ($request->has('search') && $request->search != '') {
+    // 1. Recherche avancée multi-critères
+    if ($request->filled('search')) {
         $search = $request->search;
         $query->where(function ($q) use ($search) {
             $q->where('client', 'like', "%$search%")
               ->orWhere('devis_num', 'like', "%$search%")
-              ->orWhere('titre', 'like', "%$search%");
+              ->orWhere('titre', 'like', "%$search%")
+              ->orWhere('contact', 'like', "%$search%")
+              ->orWhere('ref', 'like', "%$search%")
+              ->orWhereHas('items', function($q) use ($search) {
+                  $q->where('libele', 'like', "%$search%");
+              });
         });
     }
 
-    // جلب العروض مع التصفية والصفحة
-    $devis = $query
-    ->orderBy('created_at', 'desc') 
-    ->paginate(10); // يمكنك تعديل الرقم حسب العدد المطلوب لكل صفحة
+    // 2. Filtrage par plage de dates
+    if ($request->filled('date_from')) {
+        $query->whereDate('date', '>=', $request->date_from);
+    }
+    if ($request->filled('date_to')) {
+        $query->whereDate('date', '<=', $request->date_to);
+    }
 
-    return view('devis.index', compact('devis'));
+    // 3. Filtrage par période prédéfinie
+    if ($request->filled('period')) {
+        switch ($request->period) {
+            case 'today':
+                $query->whereDate('date', Carbon::today());
+                break;
+            case 'yesterday':
+                $query->whereDate('date', Carbon::yesterday());
+                break;
+            case 'this_week':
+                $query->whereBetween('date', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
+                break;
+            case 'last_week':
+                $query->whereBetween('date', [Carbon::now()->subWeek()->startOfWeek(), Carbon::now()->subWeek()->endOfWeek()]);
+                break;
+            case 'this_month':
+                $query->whereMonth('date', Carbon::now()->month)
+                      ->whereYear('date', Carbon::now()->year);
+                break;
+            case 'last_month':
+                $query->whereMonth('date', Carbon::now()->subMonth()->month)
+                      ->whereYear('date', Carbon::now()->subMonth()->year);
+                break;
+            case 'this_year':
+                $query->whereYear('date', Carbon::now()->year);
+                break;
+            case 'last_year':
+                $query->whereYear('date', Carbon::now()->subYear()->year);
+                break;
+        }
+    }
+
+    // 4. Filtrage par montant (HT, TTC)
+    if ($request->filled('montant_min')) {
+        $query->where('total_ttc', '>=', $request->montant_min);
+    }
+    if ($request->filled('montant_max')) {
+        $query->where('total_ttc', '<=', $request->montant_max);
+    }
+
+    // 5. Filtrage par devise
+    if ($request->filled('currency')) {
+        $query->where('currency', $request->currency);
+    }
+
+    
+    // 7. Filtrage par utilisateur (créateur)
+    if ($request->filled('user_id')) {
+        $query->where('user_id', $request->user_id);
+    }
+
+    // 8. Tri dynamique
+    $sortField = $request->get('sort', 'created_at');
+    $sortDirection = $request->get('direction', 'desc');
+    
+    $allowedSorts = ['created_at', 'date', 'devis_num', 'client', 'total_ttc', 'total_ht'];
+    if (in_array($sortField, $allowedSorts)) {
+        $query->orderBy($sortField, $sortDirection);
+    } else {
+        $query->orderBy('created_at', 'desc');
+    }
+
+    // 9. Pagination personnalisable
+    $perPage = $request->get('per_page', 10);
+    $perPage = in_array($perPage, [10, 25, 50, 100]) ? $perPage : 10;
+    
+    $devis = $query->paginate($perPage)->withQueryString();
+
+    // 10. Statistiques globales pour le tableau de bord
+    $stats = [
+        'total_devis' => Devis::count(),
+        'devis_ce_mois' => Devis::whereMonth('date', Carbon::now()->month)
+                                ->whereYear('date', Carbon::now()->year)
+                                ->count(),
+        'montant_total_ttc' => Devis::sum('total_ttc'),
+        'montant_ce_mois_ttc' => Devis::whereMonth('date', Carbon::now()->month)
+                                      ->whereYear('date', Carbon::now()->year)
+                                      ->sum('total_ttc'),
+        'montant_total_ht' => Devis::sum('total_ht'),
+        'moyenne_devis' => Devis::avg('total_ttc'),
+        'devis_par_devise' => Devis::selectRaw('currency, COUNT(*) as count, SUM(total_ttc) as total')
+                                   ->groupBy('currency')
+                                   ->get(),
+        'top_clients' => Devis::selectRaw('client, COUNT(*) as count, SUM(total_ttc) as total')
+                              ->groupBy('client')
+                              ->orderByDesc('total')
+                              ->limit(5)
+                              ->get(),
+    ];
+
+    // 11. Liste des utilisateurs pour le filtre
+    $users = \App\Models\User::all();
+
+    return view('devis.index', compact('devis', 'stats', 'users'));
 }
+
+
 public function duplicate(Devis $devis)
 {
     // Clone the existing devis

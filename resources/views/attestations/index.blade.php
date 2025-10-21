@@ -237,10 +237,10 @@
                     <div class="p-3 bg-light border-top">
                         <div class="d-flex justify-content-between align-items-center">
                             <div class="text-muted">
-                                Affichage de <strong>{{ $attestations->firstItem() }}</strong> à <strong>{{ $attestations->lastItem() }}</strong> sur <strong>{{ $attestations->total() }}</strong> attestations
+                                <strong>{{ $attestations->total() }}</strong> attestations
                             </div>
                             <div>
-                                {{ $attestations->links() }}
+                                {{ $attestations->links('pagination.custom') }}
                             </div>
                         </div>
                     </div>

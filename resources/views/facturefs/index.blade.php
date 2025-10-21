@@ -591,7 +591,7 @@
             <div>
                 Affichage de {{ $facturefs->firstItem() }} à {{ $facturefs->lastItem() }} sur {{ $facturefs->total() }} factures
             </div>
-            {{ $facturefs->links() }}
+            {{ $facturefs->links('pagination.custom') }}
         </div>
         @endif
     </div>

@@ -109,6 +109,61 @@
         .fade-in {
             animation: fadeIn 0.3s ease-out;
         }
+
+        .pagination .page-item .page-link {
+    border-radius: 8px; /* Douran zwin */
+    margin: 0 3px;
+    transition: all 0.3s ease;
+    border: 1px solid #dee2e6; /* Border khfifa */
+    color: #495057; /* Lown l-ktaba */
+    font-weight: 500;
+}
+
+/* L-link l-3adi f-l-pagination */
+.pagination .page-item:not(.active) .page-link:hover {
+    color: #C2185B; /* Lown l-7mer/pink li katsta3mal */
+    background-color: rgba(194, 24, 91, 0.1); /* Background khfif */
+    border-color: #C2185B;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* L-page l-mkhdouma (Active) */
+.pagination .page-item.active .page-link {
+    background: linear-gradient(135deg, #C2185B, #D32F2F); /* L-gradient l-li 3endek */
+    border-color: #C2185B;
+    color: white;
+    box-shadow: 0 4px 8px rgba(211, 47, 47, 0.3);
+}
+
+/* L-butunat dyal "Previous/Next" mlli makankounouch mkhdoumin (disabled) */
+.pagination .page-item.disabled .page-link {
+    background-color: #f8f9fa;
+    border-color: #e9ecef;
+    color: #adb5bd;
+    cursor: not-allowed;
+}
+
+/* Design 7ssen l-l-containe dyal l-pagination */
+.pagination-container {
+    padding: 15px 20px;
+    background-color: #fcfcfc; /* Background khfif */
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: space-between; /* L-ma3loumat 3la l-issar w l-pagination 3la l-limn */
+    align-items: center;
+    border-radius: 0 0 15px 15px; /* Douran ta7t l-card */
+}
+
+/* Style l-ma3loumat dyal "Affichage de X à Y sur Z" */
+.pagination-info {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.pagination-info .highlight {
+    font-weight: bold;
+    color: #D32F2F; /* L-lown l-2assasi */
+}
     </style>
 
     <div class="gradient-bg min-vh-100 py-4">
@@ -384,21 +439,18 @@
                     </table>
                 </div>
 
-                  @if($attestations->hasPages())
-                <div class="bg-gradient-to-r from-pink-50 to-red-50 px-6 py-4 border-t border-gray-200">
-                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <div class="text-sm text-gray-600">
-                            <i class="fas fa-info-circle mr-1"></i>
-                            Affichage de <span class="font-semibold text-[#C2185B]">{{ $attestations->firstItem() }}</span> 
-                            à <span class="font-semibold text-[#D32F2F]">{{ $attestations->lastItem() }}</span> 
-                            sur <span class="font-semibold text-[#ef4444]">{{ $attestations->total() }}</span> résultats
-                        </div>
-                        <div>
-                            {{ $attestations->links() }}
-                        </div>
-                    </div>
-                </div>
-                @endif
+                 @if($attestations->hasPages())
+                <div class="pagination-container">
+                                        <div class="pagination-info">
+                        
+                      <span class="highlight">{{ $attestations->total() }}</span> résultats
+                    </div>
+                    
+                                        <nav aria-label="Pagination des attestations">
+                        {{ $attestations->links('pagination.custom') }}
+                    </nav>
+                </div>
+                @endif
             </div>
         </div>
     </div>

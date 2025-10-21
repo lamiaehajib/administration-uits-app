@@ -9,14 +9,15 @@
                 @csrf
                 @method('PUT')
 
-
-                <div class="form-group">
-                    <label for="afficher_cachet">Afficher le cachet ?</label>
-                    <select name="afficher_cachet" class="form-control">
+                <!-- Afficher le cachet -->
+                <div class="mb-4">
+                    <label for="afficher_cachet" class="form-label">Afficher le cachet ?</label>
+                    <select name="afficher_cachet" id="afficher_cachet" class="form-control">
                         <option value="1" {{ old('afficher_cachet', $attestation->afficher_cachet ?? 0) == 1 ? 'selected' : '' }}>Oui</option>
                         <option value="0" {{ old('afficher_cachet', $attestation->afficher_cachet ?? 0) == 0 ? 'selected' : '' }}>Non</option>
                     </select>
                 </div>
+
                 <!-- Personne Name -->
                 <div class="mb-4">
                     <label for="personne_name" class="form-label">{{ __('Nom de la personne') }}</label>
@@ -58,48 +59,64 @@
     <style>
         /* Header with gradient */
         .header {
-            background: linear-gradient(135deg, #f60404, #000000);
+            background: linear-gradient(135deg, #C2185B, #D32F2F, #ef4444);
             font-size: 24px;
             font-weight: bold;
-            padding: 10px 20px;
+            padding: 15px 20px;
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 10px rgba(194, 24, 91, 0.3);
         }
 
         /* Form section styling */
         .form-section {
             background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         /* Gradient button */
         .btn-gradient {
-            background: linear-gradient(135deg, #f60404, #000000);
+            background: linear-gradient(135deg, #C2185B, #D32F2F);
             color: #fff;
-            padding: 10px 20px;
+            padding: 12px 30px;
             font-size: 16px;
+            font-weight: bold;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             transition: all 0.3s ease-in-out;
+            box-shadow: 0 4px 8px rgba(194, 24, 91, 0.3);
         }
 
         .btn-gradient:hover {
-            background: linear-gradient(135deg, #000000, #f60404);
-            color: #fff;
+            background: linear-gradient(135deg, #ef4444, #C2185B);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(239, 68, 68, 0.4);
         }
 
         /* Input fields */
         .form-control {
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
             font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: #C2185B;
+            box-shadow: 0 0 0 0.2rem rgba(194, 24, 91, 0.25);
+            outline: none;
         }
 
         .form-label {
-            font-weight: bold;
+            font-weight: 600;
             color: #333;
+            margin-bottom: 8px;
+        }
+
+        /* Container styling */
+        .container {
+            max-width: 700px;
         }
     </style>
 </x-app-layout>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BonCommandeR;
 use App\Models\BonCommandeItem;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf as FacadePdf;
 use Carbon\Carbon;
@@ -12,27 +13,150 @@ use Illuminate\Support\Str;
 class BonCommandeRController extends Controller
 {
     // عرض جميع أوامر الشراء
-    public function index(Request $request)
-    {
-        // البحث عن طريق الكلمات المفتاحية (مثلاً: prestataire، bon_num، أو titre)
-        $query = BonCommandeR::with(['items', 'user']);
+   public function index(Request $request)
+{
+    $query = BonCommandeR::with(['items', 'user']);
 
-        if ($request->has('search') && $request->search != '') {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('prestataire', 'like', "%$search%")
-                  ->orWhere('bon_num', 'like', "%$search%")
-                  ->orWhere('titre', 'like', "%$search%");
-            });
-        }
-
-        // جلب أوامر الشراء مع التصفية والصفحة
-        $bonCommandes = $query
-            ->orderBy('created_at', 'desc')
-            ->paginate(10); // يمكنك تعديل الرقم حسب العدد المطلوب لكل صفحة
-
-        return view('bon_commande_r.index', compact('bonCommandes'));
+    // 1. RECHERCHE AVANCÉE (Multi-critères)
+    if ($request->filled('search')) {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('prestataire', 'like', "%$search%")
+              ->orWhere('bon_num', 'like', "%$search%")
+              ->orWhere('titre', 'like', "%$search%")
+              ->orWhere('ice', 'like', "%$search%")
+              ->orWhere('ref', 'like', "%$search%")
+              ->orWhereHas('user', function($q) use ($search) {
+                  $q->where('name', 'like', "%$search%");
+              });
+        });
     }
+
+    // 2. FILTRE PAR DATE (Plage de dates)
+    if ($request->filled('date_debut')) {
+        $query->whereDate('date', '>=', $request->date_debut);
+    }
+    if ($request->filled('date_fin')) {
+        $query->whereDate('date', '<=', $request->date_fin);
+    }
+
+    // 3. FILTRE PAR MONTANT (Min/Max)
+    if ($request->filled('montant_min')) {
+        $query->where('total_ttc', '>=', $request->montant_min);
+    }
+    if ($request->filled('montant_max')) {
+        $query->where('total_ttc', '<=', $request->montant_max);
+    }
+
+    // 4. FILTRE PAR DEVISE
+    if ($request->filled('currency')) {
+        $query->where('currency', $request->currency);
+    }
+
+    // 5. FILTRE PAR TVA
+    if ($request->filled('tva')) {
+        $query->where('tva', $request->tva);
+    }
+
+    // 6. FILTRE PAR UTILISATEUR (Créateur)
+    if ($request->filled('user_id')) {
+        $query->where('user_id', $request->user_id);
+    }
+
+    // 7. FILTRE PAR PÉRIODE (Cette semaine, ce mois, cette année)
+    if ($request->filled('periode')) {
+        switch ($request->periode) {
+            case 'aujourd_hui':
+                $query->whereDate('created_at', Carbon::today());
+                break;
+            case 'cette_semaine':
+                $query->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
+                break;
+            case 'ce_mois':
+                $query->whereMonth('created_at', Carbon::now()->month)
+                      ->whereYear('created_at', Carbon::now()->year);
+                break;
+            case 'cette_annee':
+                $query->whereYear('created_at', Carbon::now()->year);
+                break;
+            case 'mois_dernier':
+                $query->whereMonth('created_at', Carbon::now()->subMonth()->month)
+                      ->whereYear('created_at', Carbon::now()->subMonth()->year);
+                break;
+            case 'annee_derniere':
+                $query->whereYear('created_at', Carbon::now()->subYear()->year);
+                break;
+        }
+    }
+
+    // 8. TRI DYNAMIQUE
+    $sortField = $request->get('sort_by', 'created_at');
+    $sortDirection = $request->get('sort_direction', 'desc');
+    
+    $allowedSortFields = ['created_at', 'date', 'bon_num', 'prestataire', 'total_ttc', 'titre'];
+    if (in_array($sortField, $allowedSortFields)) {
+        $query->orderBy($sortField, $sortDirection);
+    } else {
+        $query->orderBy('created_at', 'desc');
+    }
+
+    // 9. NOMBRE D'ÉLÉMENTS PAR PAGE (Personnalisable)
+    $perPage = $request->get('per_page', 10);
+    if (!in_array($perPage, [10, 25, 50, 100])) {
+        $perPage = 10;
+    }
+
+    // 10. STATISTIQUES GLOBALES (Pour le dashboard)
+    $stats = [
+        'total_bons' => BonCommandeR::count(),
+        'total_montant_ttc' => BonCommandeR::sum('total_ttc'),
+        'total_montant_ht' => BonCommandeR::sum('total_ht'),
+        'moyenne_bon' => BonCommandeR::avg('total_ttc'),
+        'total_ce_mois' => BonCommandeR::whereMonth('created_at', Carbon::now()->month)
+                                       ->whereYear('created_at', Carbon::now()->year)
+                                       ->sum('total_ttc'),
+        'nombre_ce_mois' => BonCommandeR::whereMonth('created_at', Carbon::now()->month)
+                                         ->whereYear('created_at', Carbon::now()->year)
+                                         ->count(),
+    ];
+
+    // 11. STATISTIQUES PAR DEVISE
+   
+    // 12. TOP PRESTATAIRES
+    $topPrestataires = BonCommandeR::selectRaw('prestataire, COUNT(*) as nombre_bons, SUM(total_ttc) as total_montant')
+                                    ->groupBy('prestataire')
+                                    ->orderByDesc('total_montant')
+                                    ->limit(10)
+                                    ->get();
+
+    // 13. ÉVOLUTION MENSUELLE (12 derniers mois)
+    $evolutionMensuelle = BonCommandeR::selectRaw('
+            YEAR(created_at) as annee,
+            MONTH(created_at) as mois,
+            COUNT(*) as nombre,
+            SUM(total_ttc) as montant
+        ')
+        ->where('created_at', '>=', Carbon::now()->subMonths(12))
+        ->groupBy('annee', 'mois')
+        ->orderBy('annee', 'desc')
+        ->orderBy('mois', 'desc')
+        ->get();
+
+    // 14. RÉCUPÉRATION DES UTILISATEURS (pour filtre)
+    $users = User::orderBy('name')->get();
+
+    // Pagination avec conservation des paramètres de recherche
+    $bonCommandes = $query->paginate($perPage)->withQueryString();
+
+    return view('bon_commande_r.index', compact(
+        'bonCommandes',
+        'stats',
+       
+        'topPrestataires',
+        'evolutionMensuelle',
+        'users'
+    ));
+}
 
     // عرض نموذج لإنشاء أمر شراء جديد
     public function create()

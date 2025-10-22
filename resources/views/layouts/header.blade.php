@@ -106,14 +106,7 @@
                             <i class="fas fa-user"></i>
                             <span>Mon Profil</span>
                         </a>
-                        <a href="#" class="profile-menu-item">
-                            <i class="fas fa-cog"></i>
-                            <span>Paramètres</span>
-                        </a>
-                        <a href="#" class="profile-menu-item">
-                            <i class="fas fa-question-circle"></i>
-                            <span>Aide & Support</span>
-                        </a>
+                        
                         <div class="divider"></div>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf

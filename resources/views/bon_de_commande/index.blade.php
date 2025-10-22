@@ -225,7 +225,7 @@
                         Affichage de {{ $bons->firstItem() ?? 0 }} à {{ $bons->lastItem() ?? 0 }} sur {{ $bons->total() }} résultats
                     </div>
                     <div>
-                        {{ $bons->links() }}
+                        {{ $bons->links('pagination.custom') }}
                     </div>
                 </div>
             </div>

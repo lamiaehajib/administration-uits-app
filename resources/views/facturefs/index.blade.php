@@ -475,15 +475,7 @@
                                placeholder="0.00" step="0.01" value="{{ request('max_amount') }}">
                     </div>
 
-                    <!-- TVA -->
-                    <div class="filter-group">
-                        <label class="filter-label">TVA</label>
-                        <select name="tva_filter" class="filter-select">
-                            <option value="">Toutes</option>
-                            <option value="0" {{ request('tva_filter') === '0' ? 'selected' : '' }}>0%</option>
-                            <option value="20" {{ request('tva_filter') === '20' ? 'selected' : '' }}>20%</option>
-                        </select>
-                    </div>
+                    
 
                     <!-- Tri -->
                     <div class="filter-group">

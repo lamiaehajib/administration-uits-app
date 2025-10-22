@@ -8,11 +8,51 @@ use Illuminate\Support\Facades\Storage;
 
 class BonDeCommandeController extends Controller
 {
-    public function index()
-    {
-        $bons = BonDeCommande::latest()->get();
-        return view('bon_de_commande.index', compact('bons'));
+  public function index(Request $request)
+{
+    $query = BonDeCommande::query();
+    
+    // 1. البحث المتقدم (Search)
+    if ($request->filled('search')) {
+        $search = $request->search;
+        $query->where(function($q) use ($search) {
+            $q->where('titre', 'like', "%{$search}%")
+              ->orWhere('date_commande', 'like', "%{$search}%");
+        });
     }
+    
+    // 2. الفلترة حسب التاريخ (Date Range Filter)
+    if ($request->filled('date_debut')) {
+        $query->where('date_commande', '>=', $request->date_debut);
+    }
+    if ($request->filled('date_fin')) {
+        $query->where('date_commande', '<=', $request->date_fin);
+    }
+    
+    // 3. الفلترة حسب نوع الملف (File Type Filter)
+    if ($request->filled('type_fichier')) {
+        $query->where('fichier_path', 'like', "%.{$request->type_fichier}");
+    }
+    
+    // 4. الترتيب الديناميكي (Dynamic Sorting)
+    $sortField = $request->get('sort', 'created_at');
+    $sortDirection = $request->get('direction', 'desc');
+    $query->orderBy($sortField, $sortDirection);
+    
+    // 5. Pagination مع الحفاظ على query parameters
+    $perPage = $request->get('per_page', 10);
+    $bons = $query->paginate($perPage)->withQueryString();
+    
+    // 6. إحصائيات مفيدة (Statistics)
+    $stats = [
+        'total' => BonDeCommande::count(),
+        'ce_mois' => BonDeCommande::whereMonth('created_at', now()->month)->count(),
+        'pdf_count' => BonDeCommande::where('fichier_path', 'like', '%.pdf')->count(),
+        'excel_count' => BonDeCommande::where('fichier_path', 'like', '%.xls%')->count(),
+    ];
+    
+    return view('bon_de_commande.index', compact('bons', 'stats'));
+}
 
     public function create()
     {

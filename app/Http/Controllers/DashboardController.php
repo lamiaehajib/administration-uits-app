@@ -40,14 +40,14 @@ class DashboardController extends Controller
                                ->whereYear('created_at', Carbon::now()->year)
                                ->count();
         
-        // Devis Projet
+        // Devis Projet (Stats séparées - pas dans revenus)
         $totalDevis = Devis::count();
         $devisValeurTotal = Devis::sum('total_ttc');
         $devisCurrentMonth = Devis::whereMonth('created_at', Carbon::now()->month)
                                   ->whereYear('created_at', Carbon::now()->year)
                                   ->count();
         
-        // Devis Formation
+        // Devis Formation (Stats séparées - pas dans revenus)
         $totalDevisf = Devisf::count();
         $devisfValeurTotal = Devisf::sum('total_ttc');
         $devisfCurrentMonth = Devisf::whereMonth('created_at', Carbon::now()->month)
@@ -68,15 +68,16 @@ class DashboardController extends Controller
                                          ->whereYear('created_at', Carbon::now()->year)
                                          ->count();
         
-        // ==================== REVENUS TOTAUX ====================
+        // ==================== REVENUS TOTAUX (SANS DEVIS) ====================
         $revenuTotal = $revenusReussites + $revenusReussitesf + $revenusUcgs + 
                        $facturesRevenu + $facturesfRevenu;
         
+        // Valeur totale des devis (séparée, pour information uniquement)
         $valeurDevisTotal = $devisValeurTotal + $devisfValeurTotal;
         
         // ==================== DONNÉES POUR GRAPHIQUES ====================
         
-        // Graphique : Évolution mensuelle des revenus (6 derniers mois)
+        // Graphique : Évolution mensuelle des revenus RÉELS (6 derniers mois - SANS DEVIS)
         $monthlyRevenue = [];
         for ($i = 5; $i >= 0; $i--) {
             $date = Carbon::now()->subMonths($i);
@@ -104,7 +105,7 @@ class DashboardController extends Controller
             ];
         }
         
-        // Graphique : Répartition des revenus par type
+        // Graphique : Répartition des revenus par type (SANS DEVIS)
         $revenueByType = [
             ['type' => 'Reçus Stage', 'amount' => round($revenusReussites, 2)],
             ['type' => 'Reçus Formation', 'amount' => round($revenusReussitesf, 2)],
@@ -124,7 +125,7 @@ class DashboardController extends Controller
             ['category' => 'Factures Formation', 'count' => $totalFacturesf],
         ];
         
-        // Graphique : Top 5 clients (basé sur les factures)
+        // Graphique : Top 5 clients (basé sur les factures uniquement)
         $topClients = DB::table(DB::raw('(
             SELECT client, SUM(total_ttc) as total FROM factures GROUP BY client
             UNION ALL

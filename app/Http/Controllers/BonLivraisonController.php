@@ -10,22 +10,153 @@ use Carbon\Carbon;
 
 class BonLivraisonController extends Controller
 {
-    public function index(Request $request)
-    {
-        // Get the search term
-        $search = $request->input('search');
+   public function index(Request $request)
+{
+    // Récupérer les paramètres de recherche et filtrage
+    $search = $request->input('search');
+    $dateFrom = $request->input('date_from');
+    $dateTo = $request->input('date_to');
+    $clientFilter = $request->input('client_filter');
+    $minAmount = $request->input('min_amount');
+    $maxAmount = $request->input('max_amount');
+    $sortBy = $request->input('sort_by', 'created_at');
+    $sortOrder = $request->input('sort_order', 'desc');
+    $perPage = $request->input('per_page', 10);
+    $tvaFilter = $request->input('tva_filter');
+    $userFilter = $request->input('user_filter');
 
-        // Apply search and pagination
-        $bonLivraisons = BonLivraison::with('items', 'user')
-            ->when($search, function ($query, $search) {
-                return $query->where('bon_num', 'like', "%{$search}%")
-                             ->orWhere('client', 'like', "%{$search}%");
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate(10); // Paginate 10 delivery notes per page
+    // Construction de la requête avec eager loading optimisé
+    $query = BonLivraison::with(['items', 'user:id,name,email'])
+        ->withCount('items') // Compter le nombre d'items
+        ->select('bon_livraison.*');
 
-        return view('bon_livraisons.index', compact('bonLivraisons', 'search'));
+    // Recherche globale (bon_num, client, titre, ref)
+    if ($search) {
+        $query->where(function ($q) use ($search) {
+            $q->where('bon_num', 'like', "%{$search}%")
+              ->orWhere('client', 'like', "%{$search}%")
+              ->orWhere('titre', 'like', "%{$search}%")
+              ->orWhere('ref', 'like', "%{$search}%")
+              ->orWhere('tele', 'like', "%{$search}%")
+              ->orWhere('ice', 'like', "%{$search}%");
+        });
     }
+
+    // Filtre par période (date)
+    if ($dateFrom) {
+        $query->whereDate('date', '>=', $dateFrom);
+    }
+    if ($dateTo) {
+        $query->whereDate('date', '<=', $dateTo);
+    }
+
+    // Filtre par client spécifique
+    if ($clientFilter) {
+        $query->where('client', $clientFilter);
+    }
+
+    // Filtre par montant (total TTC)
+    if ($minAmount) {
+        $query->where('total_ttc', '>=', $minAmount);
+    }
+    if ($maxAmount) {
+        $query->where('total_ttc', '<=', $maxAmount);
+    }
+
+    // Filtre par taux de TVA
+    if ($tvaFilter !== null && $tvaFilter !== '') {
+        $query->whereRaw('(tva / total_ht * 100) = ?', [$tvaFilter]);
+    }
+
+    // Filtre par utilisateur (créateur)
+    if ($userFilter) {
+        $query->where('user_id', $userFilter);
+    }
+
+    // Tri dynamique avec validation
+    $allowedSortColumns = ['bon_num', 'date', 'client', 'total_ht', 'total_ttc', 'created_at'];
+    if (in_array($sortBy, $allowedSortColumns)) {
+        $query->orderBy($sortBy, $sortOrder === 'asc' ? 'asc' : 'desc');
+    } else {
+        $query->orderBy('created_at', 'desc');
+    }
+
+    // Pagination avec validation
+    $perPage = in_array($perPage, [10, 25, 50, 100]) ? $perPage : 10;
+    $bonLivraisons = $query->paginate($perPage)->appends($request->except('page'));
+
+    // Calculs statistiques pour le tableau de bord
+    $stats = [
+        'total_count' => BonLivraison::count(),
+        'total_amount' => BonLivraison::sum('total_ttc'),
+        'monthly_count' => BonLivraison::whereMonth('created_at', now()->month)
+                                       ->whereYear('created_at', now()->year)
+                                       ->count(),
+        'monthly_amount' => BonLivraison::whereMonth('created_at', now()->month)
+                                         ->whereYear('created_at', now()->year)
+                                         ->sum('total_ttc'),
+    ];
+
+    // Statistiques filtrées (selon les critères appliqués)
+    $filteredStats = [
+        'filtered_count' => $bonLivraisons->total(),
+        'filtered_amount' => BonLivraison::when($search, function ($q) use ($search) {
+                $q->where(function ($subQ) use ($search) {
+                    $subQ->where('bon_num', 'like', "%{$search}%")
+                         ->orWhere('client', 'like', "%{$search}%")
+                         ->orWhere('titre', 'like', "%{$search}%")
+                         ->orWhere('ref', 'like', "%{$search}%");
+                });
+            })
+            ->when($dateFrom, fn($q) => $q->whereDate('date', '>=', $dateFrom))
+            ->when($dateTo, fn($q) => $q->whereDate('date', '<=', $dateTo))
+            ->when($clientFilter, fn($q) => $q->where('client', $clientFilter))
+            ->when($minAmount, fn($q) => $q->where('total_ttc', '>=', $minAmount))
+            ->when($maxAmount, fn($q) => $q->where('total_ttc', '<=', $maxAmount))
+            ->when($tvaFilter !== null, fn($q) => $q->whereRaw('(tva / total_ht * 100) = ?', [$tvaFilter]))
+            ->when($userFilter, fn($q) => $q->where('user_id', $userFilter))
+            ->sum('total_ttc'),
+    ];
+
+    // Liste des clients uniques pour le filtre
+    $clients = BonLivraison::distinct()
+                           ->pluck('client')
+                           ->filter()
+                           ->sort()
+                           ->values();
+
+    // Liste des utilisateurs pour le filtre
+    $users = \App\Models\User::select('id', 'name')
+                              ->orderBy('name')
+                              ->get();
+
+    // Graphique des ventes par mois (6 derniers mois)
+    $salesChart = BonLivraison::selectRaw('DATE_FORMAT(date, "%Y-%m") as month, SUM(total_ttc) as total')
+                               ->where('date', '>=', now()->subMonths(6))
+                               ->groupBy('month')
+                               ->orderBy('month')
+                               ->get();
+
+    return view('bon_livraisons.index', compact(
+        'bonLivraisons',
+        'search',
+        'dateFrom',
+        'dateTo',
+        'clientFilter',
+        'minAmount',
+        'maxAmount',
+        'sortBy',
+        'sortOrder',
+        'perPage',
+        'tvaFilter',
+        'userFilter',
+        'stats',
+        'filteredStats',
+        'clients',
+        'users',
+        'salesChart'
+    ));
+}
 
     // Show form to create a new delivery note
     public function create()

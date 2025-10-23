@@ -543,13 +543,9 @@
                                        class="action-btn edit" title="Modifier">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form action="{{ route('facturefs.duplicate', $facture->id) }}" 
-                                          method="POST" style="display: inline;">
-                                        @csrf
-                                        <button type="submit" class="action-btn duplicate" title="Dupliquer">
-                                            <i class="fas fa-copy"></i>
-                                        </button>
-                                    </form>
+                                     <a href="{{ route('facturefs.duplicate', $facture->id) }}" class="btn btn-secondary btn-sm" title="Dupliquer">
+                                <i class="fas fa-copy"></i> Dupliquer
+                            </a>
                                     <form action="{{ route('facturefs.destroy', $facture->id) }}" 
                                           method="POST" style="display: inline;" 
                                           onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette facture ?')">

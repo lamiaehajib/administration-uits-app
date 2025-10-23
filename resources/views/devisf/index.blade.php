@@ -424,7 +424,7 @@
                                 <a href="{{ route('devisf.edit', $devis) }}" class="action-btn btn-edit" title="Modifier">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                               <a href="{{ route('devisf.duplicate', $devisItem->id) }}" class="btn btn-secondary btn-sm" title="Dupliquer">
+                               <a href="{{ route('devisf.duplicate', $devis->id) }}" class="btn btn-secondary btn-sm" title="Dupliquer">
                                 <i class="fas fa-copy"></i> 
                             </a>
                                 <a href="{{ route('facturefs.create_from_devisf', $devis->id) }}" class="btn btn-primary btn-sm">Ajouter Facture</a>

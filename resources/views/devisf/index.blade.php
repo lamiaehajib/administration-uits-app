@@ -424,12 +424,9 @@
                                 <a href="{{ route('devisf.edit', $devis) }}" class="action-btn btn-edit" title="Modifier">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <form action="{{ route('devisf.duplicate', $devis) }}" method="POST" style="display: inline;">
-                                    @csrf
-                                    <button type="submit" class="action-btn btn-duplicate" title="Dupliquer">
-                                        <i class="fas fa-copy"></i>
-                                    </button>
-                                </form>
+                               <a href="{{ route('devisf.duplicate', $devisItem->id) }}" class="btn btn-secondary btn-sm" title="Dupliquer">
+                                <i class="fas fa-copy"></i> 
+                            </a>
                                 <a href="{{ route('facturefs.create_from_devisf', $devis->id) }}" class="btn btn-primary btn-sm">Ajouter Facture</a>
                                 <form action="{{ route('devisf.destroy', $devis) }}" method="POST" style="display: inline;" 
                                       onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce devis ?')">

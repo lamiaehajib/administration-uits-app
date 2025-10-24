@@ -8,6 +8,7 @@ use App\Models\FacturefItem;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf as FacadePdf;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class FacturefController extends Controller
 {
@@ -158,19 +159,26 @@ private function exportToCsv($factures)
 
     public function duplicate(Facturef $facturef)
     {
-        // Clone the existing facturef
+        // 1. Clone the existing facturef
         $newFacturef = $facturef->replicate();
-        $newFacturef->facturef_num = null; // Reset facturef_num to generate a new one
+        
+        // 2. Mettre à jour les champs spécifiques pour la duplication
+        $newFacturef->facturef_num = null; // Reset facturef_num pour générer un nouveau
         $newFacturef->created_at = now();
         $newFacturef->updated_at = now();
+        
+        // ✨ MODIFICATION CLÉ : Assigner l'ID de l'utilisateur authentifié
+        $newFacturef->user_id = Auth::id(); // Récupère l'ID de l'utilisateur connecté
+        // Si vous utilisez une autre méthode que Auth::id(), remplacez-la ici (ex: auth()->id())
+
         $newFacturef->save();
 
-        // Generate a new facturef_num
-        $date = Carbon::now()->format('dmy'); // Same logic as in store
+        // 3. Generate a new facturef_num (comme dans votre logique existante)
+        $date = Carbon::now()->format('dmy'); 
         $newFacturef->facturef_num = "{$newFacturef->id}{$date}";
-        $newFacturef->save();
+        $newFacturef->save(); // Sauvegarde à nouveau pour le numéro de facture
 
-        // Duplicate related items
+        // 4. Duplicate related items
         foreach ($facturef->items as $item) {
             FacturefItem::create([
                 'facturefs_id' => $newFacturef->id,
@@ -183,18 +191,13 @@ private function exportToCsv($factures)
             ]);
         }
 
-        // Duplicate important infos
+        // 5. Duplicate important infos
         foreach ($facturef->importantInfo as $info) {
             $newFacturef->importantInfo()->create(['info' => $info->info]);
         }
 
         return redirect()->route('facturefs.index')->with('success', 'Facture de formation dupliquée avec succès!');
     }
-    public function createFromDevisf(Devisf $devisf)
-{
-    $devisf->load(['items', 'ImportantInfof']);
-    return view('facturefs.create', compact('devisf'));
-}
 
     public function create()
     {

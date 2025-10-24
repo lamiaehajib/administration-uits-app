@@ -32,42 +32,40 @@ class AttestationFormationController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $request->validate([
-            'formation_name' => 'required',
-            'personne_name' => 'required',
-            'cin' => 'required',
-            'afficher_cachet' => 'nullable|boolean',
-        ]);
-    
-        // Récupérer les valeurs
-        $formationName = $request->input('formation_name');
-        $personneName = $request->input('personne_name');
-        $cin = $request->input('cin');
-        $afficher_cachet = $request->input('afficher_cachet');
-    
-    
-        // Générer le numéro de série
-        $numbers = preg_replace('/[^0-9]/', '', $cin); // Extraire les chiffres
-        $letters = preg_replace('/[^A-Za-z]/', '', $cin); // Extraire les lettres
-        $date = now()->format('dm'); // Jour et mois
-        $year = now()->format('y');  // Année en deux chiffres (24 pour 2024)
-    
-        $numeroDeSerie = $numbers . $letters . $date . $year;
-    
-        // Créer l'attestation
-        AttestationFormation::create([
-            'formation_name' => $formationName,
-            'personne_name' => $personneName,
-            'cin' => $cin,
-            'numero_de_serie' => $numeroDeSerie, // Sauvegarder le numéro de série
-            'afficher_cachet' => $afficher_cachet, // Sauvegarder le numéro de série
+{
+    $request->validate([
+        'formation_name' => 'required',
+        'personne_name' => 'required',
+        'cin' => 'required',
+    ]);
 
-            'user_id' => auth()->id(),
-        ]);
-    
-        return redirect()->route('attestations_formation.index')->with('success', 'Attestation de formation créée avec succès.');
-    }
+    // Récupérer les valeurs
+    $formationName = $request->input('formation_name');
+    $personneName = $request->input('personne_name');
+    $cin = $request->input('cin');
+    $afficher_cachet = $request->has('afficher_cachet') ? 1 : 0; // ✅ Correction ici
+
+    // Générer le numéro de série
+    $numbers = preg_replace('/[^0-9]/', '', $cin);
+    $letters = preg_replace('/[^A-Za-z]/', '', $cin);
+    $date = now()->format('dm');
+    $year = now()->format('y');
+
+    $numeroDeSerie = $numbers . $letters . $date . $year;
+
+    // Créer l'attestation
+    AttestationFormation::create([
+        'formation_name' => $formationName,
+        'personne_name' => $personneName,
+        'cin' => $cin,
+        'numero_de_serie' => $numeroDeSerie,
+        'afficher_cachet' => $afficher_cachet,
+        'user_id' => auth()->id(),
+    ]);
+
+    return redirect()->route('attestations_formation.index')
+        ->with('success', 'Attestation de formation créée avec succès.');
+}
     
 
 
@@ -81,13 +79,19 @@ class AttestationFormationController extends Controller
     $request->validate([
         'formation_name' => 'required',
         'personne_name' => 'required',
-        'cin'=> 'required',
+        'cin' => 'required',
     ]);
 
-    // Mettre à jour l'attestation
-    $attestation->update($request->all());
+    // Mettre à jour avec gestion du checkbox
+    $attestation->update([
+        'formation_name' => $request->input('formation_name'),
+        'personne_name' => $request->input('personne_name'),
+        'cin' => $request->input('cin'),
+        'afficher_cachet' => $request->has('afficher_cachet') ? 1 : 0, // ✅ Correction
+    ]);
 
-    return redirect()->route('attestations_formation.index')->with('success', 'Attestation de formation mise à jour avec succès.');
+    return redirect()->route('attestations_formation.index')
+        ->with('success', 'Attestation de formation mise à jour avec succès.');
 }
 
 

@@ -24,7 +24,7 @@ class ReussitefController extends Controller
 
     $query = Reussitef::query();
 
-    // 🔍 Recherche multi-critères avancée
+    // 🔍 Recherche multi-critères avancée lkw
     if ($search) {
         $query->where(function($q) use ($search) {
             $q->where('nom', 'like', "%{$search}%")

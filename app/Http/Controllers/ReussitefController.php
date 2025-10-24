@@ -186,7 +186,7 @@ class ReussitefController extends Controller
             'user_id' => auth()->id(), // إضافة user_id المرتبط بالمستخدم الحالي
         ]);
     
-        return redirect()->route('reussitesf.index')->with('success', 'Réussite ajoutée avec succès.');
+        return redirect()->route('reussitesf.index')->with('success', 'reçu ajoutée avec succès.');
     }
 
     public function edit($id)
@@ -237,7 +237,7 @@ class ReussitefController extends Controller
         // Alternative : Utiliser $request->all() s'il n'y a pas d'autres champs non fillable que user_id et que user_id n'est pas dans le formulaire.
         // $reussite->update($request->all());
 
-        return redirect()->route('reussitesf.index')->with('success', 'Réussite mise à jour avec succès.');
+        return redirect()->route('reussitesf.index')->with('success', 'reçu mise à jour avec succès.');
     }
 
     public function destroy($id)
@@ -245,8 +245,26 @@ class ReussitefController extends Controller
         $reussite = Reussitef::findOrFail($id);
         $reussite->delete();
 
-        return redirect()->route('reussitesf.index')->with('success', 'Réussite supprimée avec succès.');
+        return redirect()->route('reussitesf.index')->with('success', 'reçu supprimée avec succès.');
     }
+
+     public function duplicate(Reussitef $reussitef)
+{
+    // استخدام replicate() لإنشاء نسخة جديدة من الموديل
+    $newReussitef = $reussitef->replicate();
+    
+    // يمكن تغيير بعض الحقول هنا قبل الحفظ، مثل مسح 'date_paiement' أو 'rest'
+    // $newReussitef->date_paiement = now();
+    // $newReussitef->rest = null;
+
+    // ✨ إضافة معرف المستخدم الحالي لربط النسخة الجديدة به
+    $newReussitef->user_id = auth()->id(); 
+
+    // حفظ النسخة الجديدة في قاعدة البيانات
+    $newReussitef->save();
+
+    return redirect()->route('reussitesf.index')->with('success', 'reçu (Formation) dupliquée avec succès.');
+}
 
     public function downloadPDF($id)
     {

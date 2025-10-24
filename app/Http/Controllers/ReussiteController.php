@@ -95,6 +95,25 @@ class ReussiteController extends Controller
         return redirect()->route('reussites.index')->with('success', 'Réussite supprimée avec succès.');
     }
 
+
+    public function duplicate(Reussite $reussite)
+    {
+        // استخدام replicate() لإنشاء نسخة جديدة من الموديل
+        $newReussite = $reussite->replicate();
+
+        // يمكن تغيير بعض الحقول هنا إذا لزم الأمر قبل الحفظ، مثل مسح 'date_paiement'
+        // $newReussite->date_paiement = null;
+
+        // ✨ Ajouté : Remplacer l'ID de l'utilisateur par l'ID de l'utilisateur actuel
+        $newReussite->user_id = auth()->id();
+
+        // حفظ النسخة الجديدة في قاعدة البيانات
+        $newReussite->save();
+
+        return redirect()->route('reussites.index')->with('success', 'Réussite dupliquée avec succès.');
+    }
+
+
     public function generatePDF(Reussite $reussite)
 {
     set_time_limit(300);

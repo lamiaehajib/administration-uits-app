@@ -551,6 +551,14 @@
                                    title="Modifier">
                                     <i class="fas fa-edit text-white"></i>
                                 </a>
+                                 <!-- 3. النسخ/Dupliquer (أخضر) -->
+        <form action="{{ route('reussitesf.duplicate', $reussite) }}" method="POST" style="display:inline;">
+            @csrf
+            <button type="submit" class="btn btn-sm btn-success" title="Dupliquer le Reçu"
+                    onclick="return confirm('Êtes-vous sûr de vouloir dupliquer cet enregistrement/reçu ?')">
+                <i class="fas fa-copy"></i> 
+            </button>
+        </form>
                                 <form action="{{ route('reussitesf.destroy', $reussite->id) }}" 
                                       method="POST" 
                                       class="d-inline delete-form">

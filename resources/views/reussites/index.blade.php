@@ -108,14 +108,22 @@
                         <td>{{ \Carbon\Carbon::parse($reussite->date_paiement)->format('Y-m-d') }}</td>
                         <td>{{ $reussite->created_at->diffForHumans() }}</td>
                          <td>{{ $reussite->user->name ?? 'Utilisateur inconnu' }}</td>
-                        <td class="text-center">
-                            <div class="btn-group" role="group">
-                                <a href="{{ route('reussites.pdf', $reussite) }}" class="btn btn-sm btn-info text-white" title="Télécharger PDF">
-                                    <i class="fas fa-file-pdf"></i>
-                                </a>
-                                <a href="{{ route('reussites.edit', $reussite) }}" class="btn btn-sm btn-warning" title="Modifier">
-                                    <i class="fas fa-edit"></i>
-                                </a>
+                 <td class="text-center">
+    <div class="btn-group" role="group">
+        <a href="{{ route('reussites.pdf', $reussite) }}" class="btn btn-sm btn-info text-white" title="Télécharger PDF">
+            <i class="fas fa-file-pdf"></i>
+        </a>
+        <a href="{{ route('reussites.edit', $reussite) }}" class="btn btn-sm btn-warning" title="Modifier">
+            <i class="fas fa-edit"></i>
+        </a>
+        <!-- الزر المنسوخ الآن (Dupliquer) بالستايل الجديد -->
+        <form action="{{ route('reussites.duplicate', $reussite) }}" method="POST" style="display:inline;">
+            @csrf
+            <button type="submit" class="btn btn-sm btn-success" title="Dupliquer le Reçu"
+                    onclick="return confirm('Êtes-vous sûr de vouloir dupliquer ce reçu ?')">
+                <i class="fas fa-copy"></i> 
+            </button>
+        </form>
                                 <button type="button" class="btn btn-sm btn-danger delete-btn" data-id="{{ $reussite->id }}" title="Supprimer">
                                     <i class="fas fa-trash"></i>
                                 </button>

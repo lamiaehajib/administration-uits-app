@@ -77,7 +77,8 @@ Route::resource('attestations_allinone', AttestationAllinoneController::class)->
 
 
 Route::get('attestations_allinone/{attestation}/pdf', [AttestationAllinoneController::class, 'generatePDF'])->name('attestations_allinone.pdf');
-
+Route::post('/reussites/{reussite}/duplicate', [ReussiteController::class, 'duplicate'])
+    ->name('reussites.duplicate');
 Route::resource('reussites', ReussiteController::class);
 Route::get('reussites/{reussite}/pdf', [ReussiteController::class, 'generatePDF'])->name('reussites.pdf');
 
@@ -111,7 +112,8 @@ Route::put('/reussitef/{id}/restore', [ReussitefController::class, 'restore'])
 // 3. Route dyal Suppression Définitive
 Route::delete('/reussitef/{id}/forceDelete', [ReussitefController::class, 'forceDelete'])
       ->name('reussitef.forceDelete');
-
+Route::post('/reussitesf/{reussitef}/duplicate', [ReussitefController::class, 'duplicate'])
+    ->name('reussitesf.duplicate');
 Route::resource('reussitesf', ReussitefController::class);
 Route::get('/reussitesf/{id}/pdf', [ReussitefController::class, 'downloadPDF'])->name('reussitesf.pdf');
 

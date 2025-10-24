@@ -8,7 +8,7 @@ use App\Models\FactureItem;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf as FacadePdf;
 use Carbon\Carbon;
-
+use Illuminate\Support\Facades\Auth;
 class FactureController extends Controller
 {
     
@@ -323,9 +323,14 @@ private function exportPDFListe($factures)
     {
         // Clone the existing facture
         $newFacture = $facture->replicate();
+        
         $newFacture->facture_num = null; // Reset facture_num to generate a new one
         $newFacture->created_at = now();
         $newFacture->updated_at = now();
+        
+        // ✨ MODIFICATION CLÉ : Mettre à jour le user_id avec l'ID de l'utilisateur qui duplique
+        $newFacture->user_id = Auth::id(); // Assignation de l'ID de l'utilisateur authentifié
+        
         $newFacture->save();
 
         // Generate a new facture_num

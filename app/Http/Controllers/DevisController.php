@@ -10,6 +10,7 @@ use Barryvdh\DomPDF\Facade as PDF;
 use Barryvdh\DomPDF\Facade\Pdf as FacadePdf;
 use Barryvdh\DomPDF\PDF as DomPDFPDF;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 class DevisController extends Controller
 {
@@ -145,6 +146,10 @@ public function duplicate(Devis $devis)
     $newDevis->devis_num = null; // Reset devis_num to generate a new one
     $newDevis->created_at = now();
     $newDevis->updated_at = now();
+    
+    // ✨ Ligne ajoutée : Remplacer l'ID de l'utilisateur par l'ID de l'utilisateur actuel
+    $newDevis->user_id = Auth::id(); 
+    
     $newDevis->save();
 
     // Generate a new devis_num

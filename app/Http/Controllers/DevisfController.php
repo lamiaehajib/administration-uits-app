@@ -7,7 +7,7 @@ use App\Models\DevisItemf;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf as FacadePdf;
 use Carbon\Carbon;
-
+use Illuminate\Support\Facades\Auth;
 class DevisfController extends Controller
 {
   public function index(Request $request)
@@ -199,17 +199,21 @@ private function exportCSV($devisf)
 
     public function duplicate(Devisf $devisf)
 {
-    // Clone the existing devisf
-    $newDevisf = $devisf->replicate();
-    $newDevisf->devis_num = null; // Reset devis_num to generate a new one
-    $newDevisf->created_at = now();
-    $newDevisf->updated_at = now();
-    $newDevisf->save();
 
-    // Generate a new devis_num
-    $date = now()->format('dmy');
-    $newDevisf->devis_num = "{$newDevisf->id}{$date}";
-    $newDevisf->save();
+$newDevisf = $devisf->replicate();
+$newDevisf->devis_num = null; // Reset devis_num to generate a new one
+$newDevisf->created_at = now();
+ $newDevisf->updated_at = now();
+    
+    // ✨ Ligne ajoutée : Remplacer l'ID de l'utilisateur par l'ID de l'utilisateur actuel
+    $newDevisf->user_id = Auth::id(); 
+    
+$newDevisf->save();
+
+ // Generate a new devis_num
+ $date = now()->format('dmy');
+ $newDevisf->devis_num = "{$newDevisf->id}{$date}";
+$newDevisf->save();
 
     // Duplicate related items
     foreach ($devisf->items as $item) {

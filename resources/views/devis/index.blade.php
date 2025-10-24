@@ -470,12 +470,9 @@
                                        title="Modifier">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form action="{{ route('devis.duplicate', $d->id) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        <button type="submit" class="action-btn btn-duplicate" title="Dupliquer">
-                                            <i class="fas fa-copy"></i>
-                                        </button>
-                                    </form>
+                                    <a href="{{ route('devis.duplicate', $d->id) }}" class="btn btn-secondary btn-sm" title="Dupliquer">
+                                    <i class="fas fa-copy"></i> 
+                                </a>
                                     <a href="{{ route('factures.create_from_devis', $d->id) }}" class="btn btn-primary">Ajouter Facture</a>
                                     <form action="{{ route('devis.destroy', $d->id) }}" method="POST" class="d-inline delete-form">
                                         @csrf

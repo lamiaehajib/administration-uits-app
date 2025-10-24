@@ -458,33 +458,52 @@
     </style>
 
     <script>
-        function openCreateModal() {
-            var modal = new bootstrap.Modal(document.getElementById('createModal'));
-            modal.show();
-        }
+    function openCreateModal() {
+        // Réinitialiser le formulaire de création
+        document.querySelector('#createModal form').reset();
+        // Cocher la checkbox par défaut
+        document.getElementById('afficher_cachet_create').checked = true;
+        
+        var modal = new bootstrap.Modal(document.getElementById('createModal'));
+        modal.show();
+    }
 
-        function openEditModal(attestation) {
-            document.getElementById('editForm').action = `/attestations/${attestation.id}`;
-            document.getElementById('edit_stagiaire_name').value = attestation.stagiaire_name;
-            document.getElementById('edit_stagiaire_cin').value = attestation.stagiaire_cin;
-            document.getElementById('edit_poste').value = attestation.poste;
-            document.getElementById('edit_date_debut').value = attestation.date_debut;
-            document.getElementById('edit_date_fin').value = attestation.date_fin;
-            document.getElementById('edit_afficher_cachet').checked = attestation.afficher_cachet == 1;
-            
-            var modal = new bootstrap.Modal(document.getElementById('editModal'));
-            modal.show();
+    function openEditModal(attestation) {
+        console.log('Attestation reçue:', attestation); // Debug
+        
+        // Définir l'action du formulaire
+        document.getElementById('editForm').action = `/attestations/${attestation.id}`;
+        
+        // Remplir les champs texte et date
+        document.getElementById('edit_stagiaire_name').value = attestation.stagiaire_name || '';
+        document.getElementById('edit_stagiaire_cin').value = attestation.stagiaire_cin || '';
+        document.getElementById('edit_poste').value = attestation.poste || '';
+        document.getElementById('edit_date_debut').value = attestation.date_debut || '';
+        document.getElementById('edit_date_fin').value = attestation.date_fin || '';
+        
+        // Gérer la checkbox afficher_cachet
+        const checkbox = document.getElementById('edit_afficher_cachet');
+        if (checkbox) {
+            checkbox.checked = Boolean(attestation.afficher_cachet == 1 || attestation.afficher_cachet === true);
+            console.log('État checkbox:', checkbox.checked); // Debug
+        } else {
+            console.error('Checkbox edit_afficher_cachet non trouvée!');
         }
+        
+        // Ouvrir le modal
+        var modal = new bootstrap.Modal(document.getElementById('editModal'));
+        modal.show();
+    }
 
-        // Auto-dismiss success alerts after 5 seconds
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                var alerts = document.querySelectorAll('.alert');
-                alerts.forEach(function(alert) {
-                    var bsAlert = new bootstrap.Alert(alert);
-                    bsAlert.close();
-                });
-            }, 5000);
-        });
-    </script>
+    // Auto-dismiss des alertes de succès après 5 secondes
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            var alerts = document.querySelectorAll('.alert-success');
+            alerts.forEach(function(alert) {
+                var bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    });
+</script>
 </x-app-layout>

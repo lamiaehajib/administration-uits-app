@@ -17,8 +17,8 @@ class AttestationController extends Controller
                              ->orWhere('stagiaire_cin', 'like', "%{$search}%")
                              ->orWhere('poste', 'like', "%{$search}%");
             })
-            ->orderBy('created_at', 'desc') // ترتيب من الأقدم للأحدث
-            ->paginate(10); // Pagination avec 10 attestations par page
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
     
         return view('attestations.index', compact('attestations', 'search'));
     }
@@ -34,9 +34,8 @@ class AttestationController extends Controller
             'stagiaire_name' => 'required',
             'stagiaire_cin' => 'required',
             'date_debut' => 'required|date',
-            'date_fin' => 'required|date',
+            'date_fin' => 'required|date|after_or_equal:date_debut',
             'poste' => 'required',
-            'afficher_cachet' => 'boolean', // Validation du cachet
         ]);
 
         Attestation::create([
@@ -46,7 +45,7 @@ class AttestationController extends Controller
             'date_fin' => $request->input('date_fin'),
             'poste' => $request->input('poste'),
             'user_id' => auth()->id(),
-            'afficher_cachet' => $request->boolean('afficher_cachet', true), // Valeur par défaut: true
+            'afficher_cachet' => $request->has('afficher_cachet') ? 1 : 0, // ✅ Correction
         ]);
 
         return redirect()->route('attestations.index')->with('success', 'Attestation créée avec succès.');
@@ -63,9 +62,8 @@ class AttestationController extends Controller
             'stagiaire_name' => 'required',
             'stagiaire_cin' => 'required',
             'date_debut' => 'required|date',
-            'date_fin' => 'required|date',
+            'date_fin' => 'required|date|after_or_equal:date_debut',
             'poste' => 'required',
-            'afficher_cachet' => 'boolean', // Vérification de la valeur
         ]);
 
         $attestation->update([
@@ -74,7 +72,7 @@ class AttestationController extends Controller
             'date_debut' => $request->input('date_debut'),
             'date_fin' => $request->input('date_fin'),
             'poste' => $request->input('poste'),
-            'afficher_cachet' => $request->boolean('afficher_cachet'), // Mise à jour du cachet
+            'afficher_cachet' => $request->has('afficher_cachet') ? 1 : 0, // ✅ Correction
         ]);
 
         return redirect()->route('attestations.index')->with('success', 'Attestation mise à jour avec succès.');
@@ -89,7 +87,7 @@ class AttestationController extends Controller
     public function generatePDF($id)
     {
         $attestation = Attestation::findOrFail($id);
-        $pdf = Pdf::loadView('attestations.pdf', compact('attestation'));
+        $pdf = Pdf::loadView('attestations.pdf', compact('attestation'))->setPaper('a4', 'landscape');
         return $pdf->download('attestation_' . $attestation->stagiaire_name . '.pdf');
     }
 }

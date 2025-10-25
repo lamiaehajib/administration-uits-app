@@ -22,7 +22,7 @@
             background-image: url('{{ public_path('images/resu.jpg') }}');
             background-size: cover;
             background-position: center;
-            height: 55%;
+            height: 60%;
         }
         .dotted-line {
             border-bottom: 1px dotted #000; 
@@ -37,7 +37,7 @@
         .footer-text {
             font-size: 10px; /* Texte plus petit pour économiser de l'espace */
             text-align: center;
-            margin-top: 65px;
+            margin-top: 60px;
             
             
         }

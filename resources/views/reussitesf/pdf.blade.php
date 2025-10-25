@@ -143,5 +143,9 @@
         <span  style="font-weight: 500;text-transform: uppercase;">Gmail :</span>
         <span class="dotted-line">{{ $reussite->gmail }}</span>
     </div>
+     <div class="section" style="display: flex; justify-content: space-between;">
+        <span  style="font-weight: 500;text-transform: uppercase;">le Reçus Créé par :</span>
+        <span class="dotted-line">{{ $reussite->user->name ?? 'Utilisateur inconnu' }}</span>
+    </div>
 </body>
 </html>

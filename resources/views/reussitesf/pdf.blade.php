@@ -22,7 +22,7 @@
             background-image: url('{{ public_path('images/resu.jpg') }}');
             background-size: cover;
             background-position: center;
-            height: 65%;
+            height: 55%;
         }
         .dotted-line {
             border-bottom: 1px dotted #000; 

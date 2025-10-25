@@ -37,7 +37,7 @@
         .footer-text {
             font-size: 10px; /* Texte plus petit pour économiser de l'espace */
             text-align: center;
-            margin-top: 45px;
+            margin-top: 35px;
             
             
         }

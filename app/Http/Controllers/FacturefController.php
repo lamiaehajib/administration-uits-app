@@ -341,46 +341,14 @@ private function exportToCsv($factures)
     }
 
 
-public function createFromDevisf($devisfId)
-    {
-        // 1. Récupérer le Devisf
-        $devisf = Devisf::with('items', 'ImportantInfof')->findOrFail($devisfId);
-
-        // 2. Préparer les données pour le formulaire de Facture
-        // (Les champs de la facture seront pré-remplis avec les données du devis)
-        $factureData = [
-            'devis_id' => $devisf->id,
-            'date' => now()->format('Y-m-d'), // Date actuelle par défaut
-            'titre' => $devisf->titre,
-            'client' => $devisf->client,
-            'tele' => $devisf->contact, // Utiliser 'contact' du devis comme 'tele'
-            'ref' => $devisf->ref,
-            'adresse' => '', // Laissez vide si non présent dans devis
-            'ice' => '', // Laissez vide si non présent dans devis
-            'currency' => $devisf->currency,
-            'tva' => $devisf->total_ttc > $devisf->total_ht ? round(($devisf->tva / $devisf->total_ht) * 100) : 0, // Calculer le taux de TVA
-        ];
-
-        // 3. Préparer les éléments (items) du devis pour la facture
-        $items = $devisf->items->map(function ($item) {
-            return [
-                'libelle' => $item->libele,
-                'type' => $item->nombre ? 'nombre_collaborateurs' : ($item->nombre_de_jours ? 'nombre_jours' : 'duree'), // Logique pour déterminer le type
-                'duree' => $item->nombre ? null : ($item->nombre_de_jours ? null : 'À définir'),
-                'nombre_collaborateurs' => $item->nombre,
-                'nombre_jours' => $item->nombre_de_jours,
-                'prix_ht' => $item->prix_unitaire,
-                'prix_total' => $item->prix_total,
-            ];
-        })->toArray();
-        
-        // 4. Préparer les infos importantes
-        $importantInfos = $devisf->ImportantInfof->pluck('info')->toArray();
-
-
-        // 5. Afficher la vue de création de facture avec les données pré-remplies
-        return view('facturefs.create', compact('factureData', 'items', 'importantInfos'));
-    }
+public function createFromDevisf(Devisf $devis)
+{
+    // Load the devis with its items and important info
+    $devis->load(['items', 'ImportantInfof']);
+    
+    // Pass the devis to the view so it can pre-fill the form
+    return view('facturefs.create', compact('devis'));
+}
     public function edit(Facturef $facturef)
     {
          // طباعة الـ devis للتأكد من أنه موجود

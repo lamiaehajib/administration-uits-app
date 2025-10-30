@@ -198,7 +198,13 @@ private function exportToCsv($factures)
 
         return redirect()->route('facturefs.index')->with('success', 'Facture de formation dupliquée avec succès!');
     }
-
+public function createFromDevisf(Devisf $devis)
+{
+    $devis->load(['items', 'ImportantInfof']);
+    
+    // Passer le devis directement
+    return view('facturefs.create', ['devisf' => $devis]);
+}
     public function create()
     {
         return view('facturefs.create');
@@ -341,14 +347,9 @@ private function exportToCsv($factures)
     }
 
 
-public function createFromDevisf(Devisf $devis)
-{
-    // Load the devis with its items and important info
-    $devis->load(['items', 'ImportantInfof']);
-    
-    // Pass the devis to the view so it can pre-fill the form
-    return view('facturefs.create', compact('devis'));
-}
+// Ajoute cette méthode dans FacturefController
+
+
     public function edit(Facturef $facturef)
     {
          // طباعة الـ devis للتأكد من أنه موجود

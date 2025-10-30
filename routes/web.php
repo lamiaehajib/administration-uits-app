@@ -215,7 +215,9 @@ Route::get('bon_livraisons/{id}/download', [BonLivraisonController::class, 'down
 
 Route::get('factures/create_from_devis/{devis}', [App\Http\Controllers\FactureController::class, 'createFromDevis'])->name('factures.create_from_devis');
 
-Route::get('facturefs/create_from_devisf/{devisf}', [FacturefController::class, 'createFromDevisf'])->name('facturefs.create_from_devisf');
+
+Route::get('/facturefs/create-from-devis/{devis}', [FacturefController::class, 'createFromDevisf'])
+    ->name('facturefs.create_from_devisf');
 
 Route::get('/devis/{devis}/duplicate', [App\Http\Controllers\DevisController::class, 'duplicate'])->name('devis.duplicate');
 

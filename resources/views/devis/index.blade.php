@@ -55,13 +55,13 @@
             color: white;
         }
 
+        /* Conteneur du Tableau (Sans scroll par défaut) */
         .table-custom {
             background: white;
             border-radius: 15px;
-            overflow: hidden;
             box-shadow: 0 2px 10px rgba(0,0,0,0.08);
         }
-
+        
         .table-custom thead {
             background: linear-gradient(135deg, #C2185B, #D32F2F);
             color: white;
@@ -193,6 +193,33 @@
             background: linear-gradient(135deg, #C2185B, #D32F2F);
             border-color: transparent;
         }
+        
+        /* ------------------------------------------------ */
+        /* ⚠️ RÈGLES RESPONSIVE POUR LE SCROLL DU TABLEAU */
+        /* ------------------------------------------------ */
+        
+        @media (max-width: 991.98px) {
+             /* ⚠️ Hadchi houa l'mohim: Le scroll horizontal f l'table-custom */
+             .table-custom {
+                overflow-x: auto; /* Active le scroll horizontal si le contenu déborde */
+             }
+             
+             .table-custom table {
+                 /* Force la table à être plus large que l'écran pour activer le scroll */
+                 min-width: 900px; 
+             }
+             
+             /* Assurer que les filtres tiennent dans l'écran */
+             .filter-card .g-3 > div[class*="col-"] {
+                margin-bottom: 15px;
+             }
+
+             /* Assurer que les stats tiennent sur deux colonnes */
+             .col-md-6 {
+                flex: 0 0 50%;
+                max-width: 50%;
+             }
+        }
 
         @media (max-width: 768px) {
             .stats-card {
@@ -202,11 +229,46 @@
             .filter-card {
                 padding: 15px;
             }
+
+            /* Les champs de filtres prennent toute la largeur sur petit écran */
+            .row.g-3 > div[class*="col-md"], .row.g-3 > div[class*="col-sm"] {
+                 flex: 0 0 100%;
+                 max-width: 100%;
+            }
+            
+            /* L'en-tête devient vertical */
+            .d-flex.justify-content-between.align-items-center.mb-4 {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 10px;
+            }
+            .d-flex.justify-content-between.align-items-center.mb-4 .d-flex.gap-2 {
+                 width: 100%;
+                 justify-content: space-between;
+            }
+            
+            /* Boutons Période deviennent flex-wrap */
+            .filter-card .d-flex.flex-wrap.gap-2 {
+                 justify-content: space-between;
+            }
+            .filter-card .period-btn {
+                 flex-basis: 48%; /* 2 par ligne */
+                 text-align: center;
+                 margin-bottom: 5px;
+            }
+            
+            /* Mettre les boutons d'action des filtres à 100% sur très petit écran */
+            .filter-card .col-12.d-flex {
+                 flex-direction: column;
+             }
+             .filter-card .col-12.d-flex > * {
+                 width: 100%;
+                 margin-bottom: 10px;
+             }
         }
     </style>
 
     <div class="container-fluid px-4">
-        <!-- En-tête avec titre et bouton d'ajout -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h2 class="gradient-text mb-1" style="font-size: 32px; font-weight: 700;">
@@ -214,15 +276,16 @@
                 </h2>
                 <p class="text-muted mb-0">Gérez vos devis et suivez vos statistiques</p>
             </div>
-            <a href="{{ route('devis.create') }}" class="btn btn-gradient">
-                <i class="fas fa-plus-circle me-2"></i> Nouveau Devis
-            </a>
-            <a href="{{ route('devis.corbeille') }}" class="btn btn-danger">
-    <i class="fa fa-trash"></i> Corbeille
-</a>
+            <div class="d-flex gap-2">
+                <a href="{{ route('devis.create') }}" class="btn btn-gradient">
+                    <i class="fas fa-plus-circle me-2"></i> Nouveau Devis
+                </a>
+                <a href="{{ route('devis.corbeille') }}" class="btn btn-danger">
+                    <i class="fa fa-trash"></i> Corbeille
+                </a>
+            </div>
         </div>
 
-        <!-- Statistiques -->
         <div class="row mb-4">
             <div class="col-xl-3 col-md-6 mb-3">
                 <div class="stats-card p-4">
@@ -285,19 +348,16 @@
             </div>
         </div>
 
-        <!-- Filtres avancés -->
         <div class="filter-card">
             <form action="{{ route('devis.index') }}" method="GET" id="filterForm">
                 <div class="row g-3">
-                    <!-- Recherche -->
                     <div class="col-md-4">
                         <label class="filter-label">Recherche</label>
                         <input type="text" name="search" class="form-control search-box" 
-                               placeholder="Client, N° Devis, Titre..." 
-                               value="{{ request('search') }}">
+                                placeholder="Client, N° Devis, Titre..." 
+                                value="{{ request('search') }}">
                     </div>
 
-                    <!-- Période prédéfinie -->
                     <div class="col-md-8">
                         <label class="filter-label">Période</label>
                         <div class="d-flex flex-wrap gap-2">
@@ -315,33 +375,30 @@
                         <input type="hidden" name="period" id="periodInput" value="{{ request('period') }}">
                     </div>
 
-                    <!-- Date personnalisée -->
                     <div class="col-md-3">
                         <label class="filter-label">Date début</label>
                         <input type="date" name="date_from" class="form-control search-box" 
-                               value="{{ request('date_from') }}">
+                                value="{{ request('date_from') }}">
                     </div>
 
                     <div class="col-md-3">
                         <label class="filter-label">Date fin</label>
                         <input type="date" name="date_to" class="form-control search-box" 
-                               value="{{ request('date_to') }}">
+                                value="{{ request('date_to') }}">
                     </div>
 
-                    <!-- Montant -->
                     <div class="col-md-3">
                         <label class="filter-label">Montant Min</label>
                         <input type="number" name="montant_min" class="form-control search-box" 
-                               placeholder="0.00" step="0.01" value="{{ request('montant_min') }}">
+                                placeholder="0.00" step="0.01" value="{{ request('montant_min') }}">
                     </div>
 
                     <div class="col-md-3">
                         <label class="filter-label">Montant Max</label>
                         <input type="number" name="montant_max" class="form-control search-box" 
-                               placeholder="0.00" step="0.01" value="{{ request('montant_max') }}">
+                                placeholder="0.00" step="0.01" value="{{ request('montant_max') }}">
                     </div>
 
-                    <!-- Devise -->
                     <div class="col-md-2">
                         <label class="filter-label">Devise</label>
                         <select name="currency" class="form-select search-box">
@@ -352,7 +409,6 @@
                     </div>
 
                     
-                    <!-- Utilisateur -->
                     <div class="col-md-3">
                         <label class="filter-label">Créé par</label>
                         <select name="user_id" class="form-select search-box">
@@ -365,7 +421,6 @@
                         </select>
                     </div>
 
-                    <!-- Tri -->
                     <div class="col-md-3">
                         <label class="filter-label">Trier par</label>
                         <select name="sort" class="form-select search-box" onchange="this.form.submit()">
@@ -377,7 +432,6 @@
                         </select>
                     </div>
 
-                    <!-- Direction -->
                     <div class="col-md-2">
                         <label class="filter-label">Ordre</label>
                         <select name="direction" class="form-select search-box" onchange="this.form.submit()">
@@ -386,13 +440,12 @@
                         </select>
                     </div>
 
-                    <!-- Boutons -->
                     <div class="col-12 d-flex gap-2 justify-content-end">
                         <button type="submit" class="btn btn-gradient">
                             <i class="fas fa-filter me-2"></i> Filtrer
                         </button>
                         <a href="{{ route('devis.index') }}" class="btn btn-outline-secondary" 
-                           style="border-radius: 8px; padding: 10px 25px;">
+                            style="border-radius: 8px; padding: 10px 25px;">
                             <i class="fas fa-redo me-2"></i> Réinitialiser
                         </a>
                     </div>
@@ -400,7 +453,6 @@
             </form>
         </div>
 
-        <!-- Résultats et Pagination -->
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div class="text-muted">
                 Affichage de <strong>{{ $devis->firstItem() ?? 0 }}</strong> à <strong>{{ $devis->lastItem() ?? 0 }}</strong> 
@@ -417,7 +469,6 @@
             </div>
         </div>
 
-        <!-- Tableau des devis -->
         <div class="table-custom">
             <table class="table table-hover mb-0">
                 <thead>
@@ -463,17 +514,17 @@
                             <td>
                                 <div class="d-flex justify-content-center">
                                     <a href="{{ route('devis.show', $d->id) }}" class="action-btn btn-view" 
-                                       title="Voir PDF">
+                                        title="Voir PDF">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     <a href="{{ route('devis.edit', $d->id) }}" class="action-btn btn-edit" 
-                                       title="Modifier">
+                                        title="Modifier">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <a href="{{ route('devis.duplicate', $d->id) }}" class="btn btn-secondary btn-sm" title="Dupliquer">
-                                    <i class="fas fa-copy"></i> 
-                                </a>
-                                    <a href="{{ route('factures.create_from_devis', $d->id) }}" class="btn btn-primary">Ajouter Facture</a>
+                                    <a href="{{ route('devis.duplicate', $d->id) }}" class="action-btn btn-duplicate" title="Dupliquer">
+                                        <i class="fas fa-copy"></i> 
+                                    </a>
+                                    <a href="{{ route('factures.create_from_devis', $d->id) }}" class="btn btn-primary btn-sm mx-1" title="Créer Facture">Ajouter Facture</a>
                                     <form action="{{ route('devis.destroy', $d->id) }}" method="POST" class="d-inline delete-form">
                                         @csrf
                                         @method('DELETE')
@@ -498,7 +549,6 @@
             </table>
         </div>
 
-        <!-- Pagination -->
         <div class="d-flex justify-content-center">
             {{ $devis->links('pagination.custom') }}
         </div>
@@ -509,7 +559,8 @@
         function setPeriod(period) {
             document.getElementById('periodInput').value = period;
             document.querySelectorAll('.period-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            // Utilisez event.currentTarget pour gérer l'événement correctement
+            event.currentTarget.classList.add('active'); 
             document.getElementById('filterForm').submit();
         }
 

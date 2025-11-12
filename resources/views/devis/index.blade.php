@@ -564,7 +564,7 @@
             document.getElementById('filterForm').submit();
         }
 
-        // SweetAlert pour la suppression
+       
         document.querySelectorAll('.delete-btn').forEach(button => {
             button.addEventListener('click', function(e) {
                 e.preventDefault();

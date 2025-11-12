@@ -162,7 +162,7 @@ private function exportToCsv($factures)
         // 1. Clone the existing facturef
         $newFacturef = $facturef->replicate();
         
-        // 2. Mettre à jour les champs spécifiques pour la duplication
+       
         $newFacturef->facturef_num = null; // Reset facturef_num pour générer un nouveau
         $newFacturef->created_at = now();
         $newFacturef->updated_at = now();

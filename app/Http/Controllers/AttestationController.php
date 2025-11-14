@@ -46,7 +46,7 @@ class AttestationController extends Controller
             'date_fin' => $request->input('date_fin'),
             'poste' => $request->input('poste'),
             'user_id' => auth()->id(),
-            'afficher_cachet' => $request->boolean('afficher_cachet', true), // Valeur par défaut: true
+            'afficher_cachet' => $request->boolean('afficher_cachet', true), 
         ]);
 
         return redirect()->route('attestations.index')->with('success', 'Attestation créée avec succès.');
@@ -65,7 +65,7 @@ class AttestationController extends Controller
             'date_debut' => 'required|date',
             'date_fin' => 'required|date',
             'poste' => 'required',
-            'afficher_cachet' => 'boolean', // Vérification de la valeur
+            'afficher_cachet' => 'boolean', 
         ]);
 
         $attestation->update([

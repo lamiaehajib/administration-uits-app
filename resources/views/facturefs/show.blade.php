@@ -119,7 +119,7 @@
     width: 350px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Ombre douce */
     font-family: 'Arial', sans-serif; /* Police élégante */
-    font-size: 12px; /* Taille du texte */
+    font-size: 11px; /* Taille du texte */
     font-weight: bold; /* Texte en gras */
     transition: transform 0.2s, box-shadow 0.2s; /* Animation au survol */
     

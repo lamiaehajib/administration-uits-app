@@ -54,14 +54,14 @@
 .devis-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 30px;
+            margin-top: 20px;
             border: 2px dashed rgb(179, 25, 25);
         }
 
         .devis-table th,
         .devis-table td {
             border: 2px dashed red;
-            padding: 3px;
+            padding: 1px;
             text-align: center;
         }
 
@@ -70,12 +70,12 @@
             color: rgb(255, 255, 255);
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 12px
+            font-size: 11px
         }
 
         .devis-table tbody td {
             font-weight: bold;
-              font-size: 11.5px
+              font-size: 10.5px
         }
 
         .totals-table {
@@ -89,9 +89,9 @@
         .totals-table th,
         .totals-table td {
             border: 2px dashed red;
-            padding: 3px;
+            padding: 1px;
             text-align: left;
-             font-size: 12px
+             font-size: 11px
         }
 
         .totals {
@@ -101,11 +101,11 @@
         }
 
         .important-title {
-        font-size: 18px;
+        font-size: 16px;
         font-weight: bold;
         color: #c0392b; /* لون بارز */
         text-transform: uppercase;
-        margin-bottom: 30px;
+        margin-bottom: 10px;
         border-left: 5px solid #e74c3c; /* شريط تزييني على اليسار */
         padding-left: 10px; /* مسافة بين الشريط والنص */
     }
@@ -115,7 +115,7 @@
     background: linear-gradient(45deg, #ff9a9e, #fad0c4); /* Dégradé attrayant */
     color: #845858; /* Texte blanc */
     margin: 10px 0; /* Espacement entre les éléments */
-    padding: 2px; /* Espace intérieur pour chaque élément */
+    padding: 3px; /* Espace intérieur pour chaque élément */
     width: 350px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Ombre douce */
     font-family: 'Arial', sans-serif; /* Police élégante */

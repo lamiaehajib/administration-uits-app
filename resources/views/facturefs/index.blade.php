@@ -373,7 +373,7 @@
         <div class="factures-header">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
                 <h1 class="factures-title">
-                    <i class="fas fa-file-invoice"></i> Factures de Formation
+                    <i class="fas fa-file-invoice"></i> Facturehhs de Formation
                 </h1>
                 <a href="{{ route('facturefs.create') }}" class="btn-outline" style="background: white;">
                     <i class="fas fa-plus"></i> Nouvelle Facture

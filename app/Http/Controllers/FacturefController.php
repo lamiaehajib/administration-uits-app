@@ -135,8 +135,7 @@ private function exportToCsv($factures)
         
         // En-têtes CSV
         fputcsv($file, ['N° Facture', 'Date', 'Client', 'Titre', 'Total HT', 'TVA', 'Total TTC', 'Devise']);
-        
-        // Données
+       
         foreach ($factures as $facture) {
             fputcsv($file, [
                 $facture->facturef_num,

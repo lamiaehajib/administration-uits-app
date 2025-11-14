@@ -105,7 +105,7 @@
         font-weight: bold;
         color: #c0392b; /* لون بارز */
         text-transform: uppercase;
-        margin-bottom: 10px;
+        margin-bottom: 50px;
         border-left: 5px solid #e74c3c; /* شريط تزييني على اليسار */
         padding-left: 10px; /* مسافة بين الشريط والنص */
     }

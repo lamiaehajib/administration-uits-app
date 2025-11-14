@@ -101,7 +101,7 @@
         }
 
         .important-title {
-        font-size: 16px;
+        font-size: 14px;
         font-weight: bold;
         color: #c0392b; /* لون بارز */
         text-transform: uppercase;

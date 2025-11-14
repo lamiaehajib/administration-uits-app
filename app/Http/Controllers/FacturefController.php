@@ -120,7 +120,6 @@ private function exportToExcel($factures)
     // return Excel::download(new FacturefsExport($factures), $filename);
 }
 
-// Fonction helper pour export CSV
 private function exportToCsv($factures)
 {
     $filename = 'factures_formation_' . Carbon::now()->format('Y-m-d_His') . '.csv';

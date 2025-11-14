@@ -36,7 +36,7 @@ class AttestationController extends Controller
             'date_debut' => 'required|date',
             'date_fin' => 'required|date',
             'poste' => 'required',
-            'afficher_cachet' => 'boolean', // Validation du cachet
+            'afficher_cachet' => 'boolean', 
         ]);
 
         Attestation::create([

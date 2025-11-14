@@ -369,7 +369,7 @@
     </style>
 
     <div class="factures-container">
-        <!-- Header avec titre -->
+        
         <div class="factures-header">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
                 <h1 class="factures-title">

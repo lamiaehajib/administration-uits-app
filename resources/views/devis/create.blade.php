@@ -480,6 +480,7 @@
                         <select name="currency" class="form-select" required>
                             <option value="DH" {{ old('currency', 'DH') == 'DH' ? 'selected' : '' }}>Dirham (DH)</option>
                             <option value="EUR" {{ old('currency') == 'EUR' ? 'selected' : '' }}>Euro (€)</option>
+                             <option value="CFA" {{ old('currency') == 'CFA' ? 'selected' : '' }}>CFA</option>
                         </select>
                     </div>
                     <div>

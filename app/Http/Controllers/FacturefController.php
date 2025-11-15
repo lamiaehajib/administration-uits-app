@@ -236,7 +236,7 @@ public function createFromDevisf(Devisf $devis)
             'important' => 'nullable|array',
             'important.*' => 'nullable|string|max:255',
             'afficher_cachet' => 'nullable|boolean',
-            'currency' => 'required|in:DH,EUR',
+            'currency' => 'required|in:DH,EUR,CFA',
             'tva' => 'required|numeric|in:0,20',
         ]);
 
@@ -384,7 +384,7 @@ public function createFromDevisf(Devisf $devis)
             'important' => 'nullable|array',
             'important.*' => 'nullable|string|max:255',
             'afficher_cachet' => 'nullable|boolean',
-            'currency' => 'required|in:DH,EUR',
+            'currency' => 'required|in:DH,EUR,CFA',
             'tva' => 'required|numeric|in:0,20',
         ]);
 

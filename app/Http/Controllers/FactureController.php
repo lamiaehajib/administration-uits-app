@@ -388,7 +388,7 @@ private function exportPDFListe($factures)
             'important' => 'nullable|array',
             'important.*' => 'nullable|string|max:255', // عدلت required ل nullable
             'afficher_cachet' => 'nullable|boolean',
-            'currency' => 'required|in:DH,EUR',
+            'currency' => 'required|in:DH,EUR,CFA',
             'tva' => 'required|numeric|in:0,20', // إضافة فاليديشن لـ tva
         ]);
     
@@ -497,7 +497,7 @@ private function exportPDFListe($factures)
             'prix_ht' => 'required|array',
             'important' => 'nullable|array',
             'afficher_cachet' => 'nullable|boolean',
-            'currency' => 'required|in:DH,EUR',
+            'currency' => 'required|in:DH,EUR,CFA',
 'tva' => 'required|numeric|in:0,20',
         ]);
         

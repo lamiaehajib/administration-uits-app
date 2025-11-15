@@ -523,6 +523,7 @@
                         <select name="currency" class="form-select">
                             <option value="DH" {{ old('currency', $devisf->currency) == 'DH' ? 'selected' : '' }}>Dirham (DH)</option>
                             <option value="EUR" {{ old('currency', $devisf->currency) == 'EUR' ? 'selected' : '' }}>Euro (€)</option>
+                             <option value="CFA" {{ old('currency', $devisf->currency) == 'CFA' ? 'selected' : '' }}>CFA</option>
                         </select>
                     </div>
                 </div>

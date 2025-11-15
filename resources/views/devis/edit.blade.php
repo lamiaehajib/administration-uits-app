@@ -494,6 +494,7 @@
                         <select name="currency" class="form-select" required>
                             <option value="DH" {{ old('currency', $devis->currency) == 'DH' ? 'selected' : '' }}>Dirham (DH)</option>
                             <option value="EUR" {{ old('currency', $devis->currency) == 'EUR' ? 'selected' : '' }}>Euro (€)</option>
+                            <option value="CFA" {{ old('currency', $devis->currency) == 'CFA' ? 'selected' : '' }}>CFA</option>
                         </select>
                     </div>
                     <div>

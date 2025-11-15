@@ -482,6 +482,7 @@
                         <select name="currency" class="form-select" required>
                             <option value="DH" {{ old('currency', $facture->currency) == 'DH' ? 'selected' : '' }}>Dirham (DH)</option>
                             <option value="EUR" {{ old('currency', $facture->currency) == 'EUR' ? 'selected' : '' }}>Euro (€)</option>
+                            <option value="CFA" {{ old('currency', $facture->currency) == 'CFA' ? 'selected' : '' }}>CFA</option>
                         </select>
                     </div>
                     <div>

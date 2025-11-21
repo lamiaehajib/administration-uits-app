@@ -15,25 +15,63 @@ use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
+    // Taux de conversion vers DH (à mettre à jour régulièrement)
+    private const EXCHANGE_RATES = [
+        'DH'  => 1,
+        'EUR' => 10.74,  // 1 EUR = 10.74 DH
+        'CFA' => 0.0162, // 1 CFA = 0.0162 DH
+    ];
+
+    /**
+     * Convertir un montant vers DH
+     */
+    private function convertToDH($amount, $currency)
+    {
+        $rate = self::EXCHANGE_RATES[$currency] ?? 1;
+        return $amount * $rate;
+    }
+
+    /**
+     * Calculer le revenu total des factures avec conversion
+     */
+    private function getFacturesRevenueInDH($model, $dateFilter = null)
+    {
+        $query = $model::query();
+        
+        if ($dateFilter) {
+            $query->whereMonth('created_at', $dateFilter['month'])
+                  ->whereYear('created_at', $dateFilter['year']);
+        }
+
+        $factures = $query->select('total_ttc', 'currency')->get();
+        
+        $total = 0;
+        foreach ($factures as $facture) {
+            $total += $this->convertToDH($facture->total_ttc, $facture->currency);
+        }
+        
+        return $total;
+    }
+
     public function index()
     {
         // ==================== STATISTIQUES GLOBALES ====================
         
-        // Reçus Stage (Reussite)
+        // Reçus Stage (Reussite) - déjà en DH
         $totalReussites = Reussite::count();
         $revenusReussites = Reussite::sum('montant_paye');
         $reussitesCurrentMonth = Reussite::whereMonth('created_at', Carbon::now()->month)
                                          ->whereYear('created_at', Carbon::now()->year)
                                          ->count();
         
-        // Reçus Formation (Reussitef)
+        // Reçus Formation (Reussitef) - déjà en DH
         $totalReussitesf = Reussitef::count();
         $revenusReussitesf = Reussitef::sum('montant_paye');
         $reussitesfCurrentMonth = Reussitef::whereMonth('created_at', Carbon::now()->month)
                                            ->whereYear('created_at', Carbon::now()->year)
                                            ->count();
         
-        // Reçus UCG
+        // Reçus UCG - déjà en DH
         $totalUcgs = Ucg::count();
         $revenusUcgs = Ucg::sum('montant_paye');
         $ucgsCurrentMonth = Ucg::whereMonth('created_at', Carbon::now()->month)
@@ -54,16 +92,18 @@ class DashboardController extends Controller
                                     ->whereYear('created_at', Carbon::now()->year)
                                     ->count();
         
-        // Factures Projet
+        // ========== FACTURES AVEC CONVERSION DEVISES ==========
+        
+        // Factures Projet - avec conversion
         $totalFactures = Facture::count();
-        $facturesRevenu = Facture::sum('total_ttc');
+        $facturesRevenu = $this->getFacturesRevenueInDH(Facture::class);
         $facturesCurrentMonth = Facture::whereMonth('created_at', Carbon::now()->month)
                                        ->whereYear('created_at', Carbon::now()->year)
                                        ->count();
         
-        // Factures Formation
+        // Factures Formation - avec conversion
         $totalFacturesf = Facturef::count();
-        $facturesfRevenu = Facturef::sum('total_ttc');
+        $facturesfRevenu = $this->getFacturesRevenueInDH(Facturef::class);
         $facturesfCurrentMonth = Facturef::whereMonth('created_at', Carbon::now()->month)
                                          ->whereYear('created_at', Carbon::now()->year)
                                          ->count();
@@ -77,12 +117,13 @@ class DashboardController extends Controller
         
         // ==================== DONNÉES POUR GRAPHIQUES ====================
         
-        // Graphique : Évolution mensuelle des revenus RÉELS (6 derniers mois - SANS DEVIS)
+        // Graphique : Évolution mensuelle des revenus RÉELS (6 derniers mois)
         $monthlyRevenue = [];
         for ($i = 5; $i >= 0; $i--) {
             $date = Carbon::now()->subMonths($i);
             $month = $date->format('M Y');
             
+            // Reçus (déjà en DH)
             $revenueMonth = Reussite::whereMonth('created_at', $date->month)
                                     ->whereYear('created_at', $date->year)
                                     ->sum('montant_paye') +
@@ -91,13 +132,25 @@ class DashboardController extends Controller
                                     ->sum('montant_paye') +
                            Ucg::whereMonth('created_at', $date->month)
                               ->whereYear('created_at', $date->year)
-                              ->sum('montant_paye') +
-                           Facture::whereMonth('created_at', $date->month)
-                                  ->whereYear('created_at', $date->year)
-                                  ->sum('total_ttc') +
-                           Facturef::whereMonth('created_at', $date->month)
-                                   ->whereYear('created_at', $date->year)
-                                   ->sum('total_ttc');
+                              ->sum('montant_paye');
+            
+            // Factures Projet avec conversion
+            $facturesProjet = Facture::whereMonth('created_at', $date->month)
+                                     ->whereYear('created_at', $date->year)
+                                     ->select('total_ttc', 'currency')
+                                     ->get();
+            foreach ($facturesProjet as $f) {
+                $revenueMonth += $this->convertToDH($f->total_ttc, $f->currency);
+            }
+            
+            // Factures Formation avec conversion
+            $facturesFormation = Facturef::whereMonth('created_at', $date->month)
+                                         ->whereYear('created_at', $date->year)
+                                         ->select('total_ttc', 'currency')
+                                         ->get();
+            foreach ($facturesFormation as $f) {
+                $revenueMonth += $this->convertToDH($f->total_ttc, $f->currency);
+            }
             
             $monthlyRevenue[] = [
                 'month' => $month,
@@ -125,23 +178,8 @@ class DashboardController extends Controller
             ['category' => 'Factures Formation', 'count' => $totalFacturesf],
         ];
         
-        // Graphique : Top 5 clients (basé sur les factures uniquement)
-        $topClients = DB::table(DB::raw('(
-            SELECT client, SUM(total_ttc) as total FROM factures GROUP BY client
-            UNION ALL
-            SELECT client, SUM(total_ttc) as total FROM facturefs GROUP BY client
-        ) as combined'))
-        ->select('client', DB::raw('SUM(total) as total_revenue'))
-        ->groupBy('client')
-        ->orderByDesc('total_revenue')
-        ->limit(5)
-        ->get()
-        ->map(function($item) {
-            return [
-                'client' => $item->client,
-                'revenue' => round($item->total_revenue, 2)
-            ];
-        });
+        // Graphique : Top 5 clients (avec conversion devises)
+        $topClients = $this->getTopClientsWithConversion();
         
         // Activités récentes
         $recentActivities = collect()
@@ -150,6 +188,7 @@ class DashboardController extends Controller
                     'type' => 'Reçu Stage',
                     'description' => $item->nom . ' ' . $item->prenom,
                     'amount' => $item->montant_paye,
+                    'currency' => 'DH',
                     'date' => $item->created_at
                 ];
             }))
@@ -157,7 +196,9 @@ class DashboardController extends Controller
                 return [
                     'type' => 'Facture Projet',
                     'description' => $item->client . ' - ' . $item->titre,
-                    'amount' => $item->total_ttc,
+                    'amount' => $this->convertToDH($item->total_ttc, $item->currency),
+                    'original_amount' => $item->total_ttc,
+                    'original_currency' => $item->currency,
                     'date' => $item->created_at
                 ];
             }))
@@ -165,7 +206,9 @@ class DashboardController extends Controller
                 return [
                     'type' => 'Facture Formation',
                     'description' => $item->client . ' - ' . $item->titre,
-                    'amount' => $item->total_ttc,
+                    'amount' => $this->convertToDH($item->total_ttc, $item->currency),
+                    'original_amount' => $item->total_ttc,
+                    'original_currency' => $item->currency,
                     'date' => $item->created_at
                 ];
             }))
@@ -173,25 +216,57 @@ class DashboardController extends Controller
             ->take(10);
         
         return view('dashboard', compact(
-            // Statistiques Reçus Stage
             'totalReussites', 'revenusReussites', 'reussitesCurrentMonth',
-            // Statistiques Reçus Formation
             'totalReussitesf', 'revenusReussitesf', 'reussitesfCurrentMonth',
-            // Statistiques Reçus UCG
             'totalUcgs', 'revenusUcgs', 'ucgsCurrentMonth',
-            // Statistiques Devis Projet
             'totalDevis', 'devisValeurTotal', 'devisCurrentMonth',
-            // Statistiques Devis Formation
             'totalDevisf', 'devisfValeurTotal', 'devisfCurrentMonth',
-            // Statistiques Factures Projet
             'totalFactures', 'facturesRevenu', 'facturesCurrentMonth',
-            // Statistiques Factures Formation
             'totalFacturesf', 'facturesfRevenu', 'facturesfCurrentMonth',
-            // Totaux globaux
             'revenuTotal', 'valeurDevisTotal',
-            // Données graphiques
             'monthlyRevenue', 'revenueByType', 'documentCounts', 
             'topClients', 'recentActivities'
         ));
+    }
+
+    /**
+     * Top 5 clients avec conversion des devises
+     */
+    private function getTopClientsWithConversion()
+    {
+        // Récupérer toutes les factures avec leur devise
+        $facturesProjet = Facture::select('client', 'total_ttc', 'currency')->get();
+        $facturesFormation = Facturef::select('client', 'total_ttc', 'currency')->get();
+        
+        $clientTotals = [];
+        
+        // Calculer les totaux par client (Factures Projet)
+        foreach ($facturesProjet as $f) {
+            $amountDH = $this->convertToDH($f->total_ttc, $f->currency);
+            if (!isset($clientTotals[$f->client])) {
+                $clientTotals[$f->client] = 0;
+            }
+            $clientTotals[$f->client] += $amountDH;
+        }
+        
+        // Ajouter Factures Formation
+        foreach ($facturesFormation as $f) {
+            $amountDH = $this->convertToDH($f->total_ttc, $f->currency);
+            if (!isset($clientTotals[$f->client])) {
+                $clientTotals[$f->client] = 0;
+            }
+            $clientTotals[$f->client] += $amountDH;
+        }
+        
+        // Trier et prendre top 5
+        arsort($clientTotals);
+        $topClients = array_slice($clientTotals, 0, 5, true);
+        
+        return collect($topClients)->map(function($total, $client) {
+            return [
+                'client' => $client,
+                'revenue' => round($total, 2)
+            ];
+        })->values();
     }
 }

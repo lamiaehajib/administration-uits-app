@@ -10,6 +10,7 @@ class Ucg extends Model {
     use HasFactory,SoftDeletes;
 
     protected $fillable = [
-        'nom', 'prenom', 'recu_garantie', 'details', 'montant_paye', 'date_paiement','equipemen'
+            'user_id',  // <-- zid hadi
+'nom', 'prenom', 'recu_garantie', 'details', 'montant_paye', 'date_paiement','equipemen'
     ];
 }

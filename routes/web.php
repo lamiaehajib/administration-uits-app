@@ -13,6 +13,7 @@ use App\Http\Controllers\DevisController;
 use App\Http\Controllers\DevisfController;
 use App\Http\Controllers\FactureController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RepairTicketController;
 use App\Http\Controllers\ReussiteController;
 use App\Http\Controllers\ReussitefController;
 use App\Http\Controllers\RoleController;
@@ -53,6 +54,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::resource('users', UserController::class);
 Route::resource('roles', RoleController::class);
+
+
 
 
   Route::put('/devis/{id}/restore', [DevisController::class, 'restore'])
@@ -221,7 +224,7 @@ Route::get('/facturefs/create-from-devis/{devis}', [FacturefController::class, '
 
 Route::get('/devis/{devis}/duplicate', [App\Http\Controllers\DevisController::class, 'duplicate'])->name('devis.duplicate');
 
-Route::get('/devisf/{devisf}/duplicate', [App\Http\Controllers\DevisfController::class, 'duplicate'])->name('devisf.duplicate');});
+Route::get('/devisf/{devisf}/duplicate', [App\Http\Controllers\DevisfController::class, 'duplicate'])->name('devisf.duplicate');
 
 Route::get('/factures/{facture}/duplicate', [App\Http\Controllers\FactureController::class, 'duplicate'])->name('factures.duplicate');
 
@@ -242,5 +245,10 @@ Route::get('/facturefs/{facturef}', [FacturefController::class, 'show'])
       ->withTrashed();
 
       Route::get('/download-backup', [BackupController::class, 'downloadBackup'])->name('download.backup');
+
+      Route::resource('repair-tickets', RepairTicketController::class);
+    Route::get('repair-tickets/{repairTicket}/pdf', [RepairTicketController::class, 'downloadPdf'])
+        ->name('repair-tickets.pdf');
+      });
 
 require __DIR__.'/auth.php';

@@ -613,6 +613,7 @@
                         <option value="Lenovo" {{ old('device_brand') == 'Lenovo' ? 'selected' : '' }}>Lenovo</option>
                         <option value="Asus" {{ old('device_brand') == 'Asus' ? 'selected' : '' }}>Asus</option>
                         <option value="Sony" {{ old('device_brand') == 'Sony' ? 'selected' : '' }}>Sony</option>
+                        <option value="Acer" {{ old('device_brand') == 'Acer' ? 'selected' : '' }}>Acer</option>
                         <option value="Autre" {{ old('device_brand') == 'Autre' ? 'selected' : '' }}>Autre</option>
                     </select>
                     @error('device_brand')

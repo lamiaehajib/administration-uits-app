@@ -776,7 +776,7 @@
                     <select name="device_brand">
                         <option value="">Sélectionner une marque</option>
                         @php
-                            $brands = ['Apple', 'Samsung', 'Huawei', 'Xiaomi', 'Oppo', 'OnePlus', 'HP', 'Dell', 'Lenovo', 'Asus', 'Sony', 'Autre'];
+                            $brands = ['Apple', 'Samsung', 'Huawei', 'Xiaomi', 'Oppo', 'OnePlus', 'HP', 'Dell', 'Lenovo', 'Asus','Acer', 'Sony', 'Autre'];
                         @endphp
                         @foreach($brands as $brand)
                         <option value="{{ $brand }}" {{ old('device_brand', $repairTicket->device_brand) == $brand ? 'selected' : '' }}>

@@ -36,7 +36,7 @@
         
         .ticket-number { 
             background: linear-gradient(135deg, #D32F2F 0%, #C2185B 100%);
-            color: white;
+            color: black;
             padding: 8px; 
             text-align: center; 
             margin-bottom: 12px; 

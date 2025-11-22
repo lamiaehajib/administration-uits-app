@@ -257,11 +257,7 @@ class RepairTicketController extends Controller
     }
 
     // Helper: Export PDF Liste
-    private function exportPdfList($tickets)
-    {
-        $pdf = Pdf::loadView('repair-tickets.pdf-list', compact('tickets'));
-        return $pdf->download('tickets-liste-' . now()->format('Y-m-d') . '.pdf');
-    }
+    
 
     public function create()
     {

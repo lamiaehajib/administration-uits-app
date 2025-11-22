@@ -701,9 +701,7 @@
             <a href="{{ route('repair-tickets.index', array_merge(request()->query(), ['export' => 'csv'])) }}" class="btn-custom outline">
                 <i class="fas fa-file-csv"></i> Export CSV
             </a>
-            <a href="{{ route('repair-tickets.index', array_merge(request()->query(), ['export' => 'pdf'])) }}" class="btn-custom outline">
-                <i class="fas fa-file-pdf"></i> Export PDF
-            </a>
+            
             <a href="{{ route('repair-tickets.create') }}" class="btn-custom primary">
                 <i class="fas fa-plus"></i> Nouveau Ticket
             </a>

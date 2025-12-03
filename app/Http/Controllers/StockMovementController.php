@@ -9,9 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 class StockMovementController extends Controller
 {
-    /**
-     * Afficher la liste des mouvements de stock
-     */
+    
     public function index(Request $request)
     {
         $query = StockMovement::with(['produit', 'user', 'recuUcg']);

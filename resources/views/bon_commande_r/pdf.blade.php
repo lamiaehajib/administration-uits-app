@@ -162,7 +162,7 @@
 
         .footer-container {
             text-align: center;
-            margin-top: 270px;
+            margin-top: 230px;
         }
 
         .footer-line {

@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Reussite;
 use App\Models\Reussitef;
-use App\Models\Ucg;
+use App\Models\RecuUcg;
 use App\Models\Devis;
 use App\Models\Devisf;
 use App\Models\Facture;
@@ -76,6 +76,27 @@ class DashboardController extends Controller
         return $total;
     }
 
+    /**
+     * ✅ NOUVELLE MÉTHODE - Calculer la MARGE totale des Reçus UCG (rba7)
+     */
+    private function getRecuUcgMargeTotal($dateFilter = null)
+    {
+        $query = RecuUcg::with('items');
+        
+        // Apply user filter
+        $query = $this->applyUserFilter($query);
+        
+        if ($dateFilter) {
+            $query->whereMonth('created_at', $dateFilter['month'])
+                  ->whereYear('created_at', $dateFilter['year']);
+        }
+
+        $recus = $query->get();
+        
+        // Somme de toutes les marges
+        return $recus->sum(fn($recu) => $recu->margeGlobale());
+    }
+
     public function index()
     {
         // ==================== STATISTIQUES GLOBALES ====================
@@ -100,12 +121,12 @@ class DashboardController extends Controller
                                            ->whereYear('created_at', Carbon::now()->year)
                                            ->count();
         
-        // Reçus UCG
-        $queryUcgs = Ucg::query();
-        $queryUcgs = $this->applyUserFilter($queryUcgs);
-        $totalUcgs = $queryUcgs->count();
-        $revenusUcgs = $queryUcgs->sum('montant_paye');
-        $ucgsCurrentMonth = $this->applyUserFilter(Ucg::query())
+        // ✅ FIX: Reçus UCG - MARGE UNIQUEMENT (rba7 machi total)
+        $queryRecuUcgs = RecuUcg::query();
+        $queryRecuUcgs = $this->applyUserFilter($queryRecuUcgs);
+        $totalRecuUcgs = $queryRecuUcgs->count();
+        $revenusRecuUcgs = $this->getRecuUcgMargeTotal(); // ✅ Marge au lieu de montant_paye
+        $recuUcgsCurrentMonth = $this->applyUserFilter(RecuUcg::query())
                                ->whereMonth('created_at', Carbon::now()->month)
                                ->whereYear('created_at', Carbon::now()->year)
                                ->count();
@@ -153,7 +174,8 @@ class DashboardController extends Controller
                                          ->count();
         
         // ==================== REVENUS TOTAUX ====================
-        $revenuTotal = $revenusReussites + $revenusReussitesf + $revenusUcgs + 
+        // ✅ revenusRecuUcgs howa daba marge (rba7) machi CA
+        $revenuTotal = $revenusReussites + $revenusReussitesf + $revenusRecuUcgs + 
                        $facturesRevenu + $facturesfRevenu;
         
         $valeurDevisTotal = $devisValeurTotal + $devisfValeurTotal;
@@ -174,11 +196,13 @@ class DashboardController extends Controller
                            $this->applyUserFilter(Reussitef::query())
                                     ->whereMonth('created_at', $date->month)
                                     ->whereYear('created_at', $date->year)
-                                    ->sum('montant_paye') +
-                           $this->applyUserFilter(Ucg::query())
-                              ->whereMonth('created_at', $date->month)
-                              ->whereYear('created_at', $date->year)
-                              ->sum('montant_paye');
+                                    ->sum('montant_paye');
+            
+            // ✅ Reçus UCG - MARGE uniquement
+            $revenueMonth += $this->getRecuUcgMargeTotal([
+                'month' => $date->month,
+                'year' => $date->year
+            ]);
             
             // Factures Projet avec conversion
             $facturesProjet = $this->applyUserFilter(Facture::query())
@@ -210,7 +234,7 @@ class DashboardController extends Controller
         $revenueByType = [
             ['type' => 'Reçus Stage', 'amount' => round($revenusReussites, 2)],
             ['type' => 'Reçus Formation', 'amount' => round($revenusReussitesf, 2)],
-            ['type' => 'Reçus UCG', 'amount' => round($revenusUcgs, 2)],
+            ['type' => 'Reçus UCG (Marge)', 'amount' => round($revenusRecuUcgs, 2)], // ✅ Préciser "Marge"
             ['type' => 'Factures Projet', 'amount' => round($facturesRevenu, 2)],
             ['type' => 'Factures Formation', 'amount' => round($facturesfRevenu, 2)],
         ];
@@ -219,7 +243,7 @@ class DashboardController extends Controller
         $documentCounts = [
             ['category' => 'Reçus Stage', 'count' => $totalReussites],
             ['category' => 'Reçus Formation', 'count' => $totalReussitesf],
-            ['category' => 'Reçus UCG', 'count' => $totalUcgs],
+            ['category' => 'Reçus UCG', 'count' => $totalRecuUcgs],
             ['category' => 'Devis Projet', 'count' => $totalDevis],
             ['category' => 'Devis Formation', 'count' => $totalDevisf],
             ['category' => 'Factures Projet', 'count' => $totalFactures],
@@ -236,6 +260,16 @@ class DashboardController extends Controller
                     'type' => 'Reçu Stage',
                     'description' => $item->nom . ' ' . $item->prenom,
                     'amount' => $item->montant_paye,
+                    'currency' => 'DH',
+                    'date' => $item->created_at
+                ];
+            }))
+            ->merge($this->applyUserFilter(RecuUcg::query())->with('items')->latest()->take(3)->get()->map(function($item) {
+                return [
+                    'type' => 'Reçu UCG',
+                    'description' => $item->client_nom . ' - ' . $item->equipement,
+                    'amount' => $item->margeGlobale(), // ✅ Marge au lieu de total
+                    'label' => 'Marge', // ✅ Préciser que c'est la marge
                     'currency' => 'DH',
                     'date' => $item->created_at
                 ];
@@ -266,7 +300,7 @@ class DashboardController extends Controller
         return view('dashboard', compact(
             'totalReussites', 'revenusReussites', 'reussitesCurrentMonth',
             'totalReussitesf', 'revenusReussitesf', 'reussitesfCurrentMonth',
-            'totalUcgs', 'revenusUcgs', 'ucgsCurrentMonth',
+            'totalRecuUcgs', 'revenusRecuUcgs', 'recuUcgsCurrentMonth',
             'totalDevis', 'devisValeurTotal', 'devisCurrentMonth',
             'totalDevisf', 'devisfValeurTotal', 'devisfCurrentMonth',
             'totalFactures', 'facturesRevenu', 'facturesCurrentMonth',

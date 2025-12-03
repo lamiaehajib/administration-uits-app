@@ -497,12 +497,12 @@
                     <i class="fas fa-shield-alt"></i>
                 </div>
                 <h3>Reçus Garantie</h3>
-                <div class="value">{{ $totalUcgs }}</div>
+                <div class="value">{{ $totalRecuUcgs }}</div>
                 <div class="subtitle">
-                    <i class="fas fa-arrow-up"></i> {{ $ucgsCurrentMonth }} ce mois
+                    <i class="fas fa-arrow-up"></i> {{ $recuUcgsCurrentMonth }} ce mois
                 </div>
                 <small>
-                    <i class="fas fa-coins"></i> {{ number_format($revenusUcgs, 2) }} DH
+                    <i class="fas fa-coins"></i> {{ number_format($revenusRecuUcgs, 2) }} DH
                 </small>
             </div>
 

@@ -84,4 +84,11 @@ class User extends Authenticatable
 
     ];
 
+
+
+     public function achats()
+    {
+        return $this->hasMany(Achat::class);
+    }
+
 }

@@ -567,13 +567,50 @@
             { 
                 id: 'produitButto', 
                 title: 'Liste des Produits', 
-                links: [
-                    { href: '{{ route('categories.index') }}', label: 'Catégories de Produits', icon: 'fas fa-boxes-stacked', color: '#C2185B' },
-                    { href: '{{ route('produits.index') }}', label: 'Les Produits', icon: 'fas fa-box', color: '#ffc107' },
-                    { href: '{{ route('achats.index') }}', label: 'Les Achats', icon: 'fas fa-cart-arrow-down', color: '#0a58ca' },
-                    { href: '{{ route('ventes.index') }}', label: 'Les Ventes', icon: 'fas fa-cash-register', color: '#62fd0d' },
-                    { href: '{{ route('produits.totals') }}', label: 'Totaux', icon: 'fas fa-calculator', color: '#754E1A' },
-                ]
+links: [
+    { 
+        href: '{{ route('categories.index') }}', 
+        label: 'Catégories de Produits', 
+        icon: 'fas fa-boxes-stacked', 
+        color: '#C2185B' 
+    },
+    { 
+        href: '{{ route('produits.index') }}', 
+        label: 'Gestion des Produits', 
+        icon: 'fas fa-box', 
+        color: '#FF9800' 
+    },
+    { 
+        href: '{{ route('achats.index') }}', 
+        label: 'Historique des Achats', 
+        icon: 'fas fa-cart-shopping', 
+        color: '#2196F3' 
+    },
+    { 
+        href: '{{ route('recus.index') }}', 
+        label: 'Reçus de Paiement', 
+        icon: 'fas fa-receipt', 
+        color: '#4CAF50' 
+    },
+    { 
+        href: '{{ route('paiements.index') }}', 
+        label: 'Gestion des Paiements', 
+        icon: 'fas fa-credit-card', 
+        color: '#9C27B0' 
+    },
+    { 
+        href: '{{ route('stock.movements.index') }}', 
+        label: 'Mouvements de Stock', 
+        icon: 'fas fa-truck-ramp-box', 
+        color: '#00BCD4' 
+    },
+    { 
+        href: '{{ route('produits.totals') }}', 
+        label: 'Totaux et Statistiques', 
+        icon: 'fas fa-chart-pie', 
+        color: '#F44336' 
+    }
+]
             },
         ];
 

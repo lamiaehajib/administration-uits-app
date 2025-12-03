@@ -12,11 +12,14 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DevisController;
 use App\Http\Controllers\DevisfController;
 use App\Http\Controllers\FactureController;
+use App\Http\Controllers\PaiementController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RecuUcgController;
 use App\Http\Controllers\RepairTicketController;
 use App\Http\Controllers\ReussiteController;
 use App\Http\Controllers\ReussitefController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
@@ -176,14 +179,14 @@ Route::get('facturefs/{id}/download', [FacturefController::class, 'downloadPDF']
 
 
 
-Route::resource('produits', ProduitController::class);
+// Route::resource('produits', ProduitController::class);
 Route::resource('categories', CategoryController::class);
-Route::resource('achats', AchatController::class);
-Route::resource('ventes', VenteController::class);
-Route::get('marges/calculer/{produit_id}', [MargeController::class, 'calculer'])->name('marges.calculer');
-Route::get('/get-produits-by-category/{category_id}', [ProduitController::class, 'getProduitsByCategory']);
-Route::get('/totals', [ProduitController::class, 'getTotals'])->name('produits.totals');
-Route::get('/rapport-ventes', [ProduitController::class, 'exportPDF'])->name('rapport.pdf');
+// Route::resource('achats', AchatController::class);
+// Route::resource('ventes', VenteController::class);
+// Route::get('marges/calculer/{produit_id}', [MargeController::class, 'calculer'])->name('marges.calculer');
+// Route::get('/get-produits-by-category/{category_id}', [ProduitController::class, 'getProduitsByCategory']);
+
+
 
 
 
@@ -249,6 +252,42 @@ Route::get('/facturefs/{facturef}', [FacturefController::class, 'show'])
       Route::resource('repair-tickets', RepairTicketController::class);
     Route::get('repair-tickets/{repairTicket}/pdf', [RepairTicketController::class, 'downloadPdf'])
         ->name('repair-tickets.pdf');
+
+Route::controller(ProduitController::class)->prefix('produits')->name('produits.')->group(function () {
+    Route::get('totals', 'getTotals')->name('totals');
+    Route::get('export-pdf', 'exportPDF')->name('export_pdf');
+    Route::get('rapport', 'rapport')->name('rapport'); // هذا المسار الآن يتعرف عليه أولاً
+});
+
+// 2. الـ Route الأساسي (Resource) - يجب أن يأتي ثانياً
+Route::resource('produits', ProduitController::class);
+
+// 3. API/AJAX Route (غالباً في routes/api.php أو يتم إضافتها هنا)
+Route::get('produits/by-category/{category_id}', [ProduitController::class, 'getProduitsByCategory'])->name('produits.by_category');
+
+Route::resource('achats', AchatController::class);
+
+Route::resource('recus', RecuUcgController::class);
+Route::post('recus/{recu}/items', [RecuUcgController::class, 'addItem'])->name('recus.items.add');
+Route::delete('recus/{recu}/items/{item}', [RecuUcgController::class, 'removeItem'])->name('recus.items.remove');
+Route::patch('recus/{recu}/statut', [RecuUcgController::class, 'updateStatut'])->name('recus.statut');
+
+Route::get('recus/{recu}/print', [RecuUcgController::class, 'print'])->name('recus.print');
+
+Route::prefix('paiements')->name('paiements.')->group(function () {
+    Route::get('/', [PaiementController::class, 'index'])->name('index');
+    Route::post('/recu/{recu}', [PaiementController::class, 'store'])->name('store');
+    Route::get('/{paiement}', [PaiementController::class, 'show'])->name('show');
+    Route::delete('/{paiement}', [PaiementController::class, 'destroy'])->name('destroy');
+    Route::get('/rapport/generate', [PaiementController::class, 'rapport'])->name('rapport');
+});
+
+Route::prefix('stock')->group(function () {
+    Route::get('/movements', [StockMovementController::class, 'index'])->name('stock.movements.index');
+    Route::get('/movements/produit/{produit}', [StockMovementController::class, 'produit'])->name('stock.movements.produit');
+    Route::post('/movements/ajustement', [StockMovementController::class, 'ajustement'])->name('stock.movements.ajustement');
+    Route::get('/statistiques', [StockMovementController::class, 'statistiques'])->name('stock.statistiques');
+});
       });
 
 require __DIR__.'/auth.php';

@@ -1,117 +1,191 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rapport des Ventes</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>Rapport de Ventes Produits - {{ \Carbon\Carbon::parse($dateFin)->format('M Y') }}</title>
+    
     <style>
-        body { 
-            font-family: 'Arial', sans-serif; 
-            font-size: 14px; 
-            color: #333; 
-            margin: 20px; 
-            padding: 20px; 
-            background-color: #f8f9fa;
+        /* Styles CSS pour DomPDF */
+        body {
+            font-family: 'DejaVu Sans', sans-serif;
+            font-size: 10px;
+            margin: 20px;
+            padding: 0;
         }
-
         .header {
             text-align: center;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #C2185B;
             margin-bottom: 20px;
+            padding: 15px;
+            background-color: #D32F2F;
+            color: white;
         }
-
-        h2 {
-            color: #C2185B;
-            text-transform: uppercase;
-            margin-bottom: 5px;
-        }
-
-        p {
-            font-size: 16px;
+        .header h1 {
+            margin: 0;
+            font-size: 20px;
             font-weight: bold;
-            color: #555;
-            text-align: center;
         }
-
+        .period-info {
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 11px;
+            color: #555;
+            line-height: 1.6;
+        }
+        .period-info strong {
+            color: #D32F2F;
+        }
+        .table-container {
+            margin: 0 auto;
+            width: 100%;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
-            background: #fff;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            overflow: hidden;
+            font-size: 9px;
         }
-
         th, td {
             border: 1px solid #ddd;
-            padding: 12px;
+            padding: 8px;
             text-align: center;
         }
-
         th {
-            background-color: #C2185B;
-            color: white;
-            text-transform: uppercase;
-        }
-
-        tr:nth-child(even) {
             background-color: #f2f2f2;
+            color: #333;
+            font-weight: bold;
+            font-size: 10px;
         }
-
-        .footer {
-            margin-top: 30px;
+        .total-row td {
+            background-color: #E8F5E9;
+            font-weight: bold;
+            font-size: 11px;
+            color: #2E7D32;
+        }
+        .marge-column {
+            background-color: #e6ffe6;
+            font-weight: bold;
+            color: #2E7D32;
+        }
+        .vendu-column {
+            background-color: #f0f8ff;
+        }
+        .no-data {
             text-align: center;
-            font-size: 12px;
-            color: #777;
+            color: #999;
+            font-style: italic;
+            padding: 30px;
         }
-        .header-img {
-            position: absolute;
-            width: 150px; /* Taille réduite */
-            margin: 0;
-            margin-top: -55px;
+        .summary-box {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+        .summary-box h3 {
+            margin: 0 0 10px 0;
+            color: #D32F2F;
+            font-size: 14px;
+        }
+        .summary-item {
+            display: inline-block;
+            width: 48%;
+            margin: 5px 0;
+            font-size: 11px;
+        }
+        .summary-item strong {
+            color: #333;
         }
     </style>
 </head>
 <body>
-    <div><img class="header-img" src="{{ public_path('images/im.png') }}" alt="Logo"></div>
+
     <div class="header">
-        <h2><i class="fas fa-chart-bar"></i> Rapport des Ventes</h2>
-        <p><i class="fas fa-calendar-alt"></i> Période : {{ $dateDebut->format('d/m/Y') }} - {{ $dateFin->format('d/m/Y') }}</p>
+        <h1>RAPPORT MENSUEL DES VENTES DE PRODUITS</h1>
     </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Produit</th>
-                <th>Prix Achat</th>
-                <th>Quantité Vendue</th>
-                <th>Prix vente</th>
-                <th>Total Vente</th>
-                <th>Bénéfice</th>
-                <th>Stock Restant</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($ventes as $vente)
-            <tr>
-                <td>{{ $vente->produit_nom }}</td>
-                <td>{{ $vente->prix_achat }}</td>
-                <td>{{ $vente->quantite_vendue }}</td>
-                <td>{{ number_format($vente->prix_vendu, 2) }} DH</td>
-                <td>{{ number_format($vente->total_vendu, 2) }} DH</td>
-                <td>{{ $vente->marge }} DH</td>
-                <td>{{ $vente->quantite_stock }}</td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
-
-    <div class="footer">
-        <p><i class="fas fa-paperclip"></i> Rapport généré automatiquement | {{ now()->format('d/m/Y H:i') }}</p>
+    <div class="period-info">
+        <p><strong>Généré le:</strong> {{ \Carbon\Carbon::now()->format('d/m/Y H:i') }}</p>
+        <p><strong>Période couverte:</strong> Du {{ \Carbon\Carbon::parse($dateDebut)->format('d/m/Y') }} au {{ \Carbon\Carbon::parse($dateFin)->format('d/m/Y') }}</p>
     </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 8%;">Réf.</th>
+                    <th style="width: 25%;">Nom du Produit</th>
+                    <th style="width: 15%;">Catégorie</th>
+                    <th class="vendu-column" style="width: 10%;">Qté Vendue</th>
+                    <th class="vendu-column" style="width: 15%;">Total Ventes (MAD)</th>
+                    <th style="width: 12%;">Prix Achat Moyen</th>
+                    <th class="marge-column" style="width: 15%;">Marge Totale (MAD)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php
+                    $total_quantite_vendue = 0;
+                    $total_vendu_montant = 0;
+                    $total_marge_totale = 0;
+                @endphp
+                
+                @forelse ($produits as $produit)
+                    @php
+                        $total_quantite_vendue += $produit->quantite_vendue ?? 0;
+                        $total_vendu_montant += $produit->total_vendu_montant ?? 0;
+                        $total_marge_totale += $produit->marge_totale ?? 0;
+                    @endphp
+                    <tr>
+                        <td>{{ $produit->reference ?? 'N/A' }}</td>
+                        <td style="text-align: left; padding-left: 5px;">{{ $produit->nom }}</td>
+                        <td>{{ $produit->categorie_nom ?? 'N/A' }}</td>
+                        <td class="vendu-column"><strong>{{ number_format($produit->quantite_vendue ?? 0, 0) }}</strong></td>
+                        <td class="vendu-column">{{ number_format($produit->total_vendu_montant ?? 0, 2, ',', ' ') }}</td>
+                        <td>{{ number_format($produit->prix_achat_moyen ?? 0, 2, ',', ' ') }}</td>
+                        <td class="marge-column"><strong>{{ number_format($produit->marge_totale ?? 0, 2, ',', ' ') }}</strong></td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="7" class="no-data">
+                            ⚠️ Aucune vente enregistrée pour les produits actifs durant cette période.
+                        </td>
+                    </tr>
+                @endforelse
+                
+                @if(count($produits) > 0)
+                <tr class="total-row">
+                    <td colspan="3" style="text-align: right; font-weight: bold;">📊 TOTAUX PÉRIODE:</td>
+                    <td><strong>{{ number_format($total_quantite_vendue, 0) }}</strong></td>
+                    <td><strong>{{ number_format($total_vendu_montant, 2, ',', ' ') }}</strong></td>
+                    <td>-</td>
+                    <td><strong>{{ number_format($total_marge_totale, 2, ',', ' ') }}</strong></td>
+                </tr>
+                @endif
+            </tbody>
+        </table>
+    </div>
+
+    @if(count($produits) > 0)
+    <div class="summary-box">
+        <h3>📈 Résumé de la Période</h3>
+        <div class="summary-item">
+            <strong>Nombre de produits vendus:</strong> {{ count($produits) }}
+        </div>
+        <div class="summary-item">
+            <strong>Chiffre d'affaires total:</strong> {{ number_format($total_vendu_montant, 2, ',', ' ') }} MAD
+        </div>
+        <div class="summary-item">
+            <strong>Marge brute totale:</strong> {{ number_format($total_marge_totale, 2, ',', ' ') }} MAD
+        </div>
+        <div class="summary-item">
+            <strong>Taux de marge moyen:</strong> 
+            @if($total_vendu_montant > 0)
+                {{ number_format(($total_marge_totale / $total_vendu_montant) * 100, 2, ',', ' ') }}%
+            @else
+                0%
+            @endif
+        </div>
+    </div>
+    @endif
 
 </body>
 </html>

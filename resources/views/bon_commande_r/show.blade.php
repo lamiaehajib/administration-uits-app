@@ -162,7 +162,7 @@
 
         .footer-container {
             text-align: center;
-            margin-top: 180px;
+            margin-top: 270px;
         }
 
         .footer-line {
@@ -170,6 +170,7 @@
             border-top: 2px solid #df0202;
             margin: 10px auto;
             width: 90%;
+          
         }
 
         .footer-title {
@@ -177,7 +178,8 @@
             color: #df0202;
             font-weight: bold;
             text-transform: uppercase;
-            margin-top: 100px;
+            margin-top: 40px;
+          
         }
 
         .footer-text {

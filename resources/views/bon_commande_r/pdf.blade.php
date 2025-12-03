@@ -177,12 +177,14 @@
             color: #df0202;
             font-weight: bold;
             text-transform: uppercase;
+            margin-top: 100px;
         }
 
         .footer-text {
-            margin: 5px 0;
+            margin: 1px 0;
             font-size: 13px;
             line-height: 1.6;
+           
         }
 
         .footer-link {

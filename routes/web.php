@@ -9,6 +9,7 @@ use App\Http\Controllers\BonCommandeRController;
 use App\Http\Controllers\BonDeCommandeController;
 use App\Http\Controllers\BonLivraisonController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\DashboardStockController;
 use App\Http\Controllers\DevisController;
 use App\Http\Controllers\DevisfController;
 use App\Http\Controllers\FactureController;
@@ -288,6 +289,9 @@ Route::prefix('stock')->group(function () {
     Route::post('/movements/ajustement', [StockMovementController::class, 'ajustement'])->name('stock.movements.ajustement');
     Route::get('/statistiques', [StockMovementController::class, 'statistiques'])->name('stock.statistiques');
 });
+
+Route::get('/dashboardstock', [DashboardStockController::class, 'index'])->name('dashboardstock');
+    Route::get('/dashboardstock/stats', [DashboardStockController::class, 'getStats'])->name('dashboardstock.stats');
       });
 
 require __DIR__.'/auth.php';

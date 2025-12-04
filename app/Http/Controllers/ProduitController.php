@@ -14,6 +14,16 @@ use Illuminate\Support\Facades\DB;
 
 class ProduitController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:produit-list|produit-create|produit-edit|produit-delete', ['only' => ['index', 'show']]);
+        $this->middleware('permission:produit-create', ['only' => ['create', 'store']]);
+        $this->middleware('permission:produit-edit', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:produit-delete', ['only' => ['destroy']]);
+        $this->middleware('permission:produit-rapport', ['only' => ['rapport', 'getTotals']]);
+        $this->middleware('permission:produit-export', ['only' => ['exportPDF']]);
+    }
+
     /**
      * عرض جميع المنتجات مع معلومات المبيعات والمارج من RecuItem
      */

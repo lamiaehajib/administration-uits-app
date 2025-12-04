@@ -132,7 +132,14 @@
         <div class="main-container">
             <!-- Sidebar Navigation (incluse séparément) -->
             <div class="sidebar-container">
-                @include('layouts.navigation')
+                 @auth
+    @if(auth()->user()->hasRole('Gérant') || auth()->user()->hasRole('Vendeur'))
+        @include('layouts.stock-navigation')
+    @else
+        @include('layouts.navigation')
+    @endif
+@endauth
+                
             </div>
 
             <!-- Contenu principal -->

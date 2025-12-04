@@ -485,7 +485,7 @@
                     <span>Bon de Livraisons</span>
                 </a>
             </button>
-            
+            @can('produit-list')
             <div class="sidebar-divider"></div>
             <div class="sidebar-section-title">Produits & Stocks</div>
 
@@ -493,7 +493,7 @@
                 <i class="fas fa-box"></i>
                 <span>Produit UCGS <i id="i-fetch" class="fa fa-chevron-down"></i></span>
             </button>
-
+@endcan
             <div class="sidebar-divider"></div>
             <div class="sidebar-section-title">Administration</div>
 

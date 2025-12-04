@@ -131,7 +131,7 @@ class PermissionseSeeder extends Seeder
                 'password' => Hash::make('gerant123'),
             ]
         );
-        $gerant->assignRole('Gérant_de_stock');
+        $gerant->assignRole('Gérant');
 
         // Vendeur
         $vendeur = User::firstOrCreate(

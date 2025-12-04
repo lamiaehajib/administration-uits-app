@@ -47,10 +47,11 @@ class Achat extends Model
      * Get the product that was purchased.
      */
     public function produit()
-    {
-        // Kanfترضou an l-Model dial product smitou Product
-        return $this->belongsTo(produit::class);
-    }
+{
+    // Kanfترضou an l-Model dial product smitou Product
+    // Use the correct class name: Produit::class
+    return $this->belongsTo(Produit::class); 
+}
     
     /**
      * Get the user who registered the purchase (optional).

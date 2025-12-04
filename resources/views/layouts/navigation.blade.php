@@ -494,10 +494,11 @@
                 <span>Produit UCGS <i id="i-fetch" class="fa fa-chevron-down"></i></span>
             </button>
 @endcan
+  @can('role-list')
             <div class="sidebar-divider"></div>
             <div class="sidebar-section-title">Administration</div>
 
-            @can('role-list')
+          
             <button>
                 <a href="{{ route('roles.index') }}">
                     <i class="fas fa-user-shield"></i>

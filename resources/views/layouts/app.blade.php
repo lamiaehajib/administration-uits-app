@@ -133,7 +133,7 @@
             <!-- Sidebar Navigation (incluse séparément) -->
             <div class="sidebar-container">
                  @auth
-    @if(auth()->user()->hasRole('Gérant') || auth()->user()->hasRole('Vendeur'))
+    @if(auth()->user()->hasRole('Gérant_de_stock') || auth()->user()->hasRole('Vendeur'))
         @include('layouts.stock-navigation')
     @else
         @include('layouts.navigation')

@@ -36,7 +36,7 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('dashboardstock');
         }
 
-        // Ila ma kanouch 3andou had les roles, ghankhalih imchi l'default HOME dyalo
+        
         return redirect()->intended(RouteServiceProvider::HOME);
     }
 

@@ -251,6 +251,9 @@
             </button>
             @endcan
 
+            
+         
+
             <div class="sidebar-divider"></div>
             <div class="sidebar-section-title">💰 Ventes & Paiements</div>
 
@@ -273,12 +276,12 @@
                 </a>
             </button>
             @endcan
-
+ @can('produit-rapport')
             <div class="sidebar-divider"></div>
             <div class="sidebar-section-title">📊 Rapports</div>
 
             {{-- ✅ Statistiques Produits - Gérant, Comptable --}}
-            @can('produit-rapport')
+           
             <button type="button">
                 <a href="{{ route('produits.totals') }}">
                     <i class="fas fa-chart-pie"></i>
@@ -286,16 +289,6 @@
                 </a>
             </button>
             @endcan
-
-            {{-- ✅ Rapport Ventes - Gérant, Comptable --}}
-            {{-- @can('rapport-ventes')
-            <button type="button">
-                <a href="{{ route('recus.statistiques') }}">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Rapport Ventes</span>
-                </a>
-            </button>
-            @endcan --}}
 
             {{-- ✅ Rapport Paiements - Gérant, Comptable --}}
             @can('paiement-rapport')
@@ -308,10 +301,49 @@
             @endcan
 
             <div class="sidebar-divider"></div>
+            <div class="sidebar-section-title">🛠️ Service Client & Documents</div>
+
+            {{-- ✅ Tickets de Réparation - Gérant, Technicien --}}
+          
+            <button type="button">
+                <a href="{{ route('repair-tickets.index') }}">
+                    <i class="fas fa-wrench"></i>
+                    <span>Tickets Réparation</span>
+                </a>
+            </button>
+           
+
+            <button type="button">
+                <a href="{{ route('devis.index') }}">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Devis</span>
+                </a>
+            </button>
+          
+
+            <button type="button">
+                <a href="{{ route('factures.index') }}">
+                    <i class="fas fa-file-invoice"></i>
+                    <span>Factures</span>
+                </a>
+            </button>
+        
+
+            {{-- ✅ Bons de Livraison - Gérant, Magasinier, Vendeur --}}
+           
+            <button type="button">
+                <a href="{{ route('bon_livraisons.index') }}">
+                    <i class="fas fa-truck-fast"></i>
+                    <span>Bons de Livraison</span>
+                </a>
+            </button>
+            
+            @can('user-list')
+            <div class="sidebar-divider"></div>
             <div class="sidebar-section-title">⚙️ Administration</div>
 
             {{-- ✅ Utilisateurs - Admin uniquement --}}
-            @can('user-list')
+            
             <button type="button">
                 <a href="{{ route('users.index') }}">
                     <i class='bx bx-group'></i>
@@ -347,8 +379,20 @@
         // Highlight active page
         const currentPath = window.location.pathname;
         document.querySelectorAll('.sidebar-menu a').forEach(link => {
-            if (link.getAttribute('href') === currentPath) {
+            // Logic to handle route comparison for activation
+            // This is a basic comparison and might need adjustment depending on your actual routes structure
+            const linkHref = link.getAttribute('href');
+            if (linkHref === currentPath) {
                 link.closest('button').classList.add('active');
+            } else {
+                // For deeper matching in a Laravel context, you might check if the current URL starts with the link's URL path
+                const pathParts = linkHref.split('/').filter(p => p.length > 0);
+                if (pathParts.length > 0) {
+                    const baseRoute = '/' + pathParts[0]; // e.g., '/repair-tickets'
+                    if (currentPath.startsWith(baseRoute)) {
+                        link.closest('button').classList.add('active');
+                    }
+                }
             }
         });
         

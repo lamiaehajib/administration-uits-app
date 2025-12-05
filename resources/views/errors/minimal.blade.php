@@ -25,6 +25,12 @@
 <body>
     <h1>@yield('code')</h1>
     <p>@yield('message')</p>
-    <a href="{{ url('/dashboard') }}" style="text-decoration: none; color: #ff0000;">Retourner à l'accueil</a>
+    @if (auth()->user()->hasRole('Gérant_de_stock') || auth()->user()->hasRole('Vendeur')) 
+        <a href="{{ route('dashboardstock') }}" style="text-decoration: none; color: #ff0000;">Retourner à l'accueil</a>
+    @else
+        <a href="{{ url('/dashboard') }}" style="text-decoration: none; color: #ff0000;">Retourner à l'accueil</a>
+    @endif
+    
+   
 </body>
 </html>

@@ -12,9 +12,7 @@ class Achat extends Model
     // Use Traits
     use HasFactory, SoftDeletes; // Zid SoftDeletes
 
-    // Khassek tkhdem table name explicitement ila ma kanet chi 'achats'
-    // protected $table = 'achats'; 
-
+    
     /**
      * The attributes that are mass assignable.
      * @var array<int, string>
@@ -48,8 +46,7 @@ class Achat extends Model
      */
     public function produit()
 {
-    // Kanfترضou an l-Model dial product smitou Product
-    // Use the correct class name: Produit::class
+    
     return $this->belongsTo(Produit::class); 
 }
     

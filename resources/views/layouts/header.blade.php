@@ -44,6 +44,7 @@
                     <i class="fas fa-search"></i>
                 </button>
             </div>
+ @can('user-list')
 
             <!-- Raccourcis rapides -->
             <div class="header-item quick-actions-wrapper">
@@ -82,6 +83,7 @@
                     </div>
                 </div>
             </div>
+            @endcan
 
             <!-- Profil utilisateur -->
             <div class="header-item profile-wrapper">

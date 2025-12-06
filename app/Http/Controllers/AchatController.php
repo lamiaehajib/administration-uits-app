@@ -12,6 +12,13 @@ use Illuminate\Support\Facades\Log;
 
 class AchatController extends Controller
 {
+    public function __construct()
+{
+    $this->middleware('permission:achat-list|achat-create|achat-edit|achat-delete', ['only' => ['index']]);
+    $this->middleware('permission:achat-create', ['only' => ['create', 'store']]);
+    $this->middleware('permission:achat-edit', ['only' => ['edit', 'update']]);
+    $this->middleware('permission:achat-delete', ['only' => ['destroy']]);
+}
     /**
      * Afficher la liste des achats avec recherche
      */

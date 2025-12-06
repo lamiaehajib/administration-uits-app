@@ -581,36 +581,45 @@ links: [
         icon: 'fas fa-box', 
         color: '#FF9800' 
     },
+       @can('achat-list')
     { 
         href: '{{ route('achats.index') }}', 
         label: 'Historique des Achats', 
         icon: 'fas fa-cart-shopping', 
         color: '#2196F3' 
     },
+    @endcan
     { 
         href: '{{ route('recus.index') }}', 
         label: 'Reçus de Paiement', 
         icon: 'fas fa-receipt', 
         color: '#4CAF50' 
     },
+     @can('paiement-list')
     { 
+          
         href: '{{ route('paiements.index') }}', 
         label: 'Gestion des Paiements', 
         icon: 'fas fa-credit-card', 
         color: '#9C27B0' 
     },
+    @endcan
+
     { 
         href: '{{ route('stock.movements.index') }}', 
         label: 'Mouvements de Stock', 
         icon: 'fas fa-truck-ramp-box', 
         color: '#00BCD4' 
     },
+
+       @can('produit-rapport')
     { 
         href: '{{ route('produits.totals') }}', 
         label: 'Totaux et Statistiques', 
         icon: 'fas fa-chart-pie', 
         color: '#F44336' 
     }
+    @endcan
 ]
             },
         ];

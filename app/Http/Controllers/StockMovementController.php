@@ -9,7 +9,12 @@ use Illuminate\Support\Facades\DB;
 
 class StockMovementController extends Controller
 {
-    
+    public function __construct()
+{
+    $this->middleware('permission:stock-movement-list', ['only' => ['index', 'show']]);
+    $this->middleware('permission:stock-adjustment', ['only' => ['create', 'store', 'adjust']]);
+}
+
     public function index(Request $request)
     {
         $query = StockMovement::with(['produit', 'user', 'recuUcg']);

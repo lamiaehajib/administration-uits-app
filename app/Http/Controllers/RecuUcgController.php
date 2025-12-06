@@ -9,6 +9,17 @@ use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 class RecuUcgController extends Controller
 {
+
+    public function __construct()
+{
+    $this->middleware('permission:recu-list|recu-create|recu-edit|recu-delete', ['only' => ['index', 'show']]);
+    $this->middleware('permission:recu-create', ['only' => ['create', 'store', 'addItem']]);
+    $this->middleware('permission:recu-edit', ['only' => ['edit', 'update']]);
+    $this->middleware('permission:recu-delete', ['only' => ['destroy', 'removeItem']]);
+    $this->middleware('permission:recu-statut-change', ['only' => ['updateStatut']]);
+    $this->middleware('permission:recu-print', ['only' => ['print']]);
+    $this->middleware('permission:recu-statistiques', ['only' => ['statistiques']]);
+}
     public function index(Request $request)
     {
         $query = RecuUcg::with(['user', 'items.produit']);
@@ -53,7 +64,7 @@ class RecuUcgController extends Controller
     }
 
     /**
-     * ✅ VERSION FIXED - BASITA O KHDAM 100%
+     * ✅ VERSION FIXED  - BASITA O KHDAM  100%
      */
     public function store(Request $request)
     {
@@ -79,7 +90,6 @@ class RecuUcgController extends Controller
 
         DB::beginTransaction();
         try {
-            // 1️⃣ Créer le reçu b les info de base (bla montants)
             $recu = RecuUcg::create([
                 'user_id' => auth()->id(),
                 'client_nom' => $validated['client_nom'],
@@ -97,7 +107,7 @@ class RecuUcgController extends Controller
                 'notes' => $validated['notes'] ?? null,
             ]);
 
-            // 2️⃣ Ajouter les items (had chi ghadi i7asb total automatiquement)
+            
             foreach ($validated['items'] as $itemData) {
                 $produit = Produit::findOrFail($itemData['produit_id']);
                 
@@ -113,18 +123,18 @@ class RecuUcgController extends Controller
                 ]);
             }
             
-            // 3️⃣ Refresh reçu bach nakhdo total m7asb
+            //Refresh reçu bach nakhdo total m7asb
             $recu->refresh();
 
-            // 4️⃣ Ajouter paiement (ILA kan chi montant)
+            // Ajouter paiement (ILA kan chi montant)
             $montantPaye = $validated['montant_paye'] ?? null;
             
-            // ✅ Ila ma3tach walo, ndiro paiement complet
+            // Ila ma3tach walo, ndiro paiement complet
             if ($montantPaye === null || $montantPaye === '' || $montantPaye == 0) {
                 $montantPaye = $recu->total; // Paiement complet
             }
 
-            // Créer paiement o update statut
+            // Créer paiement o update statut 
             if ($montantPaye > 0) {
                 $recu->ajouterPaiement(
                     $montantPaye,

@@ -91,7 +91,7 @@ class AttestationAllinoneController extends Controller
         $request->validate([
             'personne_name' => 'required',
             'cin' => 'required',
-            'afficher_cachet' => 'boolean', // Validation de afficher_cachet
+            'afficher_cachet' => 'boolean', // Validjf  de afficher_cachet
         ]);
 
         $personneName = $request->input('personne_name');

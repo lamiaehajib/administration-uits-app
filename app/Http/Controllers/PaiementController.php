@@ -9,6 +9,15 @@ use Illuminate\Support\Facades\DB;
 
 class PaiementController extends Controller
 {
+
+    public function __construct()
+{
+    $this->middleware('permission:paiement-list|paiement-create|paiement-delete', ['only' => ['index', 'show']]);
+    $this->middleware('permission:paiement-create', ['only' => ['store']]);
+    $this->middleware('permission:paiement-delete', ['only' => ['destroy']]);
+    $this->middleware('permission:paiement-rapport', ['only' => ['rapport']]);
+}
+
     public function index(Request $request)
     {
         $query = Paiement::with(['recuUcg', 'user']);

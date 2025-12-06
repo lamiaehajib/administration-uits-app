@@ -61,6 +61,7 @@
                                 <div class="col-md-6">
                                     <label for="type_garantie" class="form-label">Type de Garantie <span class="text-danger">*</span></label>
                                     <select class="form-select" id="type_garantie" name="type_garantie" required>
+                                        <option value="30_jours" {{ old('type_garantie', $recu->type_garantie) == '30_jours' ? 'selected' : '' }}>30 Jours</option>
                                         <option value="90_jours" {{ old('type_garantie', $recu->type_garantie) == '90_jours' ? 'selected' : '' }}>90 Jours</option>
                                         <option value="180_jours" {{ old('type_garantie', $recu->type_garantie) == '180_jours' ? 'selected' : '' }}>180 Jours</option>
                                         <option value="360_jours" {{ old('type_garantie', $recu->type_garantie) == '360_jours' ? 'selected' : '' }}>360 Jours</option>

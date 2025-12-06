@@ -13,6 +13,7 @@ class RecuUcg extends Model
     
     // Constantes
     public const STATUT_GARANTIE_SANS = 'sans_garantie';
+    public const STATUT_GARANTIE_30_JOURS = '30_jours';
     public const STATUT_GARANTIE_90_JOURS = '90_jours';
     public const STATUT_GARANTIE_180_JOURS = '180_jours';
     public const STATUT_GARANTIE_360_JOURS = '360_jours';
@@ -72,22 +73,24 @@ class RecuUcg extends Model
         parent::boot();
 
         static::creating(function ($recu) {
-            if (empty($recu->numero_recu)) {
-                $recu->numero_recu = self::generateNumeroRecu();
-            }
-            
-            if ($recu->type_garantie !== self::STATUT_GARANTIE_SANS) {
-                $jours = match($recu->type_garantie) {
-                    self::STATUT_GARANTIE_90_JOURS => 90,
-                    self::STATUT_GARANTIE_180_JOURS => 180,
-                    self::STATUT_GARANTIE_360_JOURS => 360,
-                    default => 90
-                };
-                $recu->date_garantie_fin = Carbon::now()->addDays($jours);
-            }
-            
-            $recu->statut_paiement = self::STATUT_PAIEMENT_IMPAYE;
-        });
+    if (empty($recu->numero_recu)) {
+        $recu->numero_recu = self::generateNumeroRecu();
+    }
+    
+    if ($recu->type_garantie !== self::STATUT_GARANTIE_SANS) {
+        $jours = match($recu->type_garantie) {
+            self::STATUT_GARANTIE_30_JOURS => 30,   // ✅ ZIDHA
+            self::STATUT_GARANTIE_90_JOURS => 90,
+            self::STATUT_GARANTIE_180_JOURS => 180,
+            self::STATUT_GARANTIE_360_JOURS => 360,
+            default => 90
+        };
+        $recu->date_garantie_fin = Carbon::now()->addDays($jours);
+    }
+    
+    $recu->statut_paiement = self::STATUT_PAIEMENT_IMPAYE;
+});
+
 
         static::updating(function ($recu) {
             if ($recu->isDirty('montant_paye') || $recu->isDirty('total')) {

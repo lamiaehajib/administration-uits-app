@@ -103,6 +103,7 @@
                                 <div class="col-12">
                                     <label class="form-label">Type de Garantie <span class="text-danger">*</span></label>
                                     <select name="type_garantie" class="form-select" required>
+                                        <option value="30_jours">30 jours</option>
                                         <option value="90_jours">90 jours</option>
                                         <option value="180_jours">180 jours (6 mois)</option>
                                         <option value="360_jours">360 jours (1 an)</option>

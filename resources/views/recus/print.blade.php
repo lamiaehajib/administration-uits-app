@@ -467,6 +467,8 @@
                     Garantie de 180 jours - Valable jusqu'au {{ $recu->created_at->addDays(180)->format('d/m/Y') }}
                 @elseif($recu->type_garantie === '360_jours')
                     Garantie de 360 jours - Valable jusqu'au {{ $recu->created_at->addDays(360)->format('d/m/Y') }}
+                    @elseif($recu->type_garantie === '30_jours')
+                    Garantie de 30 jours - Valable jusqu'au {{ $recu->created_at->addDays(30)->format('d/m/Y') }}
                 @endif
             </div>
         </div>

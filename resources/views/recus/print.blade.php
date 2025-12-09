@@ -302,7 +302,13 @@
             font-weight: bold;
             margin-bottom: 3px;
         }
-
+ .footer-content {
+            display: table;
+            width: 100%;
+          
+              position: fixed;
+              position: relative;
+        }
         /* FOOTER - M9ad o mndmaj */
         .footer {
             position: absolute;
@@ -310,13 +316,10 @@
             left: 10mm;
             right: 10mm;
             border-top: 2px solid #eee;
-            padding-top: 6px;
+            padding-top: 1x;
         }
 
-        .footer-content {
-            display: table;
-            width: 100%;
-        }
+       
 
         .footer-left {
             display: table-cell;
@@ -377,8 +380,11 @@
         }
          .footer-text {
             font-size: 10px; /* Texte plus petit pour économiser de l'espace */
+            
+            margin-top: 150px;
+             position: fixed;
             text-align: center;
-            margin-top: 70px;
+            margin-left: 200px;
             
             
         }
@@ -458,7 +464,7 @@
 <!-- CONFIGURATION/DESCRIPTION DES PRODUITS -->
 @if($recu->items->whereNotNull('produit.description')->count() > 0)
 <div style="background: #f0f8ff; border: 1px solid #3498db; border-radius: 4px; padding: 8px; margin: 8px 0; width: 90%;">
-    <div style="font-size: 9pt; font-weight: bold; color: #2c3e50; margin-bottom: 5px; padding-bottom: 3px; border-bottom: 1px solid #bdc3c7;">
+    <div style="font-size: 9pt; font-weight: bold; color:#2c3e50; margin-bottom: 5px; padding-bottom: 3px; border-bottom: 1px solid #bdc3c7;">
          CONFIGURATION
     </div>
     @foreach($recu->items as $item)
@@ -585,7 +591,7 @@
                     <div class="qr-label">Scannez pour plus d'infos</div>
                 </div>
             </div>
-            <div class="footer-text">
+            <div class="footer-text" >
             <p style="margin: 2px;">NB: L'écran et le clavier et Circuit Alimentation ne font pas partie de la garantie</p>
             <p style="margin: 2px;">1er Étage, App 1, N° 68, Rue San Saëns, Belvédère, Casablanca 20300</p>
             <p style="margin: 2px;">06 55 79 44 42 | contact@uits.ma | www.uits.ma</p>

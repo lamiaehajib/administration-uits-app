@@ -324,14 +324,15 @@ class RecuUcgController extends Controller
         }
     }
 
-    public function print(RecuUcg $recu)
-    {
-        $recu->load(['items.produit', 'paiements', 'user']);
+   public function print(RecuUcg $recu)
+{
+    $recu->load(['items.produit', 'paiements', 'user']);
+    
+    $pdf = Pdf::loadView('recus.print', compact('recu'))
+        ->setPaper('a4', 'portrait');
         
-        $pdf = Pdf::loadView('recus.print', compact('recu')) ->setPaper('a4', 'portrait');
-            return $pdf->stream(); 
-    }
-
+    return $pdf->stream(); 
+}
     public function statistiques(Request $request)
     {
         $dateDebut = $request->input('date_debut', now()->startOfMonth());

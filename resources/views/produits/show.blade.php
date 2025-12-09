@@ -580,7 +580,7 @@
 
                     <div class="info-row">
                         <span class="info-label">Description</span>
-                        <span class="info-value">{{ $produit->description ?: 'Aucune description' }}</span>
+                        <span class="info-value">{!! nl2br(e( $produit->description)) !!}</span>
                     </div>
 
                     <div class="info-row">

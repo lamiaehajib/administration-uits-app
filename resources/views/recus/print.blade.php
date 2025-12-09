@@ -471,7 +471,7 @@
         @if($item->produit && $item->produit->description)
         <div style="font-size: 8pt; color: #34495e; margin-bottom: 4px; padding: 3px 0; border-bottom: 1px dashed #ecf0f1;">
             <strong style="color: #e74c3c;">{{ $item->produit->nom }}:</strong>
-            <span style="margin-left: 5px;">{{ $item->produit->description }}</span>
+            <span style="margin-left: 5px;">{!! nl2br(e($item->produit->description)) !!}</span>
         </div>
         @endif
     @endforeach

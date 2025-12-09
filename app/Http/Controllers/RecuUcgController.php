@@ -358,4 +358,104 @@ class RecuUcgController extends Controller
 
         return view('recus.statistiques', compact('stats', 'dateDebut', 'dateFin'));
     }
+
+    public function trash(Request $request)
+    {
+        $query = RecuUcg::onlyTrashed()->with(['user']);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('numero_recu', 'like', "%{$search}%")
+                  ->orWhere('client_nom', 'like', "%{$search}%")
+                  ->orWhere('client_telephone', 'like', "%{$search}%")
+                  ->orWhereHas('user', function (Builder $q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $recus = $query->latest('deleted_at')->paginate(20);
+
+        return view('recus.trash', compact('recus'));
+    }
+
+    /**
+     * Restaure un reçu depuis la corbeille.
+     */
+    public function restore($id)
+{
+    $recu = RecuUcg::onlyTrashed()->findOrFail($id);
+    
+    DB::beginTransaction();
+    try {
+        // 1️⃣ Restaurer le reçu
+        $recu->restore();
+
+        // 2️⃣ Récupérer et restaurer tous les items supprimés
+        $items = \App\Models\RecuItem::onlyTrashed()
+            ->where('recu_ucg_id', $recu->id)
+            ->get();
+
+        foreach ($items as $item) {
+            // L'événement 'restored' dans RecuItem va :
+            // - Vérifier le stock
+            // - Décrémenter le stock
+            // - Créer le mouvement de stock
+            // - Recalculer le total du reçu
+            $item->restore();
+        }
+        
+        DB::commit();
+        
+        return redirect()
+            ->route('recus.show', $recu->id)
+            ->with('success', "Reçu {$recu->numero_recu} restauré avec succès!");
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return back()->with('error', "Erreur lors de la restauration: " . $e->getMessage());
+    }
+}
+
+/**
+ * Supprime définitivement un reçu de la base de données.
+ * ✅ VERSION SIMPLIFIÉE
+ */
+public function forceDelete($id)
+{
+    $recu = RecuUcg::onlyTrashed()->findOrFail($id);
+
+    DB::beginTransaction();
+    try {
+        // 1️⃣ Supprimer définitivement les items
+        $items = \App\Models\RecuItem::onlyTrashed()
+            ->where('recu_ucg_id', $recu->id)
+            ->get();
+            
+        foreach ($items as $item) {
+            // Force delete ne touche pas au stock (déjà ajusté lors du soft delete)
+            $item->forceDelete();
+        }
+        
+        // 2️⃣ Supprimer les mouvements de stock (optionnel, gardez l'historique si vous voulez)
+        // \App\Models\StockMovement::where('recu_ucg_id', $recu->id)->delete();
+        
+        // 3️⃣ Supprimer les paiements
+        \App\Models\Paiement::where('recu_ucg_id', $recu->id)->forceDelete();
+        
+        // 4️⃣ Supprimer définitivement le reçu
+        $recu->forceDelete();
+
+        DB::commit();
+        
+        return redirect()
+            ->route('recus.trash')
+            ->with('success', "Reçu {$recu->numero_recu} supprimé définitivement!");
+            
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return back()->with('error', "Erreur lors de la suppression définitive: " . $e->getMessage());
+    }
+}
 }

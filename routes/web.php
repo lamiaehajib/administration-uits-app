@@ -267,7 +267,16 @@ Route::resource('produits', ProduitController::class);
 Route::get('produits/by-category/{category_id}', [ProduitController::class, 'getProduitsByCategory'])->name('produits.by_category');
 
 Route::resource('achats', AchatController::class);
-
+Route::controller(App\Http\Controllers\RecuUcgController::class)->prefix('recus')->name('recus.')->group(function () {
+    // Route pour afficher la corbeille
+    Route::get('trash', 'trash')->name('trash');
+    
+    // Route pour restaurer un reçu
+    Route::put('{id}/restore', 'restore')->name('restore');
+    
+    // Route pour supprimer définitivement un reçu
+    Route::delete('{id}/force-delete', 'forceDelete')->name('forceDelete');
+});
 Route::resource('recus', RecuUcgController::class);
 Route::post('recus/{recu}/items', [RecuUcgController::class, 'addItem'])->name('recus.items.add');
 Route::delete('recus/{recu}/items/{item}', [RecuUcgController::class, 'removeItem'])->name('recus.items.remove');

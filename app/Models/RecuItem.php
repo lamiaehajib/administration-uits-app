@@ -4,10 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class RecuItem extends Model
 {
-    use HasFactory;
+    use HasFactory,SoftDeletes;
 
     protected $fillable = [
         'recu_ucg_id', 'produit_id', 'produit_nom', 'produit_reference',
@@ -45,7 +45,7 @@ class RecuItem extends Model
             $produit = $item->produit;
 
             if (!$produit) {
-                throw new \Exception("Produit ma kaynch!");
+                throw new \Exception("Produit non trouvez!");
             }
 
             // Vérifier stock

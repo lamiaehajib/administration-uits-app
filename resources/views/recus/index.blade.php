@@ -327,9 +327,22 @@
                 <h1><i class="fas fa-receipt"></i> Gestion des Reçus UCG</h1>
                 <p>Gérez et suivez tous vos reçus de vente</p>
             </div>
+            {{-- NOUVELLE PARTIE : Bouton Corbeille et Nouveau Reçu --}}
+        <div class="d-flex gap-2">
+            
+            {{-- 1. Bouton pour aller à la corbeille (Trash) --}}
+            <a href="{{ route('recus.trash') }}" class="btn btn-outline-light btn-lg border-2" style="color: white; border-color: white;">
+                <i class="fas fa-trash-alt"></i> Corbeille
+            </a>
+
+            {{-- 2. Bouton Nouveau Reçu (li kan 3ndek déjà) --}}
             <a href="{{ route('recus.create') }}" class="btn btn-light btn-lg">
                 <i class="fas fa-plus-circle"></i> Nouveau Reçu
             </a>
+            
+        </div>
+        {{-- FIN NOUVELLE PARTIE --}}
+           
         </div>
     </div>
 

@@ -4,17 +4,8 @@
     <meta charset="UTF-8">
     <title>Reçu {{ $recu->numero_recu }}</title>
     <style>
-        @page {
-            size: A4;
-            margin: 0;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+       
+       
         body {
             font-family: 'Arial', sans-serif;
             font-size: 9pt;
@@ -23,14 +14,7 @@
             background: white;
         }
 
-        .page {
-            width: 210mm;
-            height: 297mm;
-            padding: 10mm;
-            margin: 0 auto;
-            background: white;
-            position: relative;
-        }
+        
 
         /* HEADER - M9ad */
         .header {
@@ -162,7 +146,7 @@
             padding: 6px;
             text-align: center;
             margin: 6px 0;
-            width: 90%;
+            width: 100%;
         }
 
         .warranty-title {
@@ -179,7 +163,7 @@
 
         /* ITEMS TABLE - M9ad */
         .items-table {
-            width: 91%;
+            width: 100%;
             border-collapse: collapse;
             margin: 8px 0;
             font-size: 8pt;
@@ -253,7 +237,7 @@
 
         /* PAYMENTS - M9ad */
         .payments {
-            width: 90%;
+            width: 100%;
             background: #d4edda;
             border: 2px solid #28a745;
             border-radius: 4px;
@@ -310,13 +294,13 @@
               position: relative;
         }
         /* FOOTER - M9ad o mndmaj */
-        .footer {
+         .footer {
             position: absolute;
-            bottom: 90mm;
+            bottom: 30mm;
             left: 10mm;
             right: 10mm;
             border-top: 2px solid #eee;
-            padding-top: 1x;
+            padding-top: 6px;
         }
 
        
@@ -381,10 +365,10 @@
          .footer-text {
             font-size: 10px; /* Texte plus petit pour économiser de l'espace */
             
-            margin-top: 150px;
+            margin-top: 90px;
              position: fixed;
             text-align: center;
-            margin-left: 200px;
+            margin-left: 180px;
             
             
         }
@@ -463,7 +447,7 @@
         </div>
 <!-- CONFIGURATION/DESCRIPTION DES PRODUITS -->
 @if($recu->items->whereNotNull('produit.description')->count() > 0)
-<div style="background: #f0f8ff; border: 1px solid #3498db; border-radius: 4px; padding: 8px; margin: 8px 0; width: 90%;">
+<div style="background: #f0f8ff; border: 1px solid #3498db; border-radius: 4px; padding: 8px; margin: 8px 0; width: 100%;">
     <div style="font-size: 9pt; font-weight: bold; color:#2c3e50; margin-bottom: 5px; padding-bottom: 3px; border-bottom: 1px solid #bdc3c7;">
           CONFIGURATION
     </div>
@@ -530,7 +514,7 @@
                     <td>{{ $item->produit->nom }}</td>
                     <td class="text-center">{{ $item->quantite }}</td>
                     <td class="text-right">{{ number_format($item->prix_unitaire, 2) }} DH</td>
-                    <td class="text-right">{{ number_format($item->total, 2) }} DH</td>
+                    <td class="text-right">{{ number_format($item->sous_total, 2) }} DH</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -594,7 +578,7 @@
                     
                     <div class="signatures">
                         <div class="signature-box">
-                            <img  src="{{ public_path('images/signature-r.png') }}" alt="Stamp" style="width: 40px; height: 40px; margin-top:-40px;position: absolute;margin-left: 110px;">
+                            <img  src="{{ public_path('images/signature-r.png') }}" alt="Stamp" style="width: 40px; height: 40px; margin-top:-40px;position: absolute;margin-left: 80px;">
                             <div class="signature-line">Signature vendeur</div>
 
                         </div>

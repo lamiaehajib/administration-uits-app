@@ -329,9 +329,13 @@ class RecuUcgController extends Controller
     $recu->load(['items.produit', 'paiements', 'user']);
     
     $pdf = Pdf::loadView('recus.print', compact('recu'))
-        ->setPaper('a4', 'portrait');
+        ->setPaper('a4', 'portrait')
+        ->setOption('margin-top', 10)
+        ->setOption('margin-right', 10)
+        ->setOption('margin-bottom', 10)
+        ->setOption('margin-left', 10);
         
-    return $pdf->stream(); 
+    return $pdf->stream("recu_{$recu->numero_recu}.pdf"); 
 }
     public function statistiques(Request $request)
     {

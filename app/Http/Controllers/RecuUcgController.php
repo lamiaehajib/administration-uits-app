@@ -123,7 +123,7 @@ class RecuUcgController extends Controller
                 ]);
             }
             
-            //Refresh reçu bach nakhdo total m7asb
+           
             $recu->refresh();
 
             // Ajouter paiement (ILA kan chi montant)

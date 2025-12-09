@@ -465,14 +465,31 @@
 @if($recu->items->whereNotNull('produit.description')->count() > 0)
 <div style="background: #f0f8ff; border: 1px solid #3498db; border-radius: 4px; padding: 8px; margin: 8px 0; width: 90%;">
     <div style="font-size: 9pt; font-weight: bold; color:#2c3e50; margin-bottom: 5px; padding-bottom: 3px; border-bottom: 1px solid #bdc3c7;">
-         CONFIGURATION
+          CONFIGURATION
     </div>
     @foreach($recu->items as $item)
         @if($item->produit && $item->produit->description)
-        <div style="font-size: 8pt; color: #34495e; margin-bottom: 4px; padding: 3px 0; border-bottom: 1px dashed #ecf0f1;">
-            <strong style="color: #e74c3c;">{{ $item->produit->nom }}:</strong>
-            <span style="margin-left: 5px;">{!! nl2br(e($item->produit->description)) !!}</span>
-        </div>
+        
+            @php
+                // 1. Définir les caractères non-standard qui causent les '??' (Guillemets français, apostrophes, espaces invisibles)
+                $search = ['«', '»', '’', '«', '»', '’', ' ', '‎', '‏', '—']; 
+                // 2. Définir les remplacements standard (Guillemets droits, apostrophe droite, espaces standard)
+                $replace = ['"', '"', '\'', '\"', '\"', '\'', ' ', '', '', '-'];
+                
+                // Appliquer les remplacements sur la description brute
+                $description_clean = str_replace($search, $replace, $item->produit->description);
+                
+                // 3. Forcer l'encodage correct pour la description finale
+                $description_final = htmlspecialchars($description_clean, ENT_QUOTES, 'UTF-8', false);
+            @endphp
+            
+            <div style="font-size: 8pt; color: #34495e; margin-bottom: 4px; padding: 3px 0; border-bottom: 1px dashed #ecf0f1;">
+                <strong style="color: #e74c3c;">{{ $item->produit->nom }}:</strong>
+                <span style="margin-left: 5px;">
+                    {{-- Afficher le texte nettoyé avec les sauts de ligne --}}
+                    {!! nl2br($description_final) !!}
+                </span>
+            </div>
         @endif
     @endforeach
 </div>

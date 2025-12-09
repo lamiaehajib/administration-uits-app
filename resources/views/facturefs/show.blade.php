@@ -153,7 +153,7 @@
     font-weight: bold;
     font-size: 17px; /* Une taille plus grande pour voir clairement */
     color: rgb(195, 57, 57);
-    width: 350px;
+    width: 250px;
     margin-top: 100px;
 
 }

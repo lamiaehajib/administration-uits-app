@@ -455,7 +455,22 @@
                 </div>
             </div>
         </div>
-
+<!-- CONFIGURATION/DESCRIPTION DES PRODUITS -->
+@if($recu->items->whereNotNull('produit.description')->count() > 0)
+<div style="background: #f0f8ff; border: 1px solid #3498db; border-radius: 4px; padding: 8px; margin: 8px 0; width: 90%;">
+    <div style="font-size: 9pt; font-weight: bold; color: #2c3e50; margin-bottom: 5px; padding-bottom: 3px; border-bottom: 1px solid #bdc3c7;">
+         CONFIGURATION
+    </div>
+    @foreach($recu->items as $item)
+        @if($item->produit && $item->produit->description)
+        <div style="font-size: 8pt; color: #34495e; margin-bottom: 4px; padding: 3px 0; border-bottom: 1px dashed #ecf0f1;">
+            <strong style="color: #e74c3c;">{{ $item->produit->nom }}:</strong>
+            <span style="margin-left: 5px;">{{ $item->produit->description }}</span>
+        </div>
+        @endif
+    @endforeach
+</div>
+@endif
         <!-- GARANTIE -->
         @if($recu->type_garantie !== 'sans_garantie')
         <div class="warranty-box">
@@ -566,7 +581,7 @@
                     </div>
                 </div>
                 <div class="footer-right">
-                    <img src="{{ public_path('images/scanie-r.jpg') }}" alt="QR Code" class="qr-code">
+                    <img src="{{ public_path('images/insta-scan.png') }}" alt="QR Code" class="qr-code">
                     <div class="qr-label">Scannez pour plus d'infos</div>
                 </div>
             </div>

@@ -12,6 +12,7 @@ use App\Models\StockMovement;
 use App\Models\Paiement;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardStockController extends Controller
 {
@@ -20,11 +21,15 @@ class DashboardStockController extends Controller
      */
     public function index(Request $request)
     {
+        // Vérifier le rôle de l'utilisateur
+        $user = Auth::user();
+        $isGerant = $user->hasRole('Gérant_de_stock');
+        $isVendeur = $user->hasRole('Vendeur');
+
         // Par défaut: depuis le début de l'application jusqu'à maintenant
         $dateDebut = $request->input('date_debut', null);
         $dateFin = $request->input('date_fin', null);
         
-        // Si pas de dates, prendre  depuis la première vente
         if (!$dateDebut) {
             $premiereVente = RecuUcg::oldest('created_at')->first();
             $dateDebut = $premiereVente 
@@ -40,34 +45,40 @@ class DashboardStockController extends Controller
         $dateFin = Carbon::parse($dateFin)->endOfDay();
 
         // ========== KPIs PRINCIPAUX ==========
+        
+        // Query de base pour les ventes (filtrée par user si pas Gérant)
+        $ventesQuery = RecuUcg::whereBetween('created_at', [$dateDebut, $dateFin])
+            ->whereIn('statut', ['en_cours', 'livre']);
+        
+        // Si pas Gérant, filtrer par user_id
+        if (!$isGerant) {
+            $ventesQuery->where('user_id', $user->id);
+        }
+
         $kpis = [
-            // Chiffre d'affaires (avec remise appliquée)
-            'ca_total' => RecuUcg::whereBetween('created_at', [$dateDebut, $dateFin])
-                ->whereIn('statut', ['en_cours', 'livre'])
-                ->sum('total'),
+            // Chiffre d'affaires
+            'ca_total' => (clone $ventesQuery)->sum('total'),
             
-            // Total des achats
-            'total_achats' => Achat::whereBetween('date_achat', [$dateDebut, $dateFin])
-                ->sum('total_achat'),
+            // Total des achats (visible uniquement pour Gérant)
+            'total_achats' => $isGerant ? Achat::whereBetween('date_achat', [$dateDebut, $dateFin])
+                ->sum('total_achat') : null,
             
-            // Marge totale (profit)
-            'marge_totale' => DB::table('recu_items')
+            // Marge totale (visible uniquement pour Gérant)
+            'marge_totale' => $isGerant ? DB::table('recu_items')
                 ->join('recus_ucgs', 'recu_items.recu_ucg_id', '=', 'recus_ucgs.id')
                 ->whereBetween('recus_ucgs.created_at', [$dateDebut, $dateFin])
                 ->whereIn('recus_ucgs.statut', ['en_cours', 'livre'])
                 ->whereNull('recus_ucgs.deleted_at')
-                ->sum('recu_items.marge_totale'),
+                ->sum('recu_items.marge_totale') : null,
             
             // Nombre de ventes
-            'nombre_ventes' => RecuUcg::whereBetween('created_at', [$dateDebut, $dateFin])
-                ->whereIn('statut', ['en_cours', 'livre'])
-                ->count(),
+            'nombre_ventes' => (clone $ventesQuery)->count(),
             
-            // Valeur du stock actuel
-            'valeur_stock' => DB::table('produits')
+            // Valeur du stock actuel (visible uniquement pour Gérant)
+            'valeur_stock' => $isGerant ? DB::table('produits')
                 ->whereNull('deleted_at')
                 ->selectRaw('SUM(quantite_stock * COALESCE(prix_achat, 0)) as total')
-                ->value('total') ?? 0,
+                ->value('total') ?? 0 : null,
             
             // Nombre de produits actifs
             'produits_actifs' => Produit::where('actif', true)->count(),
@@ -77,58 +88,26 @@ class DashboardStockController extends Controller
                 ->where('actif', true)
                 ->count(),
             
-            // Paiements du jour
-            'paiements_jour' => Paiement::whereDate('date_paiement', now())->sum('montant'),
+            // Paiements du jour (filtrés par user si pas Gérant)
+            'paiements_jour' => $this->getPaiementsJour($user, $isGerant),
         ];
 
-        // Calculer le taux de marge
-        $kpis['taux_marge'] = $kpis['ca_total'] > 0 
+        // Calculer le taux de marge (visible uniquement pour Gérant)
+        $kpis['taux_marge'] = $isGerant && $kpis['ca_total'] > 0 
             ? ($kpis['marge_totale'] / $kpis['ca_total']) * 100 
-            : 0;
+            : null;
 
         // ========== GRAPHIQUE: ÉVOLUTION CA vs ACHATS ==========
-        $evolutionVentes = $this->getEvolutionVentes($dateDebut, $dateFin);
+        $evolutionVentes = $this->getEvolutionVentes($dateDebut, $dateFin, $user, $isGerant);
 
         // ========== GRAPHIQUE: TOP 10 PRODUITS LES PLUS VENDUS ==========
-        $topProduits = DB::table('produits')
-            ->leftJoin('recu_items', 'produits.id', '=', 'recu_items.produit_id')
-            ->leftJoin('recus_ucgs', 'recu_items.recu_ucg_id', '=', 'recus_ucgs.id')
-            ->whereBetween('recus_ucgs.created_at', [$dateDebut, $dateFin])
-            ->whereIn('recus_ucgs.statut', ['en_cours', 'livre'])
-            ->whereNull('produits.deleted_at')
-            ->whereNull('recus_ucgs.deleted_at')
-            ->select(
-                'produits.nom',
-                DB::raw('SUM(recu_items.quantite) as quantite_vendue'),
-                DB::raw('SUM(recu_items.sous_total) as ca_total')
-            )
-            ->groupBy('produits.id', 'produits.nom')
-            ->orderByDesc('quantite_vendue')
-            ->take(10)
-            ->get();
+        $topProduits = $this->getTopProduits($dateDebut, $dateFin, $user, $isGerant);
 
         // ========== GRAPHIQUE: VENTES PAR CATÉGORIE ==========
-        $ventesByCategorie = DB::table('categories')
-            ->leftJoin('produits', 'categories.id', '=', 'produits.category_id')
-            ->leftJoin('recu_items', 'produits.id', '=', 'recu_items.produit_id')
-            ->leftJoin('recus_ucgs', 'recu_items.recu_ucg_id', '=', 'recus_ucgs.id')
-            ->whereBetween('recus_ucgs.created_at', [$dateDebut, $dateFin])
-            ->whereIn('recus_ucgs.statut', ['en_cours', 'livre'])
-            ->whereNull('recus_ucgs.deleted_at')
-            ->select(
-                'categories.nom as categorie',
-                DB::raw('SUM(recu_items.sous_total) as total_ventes'),
-                DB::raw('SUM(recu_items.marge_totale) as marge')
-            )
-            ->groupBy('categories.id', 'categories.nom')
-            ->orderByDesc('total_ventes')
-            ->get();
+        $ventesByCategorie = $this->getVentesByCategorie($dateDebut, $dateFin, $user, $isGerant);
 
         // ========== GRAPHIQUE: RÉPARTITION MODES DE PAIEMENT ==========
-        $paiementsModes = Paiement::whereBetween('date_paiement', [$dateDebut, $dateFin])
-            ->select('mode_paiement', DB::raw('SUM(montant) as total'))
-            ->groupBy('mode_paiement')
-            ->get();
+        $paiementsModes = $this->getPaiementsModes($dateDebut, $dateFin, $user, $isGerant);
 
         // ========== PRODUITS EN RUPTURE DE STOCK ==========
         $produitsRupture = Produit::whereColumn('quantite_stock', '<=', 'stock_alerte')
@@ -139,16 +118,20 @@ class DashboardStockController extends Controller
             ->get();
 
         // ========== DERNIÈRES VENTES ==========
-        $dernieresVentes = RecuUcg::with(['items.produit', 'user'])
-            ->whereIn('statut', ['en_cours', 'livre'])
-            ->latest()
-            ->take(5)
-            ->get();
+        $dernieresVentesQuery = RecuUcg::with(['items.produit', 'user'])
+            ->whereIn('statut', ['en_cours', 'livre']);
+        
+        // Si pas Gérant, filtrer par user
+        if (!$isGerant) {
+            $dernieresVentesQuery->where('user_id', $user->id);
+        }
+        
+        $dernieresVentes = $dernieresVentesQuery->latest()->take(5)->get();
 
         // ========== COMPARAISON AVEC PÉRIODE PRÉCÉDENTE ==========
-        $comparaison = $this->getComparaison($dateDebut, $dateFin);
+        $comparaison = $this->getComparaison($dateDebut, $dateFin, $user, $isGerant);
 
-        // Liste des mois disponibles pour le filtre
+        // Liste des mois disponibles
         $moisDisponibles = $this->getMoisDisponibles();
 
         return view('dashboardstock.index', compact(
@@ -162,12 +145,106 @@ class DashboardStockController extends Controller
             'comparaison',
             'dateDebut',
             'dateFin',
-            'moisDisponibles'
+            'moisDisponibles',
+            'isGerant',
+            'isVendeur'
         ));
     }
 
     /**
-     * Obtenir la liste des mois disponibles depuis la première vente
+     * Paiements du jour (filtrés par user si pas Gérant)
+     */
+    private function getPaiementsJour($user, $isGerant)
+    {
+        $query = Paiement::whereDate('date_paiement', now());
+        
+        if (!$isGerant) {
+            // Filtrer par les reçus de l'utilisateur
+            $query->whereHas('recuUcg', function($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
+        }
+        
+        return $query->sum('montant');
+    }
+
+    /**
+     * Top produits (filtrés par user si pas Gérant)
+     */
+    private function getTopProduits($dateDebut, $dateFin, $user, $isGerant)
+    {
+        $query = DB::table('produits')
+            ->leftJoin('recu_items', 'produits.id', '=', 'recu_items.produit_id')
+            ->leftJoin('recus_ucgs', 'recu_items.recu_ucg_id', '=', 'recus_ucgs.id')
+            ->whereBetween('recus_ucgs.created_at', [$dateDebut, $dateFin])
+            ->whereIn('recus_ucgs.statut', ['en_cours', 'livre'])
+            ->whereNull('produits.deleted_at')
+            ->whereNull('recus_ucgs.deleted_at');
+        
+        // Si pas Gérant, filtrer par user
+        if (!$isGerant) {
+            $query->where('recus_ucgs.user_id', $user->id);
+        }
+        
+        return $query->select(
+                'produits.nom',
+                DB::raw('SUM(recu_items.quantite) as quantite_vendue'),
+                DB::raw('SUM(recu_items.sous_total) as ca_total')
+            )
+            ->groupBy('produits.id', 'produits.nom')
+            ->orderByDesc('quantite_vendue')
+            ->take(10)
+            ->get();
+    }
+
+    /**
+     * Ventes par catégorie (filtrées par user si pas Gérant)
+     */
+    private function getVentesByCategorie($dateDebut, $dateFin, $user, $isGerant)
+    {
+        $query = DB::table('categories')
+            ->leftJoin('produits', 'categories.id', '=', 'produits.category_id')
+            ->leftJoin('recu_items', 'produits.id', '=', 'recu_items.produit_id')
+            ->leftJoin('recus_ucgs', 'recu_items.recu_ucg_id', '=', 'recus_ucgs.id')
+            ->whereBetween('recus_ucgs.created_at', [$dateDebut, $dateFin])
+            ->whereIn('recus_ucgs.statut', ['en_cours', 'livre'])
+            ->whereNull('recus_ucgs.deleted_at');
+        
+        // Si pas Gérant, filtrer par user
+        if (!$isGerant) {
+            $query->where('recus_ucgs.user_id', $user->id);
+        }
+        
+        return $query->select(
+                'categories.nom as categorie',
+                DB::raw('SUM(recu_items.sous_total) as total_ventes'),
+                $isGerant ? DB::raw('SUM(recu_items.marge_totale) as marge') : DB::raw('NULL as marge')
+            )
+            ->groupBy('categories.id', 'categories.nom')
+            ->orderByDesc('total_ventes')
+            ->get();
+    }
+
+    /**
+     * Modes de paiement (filtrés par user si pas Gérant)
+     */
+    private function getPaiementsModes($dateDebut, $dateFin, $user, $isGerant)
+    {
+        $query = Paiement::whereBetween('date_paiement', [$dateDebut, $dateFin]);
+        
+        if (!$isGerant) {
+            $query->whereHas('recuUcg', function($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
+        }
+        
+        return $query->select('mode_paiement', DB::raw('SUM(montant) as total'))
+            ->groupBy('mode_paiement')
+            ->get();
+    }
+
+    /**
+     * Obtenir la liste des mois disponibles
      */
     private function getMoisDisponibles()
     {
@@ -195,25 +272,23 @@ class DashboardStockController extends Controller
     }
 
     /**
-     * Obtenir l'évolution des ventes et achats
+     * Obtenir l'évolution des ventes
      */
-    private function getEvolutionVentes($dateDebut, $dateFin)
+    private function getEvolutionVentes($dateDebut, $dateFin, $user, $isGerant)
     {
         $nbJours = $dateDebut->diffInDays($dateFin) + 1;
         
-        // Si la période est trop longue (>60 jours), grouper par mois
         if ($nbJours > 60) {
-            return $this->getEvolutionVentesParMois($dateDebut, $dateFin);
+            return $this->getEvolutionVentesParMois($dateDebut, $dateFin, $user, $isGerant);
         }
         
-        // Sinon, afficher jour par jour
-        return $this->getEvolutionVentesParJour($dateDebut, $dateFin);
+        return $this->getEvolutionVentesParJour($dateDebut, $dateFin, $user, $isGerant);
     }
 
     /**
      * Évolution par jour
      */
-    private function getEvolutionVentesParJour($dateDebut, $dateFin)
+    private function getEvolutionVentesParJour($dateDebut, $dateFin, $user, $isGerant)
     {
         $jours = [];
         $ventes = [];
@@ -225,22 +300,29 @@ class DashboardStockController extends Controller
         while ($dateActuelle->lte($dateFin)) {
             $jours[] = $dateActuelle->format('d/m');
             
-            $caJour = RecuUcg::whereDate('created_at', $dateActuelle)
-                ->whereIn('statut', ['en_cours', 'livre'])
-                ->sum('total');
+            $ventesQuery = RecuUcg::whereDate('created_at', $dateActuelle)
+                ->whereIn('statut', ['en_cours', 'livre']);
+            
+            if (!$isGerant) {
+                $ventesQuery->where('user_id', $user->id);
+            }
+            
+            $caJour = $ventesQuery->sum('total');
             $ventes[] = round($caJour, 2);
             
-            $achatsJour = Achat::whereDate('date_achat', $dateActuelle)
-                ->sum('total_achat');
-            $achats[] = round($achatsJour, 2);
-            
-            $margeJour = DB::table('recu_items')
-                ->join('recus_ucgs', 'recu_items.recu_ucg_id', '=', 'recus_ucgs.id')
-                ->whereDate('recus_ucgs.created_at', $dateActuelle)
-                ->whereIn('recus_ucgs.statut', ['en_cours', 'livre'])
-                ->whereNull('recus_ucgs.deleted_at')
-                ->sum('recu_items.marge_totale');
-            $marges[] = round($margeJour, 2);
+            if ($isGerant) {
+                $achatsJour = Achat::whereDate('date_achat', $dateActuelle)
+                    ->sum('total_achat');
+                $achats[] = round($achatsJour, 2);
+                
+                $margeJour = DB::table('recu_items')
+                    ->join('recus_ucgs', 'recu_items.recu_ucg_id', '=', 'recus_ucgs.id')
+                    ->whereDate('recus_ucgs.created_at', $dateActuelle)
+                    ->whereIn('recus_ucgs.statut', ['en_cours', 'livre'])
+                    ->whereNull('recus_ucgs.deleted_at')
+                    ->sum('recu_items.marge_totale');
+                $marges[] = round($margeJour, 2);
+            }
             
             $dateActuelle->addDay();
         }
@@ -248,15 +330,15 @@ class DashboardStockController extends Controller
         return [
             'labels' => $jours,
             'ventes' => $ventes,
-            'achats' => $achats,
-            'marges' => $marges,
+            'achats' => $isGerant ? $achats : null,
+            'marges' => $isGerant ? $marges : null,
         ];
     }
 
     /**
-     * Évolution par mois (pour longues périodes)
+     * Évolution par mois
      */
-    private function getEvolutionVentesParMois($dateDebut, $dateFin)
+    private function getEvolutionVentesParMois($dateDebut, $dateFin, $user, $isGerant)
     {
         $mois = [];
         $ventes = [];
@@ -271,22 +353,29 @@ class DashboardStockController extends Controller
             $debutMois = $dateActuelle->copy()->startOfMonth();
             $finMois = $dateActuelle->copy()->endOfMonth();
             
-            $caMois = RecuUcg::whereBetween('created_at', [$debutMois, $finMois])
-                ->whereIn('statut', ['en_cours', 'livre'])
-                ->sum('total');
+            $ventesQuery = RecuUcg::whereBetween('created_at', [$debutMois, $finMois])
+                ->whereIn('statut', ['en_cours', 'livre']);
+            
+            if (!$isGerant) {
+                $ventesQuery->where('user_id', $user->id);
+            }
+            
+            $caMois = $ventesQuery->sum('total');
             $ventes[] = round($caMois, 2);
             
-            $achatsMois = Achat::whereBetween('date_achat', [$debutMois, $finMois])
-                ->sum('total_achat');
-            $achats[] = round($achatsMois, 2);
-            
-            $margeMois = DB::table('recu_items')
-                ->join('recus_ucgs', 'recu_items.recu_ucg_id', '=', 'recus_ucgs.id')
-                ->whereBetween('recus_ucgs.created_at', [$debutMois, $finMois])
-                ->whereIn('recus_ucgs.statut', ['en_cours', 'livre'])
-                ->whereNull('recus_ucgs.deleted_at')
-                ->sum('recu_items.marge_totale');
-            $marges[] = round($margeMois, 2);
+            if ($isGerant) {
+                $achatsMois = Achat::whereBetween('date_achat', [$debutMois, $finMois])
+                    ->sum('total_achat');
+                $achats[] = round($achatsMois, 2);
+                
+                $margeMois = DB::table('recu_items')
+                    ->join('recus_ucgs', 'recu_items.recu_ucg_id', '=', 'recus_ucgs.id')
+                    ->whereBetween('recus_ucgs.created_at', [$debutMois, $finMois])
+                    ->whereIn('recus_ucgs.statut', ['en_cours', 'livre'])
+                    ->whereNull('recus_ucgs.deleted_at')
+                    ->sum('recu_items.marge_totale');
+                $marges[] = round($margeMois, 2);
+            }
             
             $dateActuelle->addMonth();
         }
@@ -294,27 +383,33 @@ class DashboardStockController extends Controller
         return [
             'labels' => $mois,
             'ventes' => $ventes,
-            'achats' => $achats,
-            'marges' => $marges,
+            'achats' => $isGerant ? $achats : null,
+            'marges' => $isGerant ? $marges : null,
         ];
     }
 
     /**
-     * Comparaison avec la période précédente
+     * Comparaison avec période précédente
      */
-    private function getComparaison($dateDebut, $dateFin)
+    private function getComparaison($dateDebut, $dateFin, $user, $isGerant)
     {
         $nbJours = $dateDebut->diffInDays($dateFin) + 1;
         $dateDebutPrecedent = $dateDebut->copy()->subDays($nbJours);
         $dateFinPrecedent = $dateDebut->copy()->subDay();
 
-        $caActuel = RecuUcg::whereBetween('created_at', [$dateDebut, $dateFin])
-            ->whereIn('statut', ['en_cours', 'livre'])
-            ->sum('total');
+        $ventesActuelQuery = RecuUcg::whereBetween('created_at', [$dateDebut, $dateFin])
+            ->whereIn('statut', ['en_cours', 'livre']);
+        
+        $ventesPrecedentQuery = RecuUcg::whereBetween('created_at', [$dateDebutPrecedent, $dateFinPrecedent])
+            ->whereIn('statut', ['en_cours', 'livre']);
+        
+        if (!$isGerant) {
+            $ventesActuelQuery->where('user_id', $user->id);
+            $ventesPrecedentQuery->where('user_id', $user->id);
+        }
 
-        $caPrecedent = RecuUcg::whereBetween('created_at', [$dateDebutPrecedent, $dateFinPrecedent])
-            ->whereIn('statut', ['en_cours', 'livre'])
-            ->sum('total');
+        $caActuel = $ventesActuelQuery->sum('total');
+        $caPrecedent = $ventesPrecedentQuery->sum('total');
 
         $variation = $caPrecedent > 0 
             ? (($caActuel - $caPrecedent) / $caPrecedent) * 100 
@@ -334,6 +429,8 @@ class DashboardStockController extends Controller
     public function getStats(Request $request)
     {
         $type = $request->input('type', 'today');
+        $user = Auth::user();
+        $isGerant = $user->hasRole('Gérant_de_stock');
         
         switch ($type) {
             case 'today':
@@ -353,18 +450,24 @@ class DashboardStockController extends Controller
                 $dateFin = now()->endOfMonth();
         }
 
+        $ventesQuery = RecuUcg::whereBetween('created_at', [$dateDebut, $dateFin])
+            ->whereIn('statut', ['en_cours', 'livre']);
+        
+        if (!$isGerant) {
+            $ventesQuery->where('user_id', $user->id);
+        }
+
         $stats = [
-            'ca' => RecuUcg::whereBetween('created_at', [$dateDebut, $dateFin])
-                ->whereIn('statut', ['en_cours', 'livre'])
-                ->sum('total'),
-            'ventes' => RecuUcg::whereBetween('created_at', [$dateDebut, $dateFin])
-                ->whereIn('statut', ['en_cours', 'livre'])
-                ->count(),
-            'marge' => DB::table('recu_items')
+            'ca' => (clone $ventesQuery)->sum('total'),
+            'ventes' => (clone $ventesQuery)->count(),
+            'marge' => $isGerant ? DB::table('recu_items')
                 ->join('recus_ucgs', 'recu_items.recu_ucg_id', '=', 'recus_ucgs.id')
                 ->whereBetween('recus_ucgs.created_at', [$dateDebut, $dateFin])
                 ->whereIn('recus_ucgs.statut', ['en_cours', 'livre'])
-                ->sum('recu_items.marge_totale'),
+                ->when(!$isGerant, function($q) use ($user) {
+                    $q->where('recus_ucgs.user_id', $user->id);
+                })
+                ->sum('recu_items.marge_totale') : null,
         ];
 
         return response()->json($stats);

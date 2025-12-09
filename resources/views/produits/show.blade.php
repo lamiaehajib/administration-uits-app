@@ -493,9 +493,11 @@
                 </div>
 
                 <div class="header-actions">
+                    @can('produit-edit')
                     <a href="{{ route('produits.edit', $produit->id) }}" class="btn-action-header btn-white">
                         <i class="fas fa-edit"></i> Modifier
                     </a>
+                    @endcan
                     <a href="{{ route('produits.index') }}" class="btn-action-header btn-outline-white">
                         <i class="fas fa-arrow-left"></i> Retour
                     </a>
@@ -517,11 +519,13 @@
                 <div class="stat-overview-value">{{ number_format($stats['ca_total'], 0) }} DH</div>
             </div>
 
+            @can('produit-rapport')
             <div class="stat-overview-card purple">
                 <i class="fas fa-chart-line stat-overview-icon"></i>
                 <div class="stat-overview-label">Marge Totale</div>
                 <div class="stat-overview-value">{{ number_format($stats['marge_totale'], 0) }} DH</div>
             </div>
+            @endcan
 
             <div class="stat-overview-card orange">
                 <i class="fas fa-boxes stat-overview-icon"></i>
@@ -529,11 +533,13 @@
                 <div class="stat-overview-value">{{ number_format($produit->quantite_stock) }}</div>
             </div>
 
+            @can('produit-rapport')
             <div class="stat-overview-card red">
                 <i class="fas fa-warehouse stat-overview-icon"></i>
                 <div class="stat-overview-label">Valeur Stock</div>
                 <div class="stat-overview-value">{{ number_format($stats['valeur_stock'], 0) }} DH</div>
             </div>
+            @endcan
         </div>
 
         <!-- Stock Alert -->
@@ -593,18 +599,23 @@
                     </div>
 
                     <div class="price-display">
+                        @can('produit-rapport')
                         <div class="price-row">
                             <span class="price-label"><i class="fas fa-tag"></i> Prix d'Achat</span>
                             <span class="price-value" style="color: #f44336;">
                                 {{ number_format($produit->prix_achat, 2) }} DH
                             </span>
                         </div>
+                        @endcan
+                        
                         <div class="price-row">
                             <span class="price-label"><i class="fas fa-dollar-sign"></i> Prix de Vente</span>
                             <span class="price-value" style="color: #4CAF50;">
                                 {{ number_format($produit->prix_vente, 2) }} DH
                             </span>
                         </div>
+                        
+                        @can('produit-rapport')
                         <div class="price-row" style="border-top: 2px dashed #ccc; padding-top: 15px; margin-top: 10px;">
                             <span class="price-label"><i class="fas fa-percentage"></i> Marge Unitaire</span>
                             <span class="price-value" style="color: #9C27B0;">
@@ -612,6 +623,7 @@
                                 ({{ number_format((($produit->prix_vente - $produit->prix_achat) / $produit->prix_achat) * 100, 1) }}%)
                             </span>
                         </div>
+                        @endcan
                     </div>
                 </div>
             </div>
@@ -636,6 +648,7 @@
                         <span class="info-value">{{ number_format($produit->stock_alerte) }}</span>
                     </div>
 
+                    @can('produit-rapport')
                     <div class="info-row">
                         <span class="info-label">Total Achats</span>
                         <span class="info-value">{{ number_format($stats['total_achats']) }}</span>
@@ -645,6 +658,7 @@
                         <span class="info-label">Valeur Stock</span>
                         <span class="info-value success">{{ number_format($stats['valeur_stock'], 2) }} DH</span>
                     </div>
+                    @endcan
                 </div>
 
                 <div class="info-card" style="margin-top: 25px;">
@@ -665,10 +679,12 @@
                         <span class="info-value success">{{ number_format($stats['ca_total'], 2) }} DH</span>
                     </div>
 
+                    @can('produit-rapport')
                     <div class="info-row">
                         <span class="info-label">Marge Totale</span>
                         <span class="info-value success">{{ number_format($stats['marge_totale'], 2) }} DH</span>
                     </div>
+                    @endcan
                 </div>
             </div>
         </div>
@@ -677,6 +693,7 @@
         <div class="activity-section">
             <div class="activity-grid">
                 <!-- Recent Purchases -->
+                @can('achat-list')
                 <div class="activity-card">
                     <div class="activity-header">
                         <h4><i class="fas fa-shopping-bag"></i> Derniers Achats</h4>
@@ -693,9 +710,11 @@
                                         <br>
                                         <small class="text-muted">Fournisseur: {{ $achat->fournisseur->nom ?? 'N/A' }}</small>
                                     </div>
+                                    @can('produit-rapport')
                                     <div class="activity-price">
                                         {{ number_format($achat->total_achat, 2) }} DH
                                     </div>
+                                    @endcan
                                 </div>
                             </div>
                         @empty
@@ -706,6 +725,7 @@
                         @endforelse
                     </div>
                 </div>
+                @endcan
 
                 <!-- Recent Sales -->
                 <div class="activity-card">
@@ -726,7 +746,9 @@
                                     </div>
                                     <div>
                                         <div class="activity-price">{{ number_format($vente->sous_total, 2) }} DH</div>
+                                        @can('produit-rapport')
                                         <small class="text-muted">Marge: {{ number_format($vente->marge_totale, 2) }} DH</small>
+                                        @endcan
                                     </div>
                                 </div>
                             </div>

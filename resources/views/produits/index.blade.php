@@ -336,6 +336,15 @@
         .btn-delete { background: #FFEBEE; color: #C62828; }
         .btn-delete:hover { background: #C62828; color: white; }
 
+        .btn-stock { 
+            background: #F3E5F5; 
+            color: #7B1FA2; 
+        }
+        .btn-stock:hover { 
+            background: #7B1FA2; 
+            color: white; 
+        }
+
         /* Pagination */
         .pagination-modern {
             margin-top: 25px;
@@ -371,14 +380,6 @@
             .action-bar { flex-direction: column; }
             .search-box { width: 100%; }
         }
-        .btn-stock { 
-    background: #F3E5F5; 
-    color: #7B1FA2; 
-}
-.btn-stock:hover { 
-    background: #7B1FA2; 
-    color: white; 
-}
     </style>
 
     <div class="container-fluid">
@@ -408,11 +409,13 @@
                 <div class="stat-label">Alertes Stock</div>
             </div>
             
+            @can('produit-rapport')
             <div class="stat-card info">
                 <div class="stat-icon"><i class="fas fa-coins"></i></div>
                 <div class="stat-value">{{ number_format($produits->sum('marge_totale'), 0) }} DH</div>
                 <div class="stat-label">Marge Totale</div>
             </div>
+            @endcan
         </div>
 
         <!-- Action Bar -->
@@ -423,17 +426,23 @@
                 <i class="fas fa-search"></i>
             </form>
 
+            @can('produit-create')
             <a href="{{ route('produits.create') }}" class="btn-modern btn-primary-modern">
                 <i class="fas fa-plus-circle"></i> Nouveau Produit
             </a>
+            @endcan
 
+            @can('produit-rapport')
             <a href="{{ route('produits.rapport') }}" class="btn-modern btn-outline-modern">
                 <i class="fas fa-chart-line"></i> Rapport
             </a>
+            @endcan
 
+            @can('produit-export')
             <a href="{{ route('produits.export_pdf') }}" class="btn-modern btn-outline-modern">
                 <i class="fas fa-file-pdf"></i> Export PDF
             </a>
+            @endcan
         </div>
 
         <!-- Products Table -->
@@ -448,7 +457,9 @@
                             <th>Prix Vente</th>
                             <th>Stock</th>
                             <th>Ventes</th>
+                            @can('produit-rapport')
                             <th>Marge</th>
+                            @endcan
                             <th>Statut</th>
                             <th>Actions</th>
                         </tr>
@@ -493,12 +504,14 @@
                                 <div><strong>{{ $produit->quantite_vendue ?? 0 }}</strong> unités</div>
                                 <small class="text-muted">{{ number_format($produit->total_vendu_montant ?? 0, 0) }} DH</small>
                             </td>
+                            @can('produit-rapport')
                             <td>
                                 <div class="text-success">
                                     <strong>{{ number_format($produit->marge_totale ?? 0, 0) }} DH</strong>
                                 </div>
                                 <small class="text-muted">({{ number_format($produit->marge_pourcentage ?? 0, 1) }}%)</small>
                             </td>
+                            @endcan
                             <td>
                                 @if($produit->actif)
                                     <span class="badge-modern badge-success-modern">
@@ -516,19 +529,25 @@
                                        class="btn-icon btn-view" title="Voir">
                                         <i class="fas fa-eye"></i>
                                     </a>
+                                    @can('produit-edit')
                                     <a href="{{ route('produits.edit', $produit->id) }}" 
                                        class="btn-icon btn-edit" title="Modifier">
                                         <i class="fas fa-edit"></i>
                                     </a>
+                                    @endcan
+                                    @can('produit-delete')
                                     <button onclick="confirmDelete({{ $produit->id }})" 
                                             class="btn-icon btn-delete" title="Supprimer">
                                         <i class="fas fa-trash"></i>
                                     </button>
+                                    @endcan
+                                    @can('stock-view')
                                     <a href="{{ route('stock.movements.produit', $produit->id) }}" 
-   class="btn-icon btn-stock" 
-   title="Mouvements de stock">
-    <i class="fas fa-exchange-alt"></i>
-</a>
+                                       class="btn-icon btn-stock" 
+                                       title="Mouvements de stock">
+                                        <i class="fas fa-exchange-alt"></i>
+                                    </a>
+                                    @endcan
                                 </div>
                             </td>
                         </tr>

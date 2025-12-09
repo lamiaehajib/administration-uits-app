@@ -71,7 +71,8 @@
             </div>
         </div>
 
-        <!-- Marge -->
+        <!-- Marge (Masqué pour Vendeur) -->
+        @if(!$isVendeur)
         <div class="kpi-card gradient-green">
             <div class="kpi-content">
                 <div class="kpi-header">
@@ -89,6 +90,7 @@
                 </div>
             </div>
         </div>
+        @endif
 
         <!-- Nombre de Ventes -->
         <div class="kpi-card gradient-pink">
@@ -109,7 +111,8 @@
             </div>
         </div>
 
-        <!-- Valeur Stock -->
+        <!-- Valeur Stock (Masqué pour Vendeur) -->
+        @if(!$isVendeur)
         <div class="kpi-card gradient-orange">
             <div class="kpi-content">
                 <div class="kpi-header">
@@ -131,6 +134,7 @@
                 </div>
             </div>
         </div>
+        @endif
     </div>
 
     <!-- Mini Stats -->
@@ -155,6 +159,8 @@
             </div>
         </div>
 
+        <!-- Total Achats (Masqué pour Vendeur) -->
+        @if(!$isVendeur)
         <div class="mini-stat-card">
             <div class="mini-stat-icon cyan">
                 <i class="fas fa-money-bill-wave"></i>
@@ -164,6 +170,7 @@
                 <p>Total Achats</p>
             </div>
         </div>
+        @endif
 
         <div class="mini-stat-card">
             <div class="mini-stat-icon red">
@@ -185,7 +192,13 @@
                     <i class="fas fa-chart-area"></i>
                 </div>
                 <div class="header-text">
-                    <h5>Évolution CA, Achats & Marge</h5>
+                    <h5>
+                        @if($isVendeur)
+                            Évolution du Chiffre d'Affaires
+                        @else
+                            Évolution CA, Achats & Marge
+                        @endif
+                    </h5>
                     <p>Suivi sur la période sélectionnée</p>
                 </div>
             </div>
@@ -683,6 +696,7 @@
     font-weight: 700;
     margin: 0;
     line-height: 1.2;
+    color: white;
 }
 
 .kpi-value span {
@@ -782,7 +796,6 @@
     grid-template-columns: 1fr 1fr;
 }
 
-.chart-card {
     background: white;
     border-radius: var(--radius);
     box-shadow: var(--shadow-md);
@@ -1103,13 +1116,6 @@
         font-size: 36px;
     }
 }
-.kpi-value {
-    font-size: 32px;
-    font-weight: 700;
-    margin: 0;
-    line-height: 1.2;
-    color: white;
-}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -1137,37 +1143,49 @@ const colors = {
     warning: '#f2994a'
 };
 
+const isVendeur = @json($isVendeur);
+
 // Évolution Chart
 @if($evolutionVentes && count($evolutionVentes['labels']) > 0)
+const evolutionDatasets = [{
+    label: 'Ventes',
+    data: @json($evolutionVentes['ventes']),
+    borderColor: colors.primary,
+    backgroundColor: 'rgba(194, 24, 91, 0.1)',
+    fill: true,
+    tension: 0.4,
+    borderWidth: 3
+}];
+
+@if(!$isVendeur && $evolutionVentes['achats'])
+evolutionDatasets.push({
+    label: 'Achats',
+    data: @json($evolutionVentes['achats']),
+    borderColor: colors.secondary,
+    backgroundColor: 'rgba(211, 47, 47, 0.1)',
+    fill: true,
+    tension: 0.4,
+    borderWidth: 3
+});
+@endif
+
+@if(!$isVendeur && $evolutionVentes['marges'])
+evolutionDatasets.push({
+    label: 'Marge',
+    data: @json($evolutionVentes['marges']),
+    borderColor: colors.success,
+    backgroundColor: 'rgba(56, 239, 125, 0.1)',
+    fill: true,
+    tension: 0.4,
+    borderWidth: 3
+});
+@endif
+
 new Chart(document.getElementById('evolutionChart'), {
     type: 'line',
     data: {
         labels: @json($evolutionVentes['labels']),
-        datasets: [{
-            label: 'Ventes',
-            data: @json($evolutionVentes['ventes']),
-            borderColor: colors.primary,
-            backgroundColor: 'rgba(194, 24, 91, 0.1)',
-            fill: true,
-            tension: 0.4,
-            borderWidth: 3
-        }, {
-            label: 'Achats',
-            data: @json($evolutionVentes['achats']),
-            borderColor: colors.secondary,
-            backgroundColor: 'rgba(211, 47, 47, 0.1)',
-            fill: true,
-            tension: 0.4,
-            borderWidth: 3
-        }, {
-            label: 'Marge',
-            data: @json($evolutionVentes['marges']),
-            borderColor: colors.success,
-            backgroundColor: 'rgba(56, 239, 125, 0.1)',
-            fill: true,
-            tension: 0.4,
-            borderWidth: 3
-        }]
+        datasets: evolutionDatasets
     },
     options: {
         responsive: true,

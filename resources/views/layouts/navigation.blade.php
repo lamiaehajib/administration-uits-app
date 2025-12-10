@@ -536,9 +536,9 @@
                 title: 'Liste des Reçus', 
                 links: [
                     { href: '{{ route('reussites.index') }}', label: 'Reçu de Stage', icon: 'fas fa-receipt', color: '#C2185B' },
-                    { href: '{{ route('reussitesf.index') }}', label: 'Reçu de Formation', icon: 'fas fa-graduation-cap', color: '#4CAF50' },
+                    { href: '{{ route('reussitesf.index') }}', label: 'Reçu de Formation', icon: 'fas fa-graduation-cap', color: '#4CAF50' }
                     // { href: '{{ route('ucgs.index') }}', label: 'Reçu de UCGS', icon: 'fas fa-shield-alt', color: '#ef4444' },
-                     { href: '{{ route('repair-tickets.index') }}', label: 'SERVICE DE RÉPARATION', icon: 'fas fa-shield-alt', color: '#4455efff' }
+                    
                 ]
             },
             { 
@@ -569,6 +569,7 @@
                 id: 'produitButto', 
                 title: 'Liste des Produits', 
 links: [
+     { href: '{{ route('repair-tickets.index') }}', label: 'SERVICE DE RÉPARATION', icon: 'fas fa-shield-alt', color: '#4455efff' },
     { 
         href: '{{ route('categories.index') }}', 
         label: 'Catégories de Produits', 

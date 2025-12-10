@@ -353,7 +353,7 @@
                 <div class="stat-icon">
                     <i class="fas fa-file-invoice"></i>
                 </div>
-                <h6>Total Reçus</h6>
+                <h6>Total Reçuss</h6>
                 <h3>{{ $recus->total() }}</h3>
             </div>
         </div>

@@ -70,22 +70,22 @@
                                         <td>{{ $produit->deleted_at ? $produit->deleted_at->format('Y-m-d H:i') : 'N/A' }}</td>
                                         <td>
                                             {{-- Bouton Restaurer --}}
-                                            @can('produit-trash')
+                                          
                                                 <button class="btn btn-success btn-sm me-1 btn-restore"
                                                         data-id="{{ $produit->id }}" 
                                                         title="Restaurer le produit">
                                                     <i class="fas fa-trash-restore"></i> Restaurer
                                                 </button>
-                                            @endcan
+                                           
 
                                             {{-- Bouton Suppression Définitive --}}
-                                            @can('produit-trash')
+                                      
                                                 <button class="btn btn-danger btn-sm btn-force-delete"
                                                         data-id="{{ $produit->id }}" 
                                                         title="Supprimer définitivement de la base de données">
                                                     <i class="fas fa-bomb"></i> Supprimer Déf.
                                                 </button>
-                                            @endcan
+                                           
                                         </td>
                                     </tr>
                                 @endforeach

@@ -126,4 +126,16 @@ class Produit extends Model
               ->orWhere('reference', 'like', "%{$search}%");
         });
     }
+    public function scopeOnlyTrashed($query)
+    {
+        return $query->onlyTrashed();
+    }
+
+    /**
+     * ✅ لجلب جميع المنتجات (النشطة والمحذوفة)
+     */
+    public function scopeWithTrashed($query)
+    {
+        return $query->withTrashed();
+    }
 }

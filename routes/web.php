@@ -259,6 +259,13 @@ Route::controller(ProduitController::class)->prefix('produits')->name('produits.
     Route::get('export-pdf', 'exportPDF')->name('export_pdf');
     Route::get('rapport', 'rapport')->name('rapport'); // هذا المسار الآن يتعرف عليه أولاً
 });
+Route::get('produits/trash', [ProduitController::class, 'trash'])->name('produits.trash');
+
+// Route لاستعادة منتج
+Route::post('produits/{id}/restore', [ProduitController::class, 'restore'])->name('produits.restore');
+
+// Route للحذف النهائي
+Route::delete('produits/{id}/force-delete', [ProduitController::class, 'forceDelete'])->name('produits.forceDelete');
 
 // 2. الـ Route الأساسي (Resource) - يجب أن يأتي ثانياً
 Route::resource('produits', ProduitController::class);

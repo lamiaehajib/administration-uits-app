@@ -443,6 +443,11 @@
                 <i class="fas fa-file-pdf"></i> Export PDF
             </a>
             @endcan
+            @can('produit-export')
+            <a href="{{ route('produits.trash') }}" class="btn-modern btn-outline-modern">
+                <i class="fas fa-trash"></i> Corbeille
+            </a>
+            @endcan
         </div>
 
         <!-- Products Table -->

@@ -399,4 +399,47 @@ public function exportPDF(Request $request)
             'dateFin'
         ));
     }
+
+
+
+    public function trash(Request $request)
+    {
+        $search = $request->input('search');
+
+        $produits = Produit::onlyTrashed() // ✅ جلب المحذوفة فقط
+            ->with('category')
+            ->when($search, function ($query) use ($search) {
+                return $query->where('nom', 'like', '%' . $search . '%')
+                    ->orWhere('reference', 'like', '%' . $search . '%');
+            })
+            ->paginate(10);
+
+        return view('produits.trash', compact('produits'));
+    }
+
+    /**
+     * استعادة منتج محذوف
+     */
+    public function restore($id)
+    {
+        // ✅ البحث في المنتجات المحذوفة
+        $produit = Produit::onlyTrashed()->findOrFail($id); 
+
+        $produit->restore();
+
+        return redirect()->route('produits.trash')->with('success', 'Produit restauré avec succès.');
+    }
+
+    /**
+     * الحذف النهائي لمنتج من قاعدة البيانات
+     */
+    public function forceDelete($id)
+    {
+        // ✅ البحث في المنتجات المحذوفة
+        $produit = Produit::onlyTrashed()->findOrFail($id); 
+
+        $produit->forceDelete();
+
+        return redirect()->route('produits.trash')->with('success', 'Produit supprimé définitivement avec succès.');
+    }
 }

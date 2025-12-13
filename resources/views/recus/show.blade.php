@@ -81,7 +81,9 @@
                                         <th>Qté</th>
                                         <th>Prix Unit.</th>
                                         <th>Sous-total</th>
-                                        <th>Marge</th>
+                                        @can('produit-rapport')
+                                            <th>Marge</th>
+                                        @endcan
                                         @if($recu->statut == 'en_cours')
                                             <th>Action</th>
                                         @endif
@@ -95,11 +97,13 @@
                                             <td><span class="badge bg-secondary">{{ $item->quantite }}</span></td>
                                             <td>{{ number_format($item->prix_unitaire, 2) }} DH</td>
                                             <td class="fw-bold">{{ number_format($item->sous_total, 2) }} DH</td>
-                                            <td>
-                                                <span class="text-success">
-                                                    {{ number_format($item->marge_totale, 2) }} DH
-                                                </span>
-                                            </td>
+                                            @can('produit-rapport')
+                                                <td>
+                                                    <span class="text-success">
+                                                        {{ number_format($item->marge_totale, 2) }} DH
+                                                    </span>
+                                                </td>
+                                            @endcan
                                             @if($recu->statut == 'en_cours')
                                                 <td>
                                                     <button class="btn btn-sm btn-danger" 
@@ -118,7 +122,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="7" class="text-center py-3 text-muted">
+                                            <td colspan="{{ auth()->user()->can('produit-rapport') ? '7' : '6' }}" class="text-center py-3 text-muted">
                                                 <i class="fas fa-inbox fa-2x mb-2"></i>
                                                 <p>Aucun article</p>
                                             </td>

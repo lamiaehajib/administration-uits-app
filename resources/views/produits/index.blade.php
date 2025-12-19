@@ -586,6 +586,32 @@
         .modern-table thead th {
             white-space: nowrap;
         }
+ .pagination {
+            margin-top: 20px;
+        }
+
+        .page-link {
+            border: 1px solid #e5e7eb;
+            color: #C2185B;
+            border-radius: 8px;
+            margin: 0 3px;
+            padding: 8px 15px;
+            transition: all 0.3s ease;
+        }
+
+        .page-link:hover {
+            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            color: white;
+            border-color: #C2185B;
+            transform: translateY(-2px);
+        }
+
+        .page-item.active .page-link {
+            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            border-color: #C2185B;
+        }
+
+        
     </style>
 
     <div class="container-fluid">
@@ -788,8 +814,12 @@
             </div>
 
             <!-- Pagination -->
-            <div class="pagination-modern">
-                {{ $produits->links() }}
+             
+            <div class="d-flex justify-content-between align-items-center p-3">
+                
+                <div>
+                    {{ $produits->links('pagination.custom') }}
+                </div>
             </div>
         </div>
     </div>

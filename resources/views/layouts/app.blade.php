@@ -151,18 +151,27 @@
         </div>
     </div>
 
-    <!-- Script pour connecter le burger du header avec la sidebar -->
+     <!-- ✅ SCRIPTS À LA FIN (ordre important!) -->
+    <!-- jQuery (UNE SEULE FOIS!) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Script sidebar -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // ======================================= 
-            // TOGGLE MENU BURGER POUR SIDEBAR
-            // ======================================= 
             const menuBurgerBtn = document.getElementById('menuBurgerBtn');
             const sidebar = document.getElementById('sidebar');
             const sidebarOverlay = document.getElementById('sidebarOverlay');
 
             if (menuBurgerBtn && sidebar) {
-                // Ouvrir/Fermer la sidebar
                 menuBurgerBtn.addEventListener('click', function(e) {
                     e.stopPropagation();
                     menuBurgerBtn.classList.toggle('active');
@@ -173,7 +182,6 @@
                 });
             }
 
-            // Fermer la sidebar en cliquant sur l'overlay
             if (sidebarOverlay) {
                 sidebarOverlay.addEventListener('click', function() {
                     if (menuBurgerBtn) {
@@ -184,7 +192,6 @@
                 });
             }
 
-            // Fermer la sidebar avec touche Escape
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape' && sidebar && sidebar.classList.contains('active')) {
                     if (menuBurgerBtn) {
@@ -198,5 +205,8 @@
             });
         });
     </script>
+
+    <!-- ✅ Scripts des pages (pushez depuis les vues) -->
+    @stack('scripts')
 </body>
 </html>

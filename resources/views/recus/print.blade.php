@@ -446,34 +446,92 @@
             </div>
         </div>
 <!-- CONFIGURATION/DESCRIPTION DES PRODUITS -->
-@if($recu->items->whereNotNull('produit.description')->count() > 0)
+@if($recu->items->count() > 0)
 <div style="background: #f0f8ff; border: 1px solid #3498db; border-radius: 4px; padding: 8px; margin: 8px 0; width: 100%;">
     <div style="font-size: 9pt; font-weight: bold; color:#2c3e50; margin-bottom: 5px; padding-bottom: 3px; border-bottom: 1px solid #bdc3c7;">
           CONFIGURATION
     </div>
     @foreach($recu->items as $item)
-        @if($item->produit && $item->produit->description)
-        
-            @php
-                // 1. Définir les caractères non-standard qui causent les '??' (Guillemets français, apostrophes, espaces invisibles)
-                $search = ['«', '»', '’', '«', '»', '’', ' ', '‎', '‏', '—']; 
-                // 2. Définir les remplacements standard (Guillemets droits, apostrophe droite, espaces standard)
+        @php
+            $description_brute = $item->produit && $item->produit->description ? $item->produit->description : null;
+            
+            // ✅ Si item a un variant, remplacer SEULEMENT les valeurs des specs dans la description
+            if ($description_brute && $item->variant) {
+                $variant = $item->variant;
+                
+                // Remplacer RAM si le variant a une valeur
+                if ($variant->ram) {
+                    // Chercher "RAM: 16GB" ou "RAM : 16GB" ou "ram: 16gb" etc.
+                    $description_brute = preg_replace(
+                        '/RAM\s*:\s*\d+\s*GB/i',
+                        'RAM: ' . $variant->ram,
+                        $description_brute
+                    );
+                }
+                
+                // Remplacer SSD si le variant a une valeur
+                if ($variant->ssd) {
+                    // Chercher "SSD: 512GB" ou "SSD : 512GB NVMe" etc.
+                    $description_brute = preg_replace(
+                        '/SSD\s*:\s*\d+\s*(?:GB|TB)(?:\s+NVMe)?/i',
+                        'SSD: ' . $variant->ssd,
+                        $description_brute
+                    );
+                }
+                
+                // Remplacer CPU si le variant a une valeur
+                if ($variant->cpu) {
+                    // Chercher toute la ligne CPU
+                    $description_brute = preg_replace(
+                        '/CPU\s*:\s*[^\n]+/i',
+                        'CPU: ' . $variant->cpu,
+                        $description_brute
+                    );
+                }
+                
+                // Remplacer GPU si le variant a une valeur
+                if ($variant->gpu) {
+                    // Chercher "GPU 1:" ou "GPU:" 
+                    $description_brute = preg_replace(
+                        '/GPU\s*(?:1|2)?\s*:\s*[^\n]+/i',
+                        'GPU: ' . $variant->gpu,
+                        $description_brute,
+                        1 // Remplacer seulement le premier GPU trouvé
+                    );
+                }
+                
+                // Remplacer Écran si le variant a une valeur
+                if ($variant->ecran) {
+                    $description_brute = preg_replace(
+                        '/Écran\s*:\s*[^\n]+/i',
+                        'Écran: ' . $variant->ecran,
+                        $description_brute
+                    );
+                }
+            }
+            
+            // Nettoyer les caractères spéciaux
+            if ($description_brute) {
+                $search = ['«', '»', '', '«', '»', '', ' ', '‎', '‏', '—']; 
                 $replace = ['"', '"', '\'', '\"', '\"', '\'', ' ', '', '', '-'];
                 
-                // Appliquer les remplacements sur la description brute
-                $description_clean = str_replace($search, $replace, $item->produit->description);
-                
-                // 3. Forcer l'encodage correct pour la description finale
+                $description_clean = str_replace($search, $replace, $description_brute);
                 $description_final = htmlspecialchars($description_clean, ENT_QUOTES, 'UTF-8', false);
-            @endphp
-            
-            <div style="font-size: 8pt; color: #34495e; margin-bottom: 4px; padding: 3px 0; border-bottom: 1px dashed #ecf0f1;">
-                <strong style="color: #e74c3c;">{{ $item->produit->nom }}:</strong>
-                <span style="margin-left: 5px;">
-                    {{-- Afficher le texte nettoyé avec les sauts de ligne --}}
-                    {!! nl2br($description_final) !!}
-                </span>
-            </div>
+            }
+        @endphp
+        
+        @if(isset($description_final))
+        <div style="font-size: 8pt; color: #34495e; margin-bottom: 4px; padding: 3px 0; border-bottom: 1px dashed #ecf0f1;">
+            <strong style="color: #e74c3c;">
+                {{ $item->produit->nom }}
+                @if($item->variant)
+                    <span style="color: #3498db; font-size: 7.5pt;">({{ $item->variant->variant_name }})</span>
+                @endif:
+            </strong>
+            <span style="margin-left: 5px;">
+                {!! nl2br($description_final) !!}
+            </span>
+        </div>
         @endif
     @endforeach
 </div>

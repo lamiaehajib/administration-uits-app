@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ProductVariant;
 use App\Models\RecuUcg;
 use App\Models\Produit;
 use Illuminate\Http\Request;
@@ -53,110 +54,131 @@ class RecuUcgController extends Controller
         return view('recus.index', compact('recus'));
     }
 
-    public function create()
-    {
-        $produits = Produit::where('actif', true)
-            ->where('quantite_stock', '>', 0)
-            ->orderBy('nom')
-            ->get();
+  public function create()
+{
+    // ✅ Charger produits AVEC leurs variants ACTIFS et EN STOCK (>0)
+    $produits = Produit::with(['variants' => function($query) {
+        $query->where('actif', true)
+              ->where('quantite_stock', '>', 0);
+    }])
+    ->where('actif', true)
+    ->where(function($q) {
+        // Produits qui ont du stock OU qui ont des variants actifs en stock
+        $q->where('quantite_stock', '>', 0)
+          ->orWhereHas('variants', function($query) {
+              $query->where('actif', true)
+                    ->where('quantite_stock', '>', 0);
+          });
+    })
+    ->orderBy('nom')
+    ->get();
 
-        return view('recus.create', compact('produits'));
-    }
-
+    return view('recus.create', compact('produits'));
+}
     /**
      * ✅ VERSION FIXED  - BASITA O KHDAM  100%
      */
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'client_nom' => 'required|string|max:255',
-            'client_prenom' => 'nullable|string|max:255',
-            'client_telephone' => 'nullable|string|max:20',
-            'client_email' => 'nullable|email|max:255',
-            'client_adresse' => 'nullable|string',
-            'equipement' => 'nullable|string|max:255',
-            'details' => 'nullable|string',
-'type_garantie' => 'required|in:30_jours,90_jours,180_jours,360_jours,sans_garantie',
-            'remise' => 'nullable|numeric|min:0',
-            'tva' => 'nullable|numeric|min:0',
-            'mode_paiement' => 'required|in:especes,carte,cheque,virement,credit',
-            'montant_paye' => 'nullable|numeric|min:0',
-            'date_paiement' => 'nullable|date',
-            'notes' => 'nullable|string',
-            'items' => 'required|array|min:1',
-            'items.*.produit_id' => 'required|exists:produits,id',
-            'items.*.quantite' => 'required|integer|min:1',
+   // ✅ MÉTHODE STORE MODIFIÉE
+
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'client_nom' => 'required|string|max:255',
+        'client_prenom' => 'nullable|string|max:255',
+        'client_telephone' => 'nullable|string|max:20',
+        'client_email' => 'nullable|email|max:255',
+        'client_adresse' => 'nullable|string',
+        'equipement' => 'nullable|string|max:255',
+        'details' => 'nullable|string',
+        'type_garantie' => 'required|in:30_jours,90_jours,180_jours,360_jours,sans_garantie',
+        'remise' => 'nullable|numeric|min:0',
+        'tva' => 'nullable|numeric|min:0',
+        'mode_paiement' => 'required|in:especes,carte,cheque,virement,credit',
+        'montant_paye' => 'nullable|numeric|min:0',
+        'date_paiement' => 'nullable|date',
+        'notes' => 'nullable|string',
+        'items' => 'required|array|min:1',
+        'items.*.produit_id' => 'required|exists:produits,id',
+        'items.*.product_variant_id' => 'nullable|exists:product_variants,id', // ✅ NOUVEAU
+        'items.*.quantite' => 'required|integer|min:1',
+    ]);
+
+    DB::beginTransaction();
+    try {
+        $recu = RecuUcg::create([
+            'user_id' => auth()->id(),
+            'client_nom' => $validated['client_nom'],
+            'client_prenom' => $validated['client_prenom'] ?? null,
+            'client_telephone' => $validated['client_telephone'] ?? null,
+            'client_email' => $validated['client_email'] ?? null,
+            'client_adresse' => $validated['client_adresse'] ?? null,
+            'equipement' => $validated['equipement'] ?? null,
+            'details' => $validated['details'] ?? null,
+            'type_garantie' => $validated['type_garantie'],
+            'remise' => $validated['remise'] ?? 0,
+            'tva' => $validated['tva'] ?? 0,
+            'mode_paiement' => $validated['mode_paiement'],
+            'date_paiement' => $validated['date_paiement'] ?? now(),
+            'notes' => $validated['notes'] ?? null,
         ]);
 
-        DB::beginTransaction();
-        try {
-            $recu = RecuUcg::create([
-                'user_id' => auth()->id(),
-                'client_nom' => $validated['client_nom'],
-                'client_prenom' => $validated['client_prenom'] ?? null,
-                'client_telephone' => $validated['client_telephone'] ?? null,
-                'client_email' => $validated['client_email'] ?? null,
-                'client_adresse' => $validated['client_adresse'] ?? null,
-                'equipement' => $validated['equipement'] ?? null,
-                'details' => $validated['details'] ?? null,
-                'type_garantie' => $validated['type_garantie'],
-                'remise' => $validated['remise'] ?? 0,
-                'tva' => $validated['tva'] ?? 0,
-                'mode_paiement' => $validated['mode_paiement'],
-                'date_paiement' => $validated['date_paiement'] ?? now(),
-                'notes' => $validated['notes'] ?? null,
-            ]);
-
-            
-            foreach ($validated['items'] as $itemData) {
-                $produit = Produit::findOrFail($itemData['produit_id']);
+        foreach ($validated['items'] as $itemData) {
+            // ✅ Vérifier si c'est un variant ou produit simple
+            if (!empty($itemData['product_variant_id'])) {
+                $variant = ProductVariant::findOrFail($itemData['product_variant_id']);
                 
-                // Vérifier stock
-                if ($produit->quantite_stock < $itemData['quantite']) {
-                    throw new \Exception("Stock insuffisant pour {$produit->nom}. Stock disponible: {$produit->quantite_stock}");
+                if ($variant->quantite_stock < $itemData['quantite']) {
+                    throw new \Exception("Stock insuffisant pour {$variant->full_name}. Stock: {$variant->quantite_stock}");
                 }
 
-                // Créer item (observer ghadi i7asb totaux o inaqs stock)
+                // Créer item avec variant
+                $recu->items()->create([
+                    'produit_id' => $itemData['produit_id'],
+                    'product_variant_id' => $itemData['product_variant_id'], // ✅ Important
+                    'quantite' => $itemData['quantite'],
+                ]);
+
+            } else {
+                // Produit simple (sans variant)
+                $produit = Produit::findOrFail($itemData['produit_id']);
+                
+                if ($produit->quantite_stock < $itemData['quantite']) {
+                    throw new \Exception("Stock insuffisant pour {$produit->nom}. Stock: {$produit->quantite_stock}");
+                }
+
                 $recu->items()->create([
                     'produit_id' => $itemData['produit_id'],
                     'quantite' => $itemData['quantite'],
                 ]);
             }
-            
-           
-            $recu->refresh();
-
-            // Ajouter paiement (ILA kan chi montant)
-            $montantPaye = $validated['montant_paye'] ?? null;
-            
-            // Ila ma3tach walo, ndiro paiement complet
-            if ($montantPaye === null || $montantPaye === '' || $montantPaye == 0) {
-                $montantPaye = $recu->total; // Paiement complet
-            }
-
-            // Créer paiement o update statut 
-            if ($montantPaye > 0) {
-                $recu->ajouterPaiement(
-                    $montantPaye,
-                    $validated['mode_paiement'],
-                    null
-                );
-            }
-
-            DB::commit();
-
-            return redirect()
-                ->route('recus.show', $recu)
-                ->with('success', "Reçu {$recu->numero_recu} créé avec succès!");
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()
-                ->withInput()
-                ->with('error', "Erreur lors de la création: " . $e->getMessage());
         }
-    }
+        
+        $recu->refresh();
 
+        // Ajouter paiement
+        $montantPaye = $validated['montant_paye'] ?? $recu->total;
+
+        if ($montantPaye > 0) {
+            $recu->ajouterPaiement(
+                $montantPaye,
+                $validated['mode_paiement'],
+                null
+            );
+        }
+
+        DB::commit();
+
+        return redirect()
+            ->route('recus.show', $recu)
+            ->with('success', "Reçu {$recu->numero_recu} créé avec succès!");
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return back()
+            ->withInput()
+            ->with('error', "Erreur: " . $e->getMessage());
+    }
+}
     public function show(RecuUcg $recu)
     {
         $recu->load([

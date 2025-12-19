@@ -14,6 +14,7 @@ use App\Http\Controllers\DevisController;
 use App\Http\Controllers\DevisfController;
 use App\Http\Controllers\FactureController;
 use App\Http\Controllers\PaiementController;
+use App\Http\Controllers\ProductVariantController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecuUcgController;
 use App\Http\Controllers\RepairTicketController;
@@ -254,6 +255,28 @@ Route::get('/facturefs/{facturef}', [FacturefController::class, 'show'])
     Route::get('repair-tickets/{repairTicket}/pdf', [RepairTicketController::class, 'downloadPdf'])
         ->name('repair-tickets.pdf');
 
+
+        Route::prefix('produits/{produit}/variants')->name('produits.variants.')->group(function () {
+    Route::get('/', [ProductVariantController::class, 'index'])->name('index');
+    Route::get('/create', [ProductVariantController::class, 'create'])->name('create');
+    Route::post('/', [ProductVariantController::class, 'store'])->name('store');
+    Route::get('/{variant}', [ProductVariantController::class, 'show'])->name('show');
+    Route::get('/{variant}/edit', [ProductVariantController::class, 'edit'])->name('edit');
+    Route::put('/{variant}', [ProductVariantController::class, 'update'])->name('update');
+    Route::delete('/{variant}', [ProductVariantController::class, 'destroy'])->name('destroy');
+    
+    // Actions supplémentaires
+    Route::post('/{variant}/ajuster-stock', [ProductVariantController::class, 'ajusterStock'])->name('ajuster-stock');
+    Route::post('/{variant}/duplicate', [ProductVariantController::class, 'duplicate'])->name('duplicate');
+    Route::post('/{variant}/toggle-actif', [ProductVariantController::class, 'toggleActif'])->name('toggle-actif');
+});
+
+// Routes API pour les variants (pour AJAX)
+Route::prefix('api/variants')->name('api.variants.')->group(function () {
+    Route::get('/produit/{id}', [ProductVariantController::class, 'getVariants'])->name('by-produit');
+    Route::get('/{id}', [ProductVariantController::class, 'getVariant'])->name('show');
+    Route::get('/search', [ProductVariantController::class, 'search'])->name('search');
+});
 Route::controller(ProduitController::class)->prefix('produits')->name('produits.')->group(function () {
     Route::get('totals', 'getTotals')->name('totals');
     Route::get('export-pdf', 'exportPDF')->name('export_pdf');
@@ -308,6 +331,11 @@ Route::prefix('stock')->group(function () {
 
 Route::get('/dashboardstock', [DashboardStockController::class, 'index'])->name('dashboardstock');
     Route::get('/dashboardstock/stats', [DashboardStockController::class, 'getStats'])->name('dashboardstock.stats');
+
+
+
+    
+
       });
 
 require __DIR__.'/auth.php';

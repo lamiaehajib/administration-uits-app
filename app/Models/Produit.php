@@ -62,6 +62,12 @@ class Produit extends Model
         return $this->hasMany(StockMovement::class);
     }
 
+    public function variants()
+{
+    // On précise 'produit_id' au cas où Laravel ne le devine pas
+    return $this->hasMany(ProductVariant::class, 'produit_id');
+}
+
     // ==================== ACCESSORS ====================
 
     public function getMargeUnitaireAttribute()

@@ -380,6 +380,212 @@
             .action-bar { flex-direction: column; }
             .search-box { width: 100%; }
         }
+        .btn-variant { 
+            background: #E8EAF6; 
+            color: #3F51B5; 
+        }
+        .btn-variant:hover { 
+            background: #3F51B5; 
+            color: white; 
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.show {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 1000px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            color: white;
+            padding: 25px 30px;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 12px 24px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            color: #C2185B;
+            border-bottom-color: #C2185B;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .variant-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .variant-card:hover {
+            border-color: #C2185B;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(194, 24, 91, 0.2);
+        }
+
+        .variant-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .variant-name {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #333;
+        }
+
+        .variant-specs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .spec-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .spec-item i {
+            color: #C2185B;
+        }
+
+        .variant-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #C2185B;
+            box-shadow: 0 0 0 3px rgba(194, 24, 91, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .badge-purple-modern {
+            background: #F3E5F5;
+            color: #7B1FA2;
+        }
+
+        /* Ajout colonne Variants dans le tableau */
+        .modern-table thead th {
+            white-space: nowrap;
+        }
     </style>
 
     <div class="container-fluid">
@@ -461,12 +667,13 @@
                             <th>Prix Achat</th>
                             <th>Prix Vente</th>
                             <th>Stock</th>
+                            <th>Variants</th>
                             <th>Ventes</th>
                             @can('produit-rapport')
                             <th>Marge</th>
                             @endcan
                             <th>Statut</th>
-                            <th>Actions</th>
+                            <th style="min-width: 200px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -506,6 +713,11 @@
                                 </div>
                             </td>
                             <td>
+                                <span class="badge-modern badge-purple-modern">
+                                    <i class="fas fa-layer-group"></i> {{ $produit->variants->count() ?? 0 }}
+                                </span>
+                            </td>
+                            <td>
                                 <div><strong>{{ $produit->quantite_vendue ?? 0 }}</strong> unités</div>
                                 <small class="text-muted">{{ number_format($produit->total_vendu_montant ?? 0, 0) }} DH</small>
                             </td>
@@ -529,7 +741,7 @@
                                 @endif
                             </td>
                             <td>
-                                <div class="action-btns">
+                                <div class="action-btns" style="flex-wrap: wrap;">
                                     <a href="{{ route('produits.show', $produit->id) }}" 
                                        class="btn-icon btn-view" title="Voir">
                                         <i class="fas fa-eye"></i>
@@ -539,6 +751,12 @@
                                        class="btn-icon btn-edit" title="Modifier">
                                         <i class="fas fa-edit"></i>
                                     </a>
+                                    @endcan
+                                    @can('produit-edit')
+                                    <button onclick="openVariantsModal({{ $produit->id }}, '{{ addslashes($produit->nom) }}')" 
+                                            class="btn-icon btn-variant" title="Gérer Variants">
+                                        <i class="fas fa-layer-group"></i>
+                                    </button>
                                     @endcan
                                     @can('produit-delete')
                                     <button onclick="confirmDelete({{ $produit->id }})" 
@@ -558,7 +776,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="9" class="text-center py-5">
+                            <td colspan="10" class="text-center py-5">
                                 <i class="fas fa-box-open" style="font-size: 3rem; color: #ccc; margin-bottom: 15px;"></i>
                                 <h5 class="text-muted">Aucun produit trouvé</h5>
                                 <p class="text-muted">Commencez par ajouter votre premier produit</p>
@@ -576,8 +794,354 @@
         </div>
     </div>
 
-    <!-- Delete Confirmation Script -->
+    <!-- Modal Variants -->
+    <div id="variantsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-layer-group"></i> <span id="modalTitle">Variants du Produit</span></h3>
+                <button class="modal-close" onclick="closeVariantsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Tabs Navigation -->
+                <div style="display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #e0e0e0;">
+                    <button class="tab-btn active" onclick="switchTab('list')" id="listTab">
+                        <i class="fas fa-list"></i> Liste des Variants
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('create')" id="createTab">
+                        <i class="fas fa-plus"></i> Créer Variant
+                    </button>
+                </div>
+
+                <!-- Tab Content: Liste -->
+                <div id="listContent" class="tab-content active">
+                    <div id="variantsListContainer">
+                        <div class="text-center py-5">
+                            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #C2185B;"></i>
+                            <p class="mt-3">Chargement des variants...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Content: Créer -->
+                <div id="createContent" class="tab-content">
+                    <form id="createVariantForm" onsubmit="submitVariant(event)">
+                        @csrf
+                        <input type="hidden" id="produit_id" name="produit_id">
+                        <input type="hidden" id="variant_id" name="variant_id">
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label><i class="fas fa-memory"></i> RAM</label>
+                                <input type="text" class="form-control" name="ram" placeholder="Ex: 16GB">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label><i class="fas fa-hdd"></i> SSD</label>
+                                <input type="text" class="form-control" name="ssd" placeholder="Ex: 512GB">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label><i class="fas fa-microchip"></i> CPU</label>
+                                <input type="text" class="form-control" name="cpu" placeholder="Ex: Intel i7">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label><i class="fas fa-desktop"></i> GPU</label>
+                                <input type="text" class="form-control" name="gpu" placeholder="Ex: NVIDIA RTX 3060">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label><i class="fas fa-tv"></i> Écran</label>
+                                <input type="text" class="form-control" name="ecran" placeholder="Ex: 15.6'' FHD">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label><i class="fas fa-coins"></i> Prix Supplément (DH)</label>
+                                <input type="number" step="0.01" class="form-control" name="prix_supplement" value="0" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label><i class="fas fa-box"></i> Quantité Stock</label>
+                                <input type="number" class="form-control" name="quantite_stock" value="0" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" name="actif" value="1" checked style="width: 20px; height: 20px;">
+                                <span><i class="fas fa-check-circle"></i> Variant actif</span>
+                            </label>
+                        </div>
+
+                        <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 25px;">
+                            <button type="button" class="btn-modern btn-outline-modern" onclick="resetForm()">
+                                <i class="fas fa-times"></i> Annuler
+                            </button>
+                            <button type="submit" class="btn-modern btn-primary-modern">
+                                <i class="fas fa-save"></i> <span id="submitBtnText">Créer Variant</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation & Scripts -->
     <script>
+        let currentProduitId = null;
+
+        // Ouvrir le modal
+        function openVariantsModal(produitId, produitNom) {
+            currentProduitId = produitId;
+            document.getElementById('modalTitle').textContent = `Variants - ${produitNom}`;
+            document.getElementById('produit_id').value = produitId;
+            document.getElementById('variantsModal').classList.add('show');
+            
+            // Charger la liste des variants
+            loadVariants(produitId);
+        }
+
+        // Fermer le modal
+        function closeVariantsModal() {
+            document.getElementById('variantsModal').classList.remove('show');
+            resetForm();
+        }
+
+        // Changer d'onglet
+        function switchTab(tab) {
+            // Reset tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Activer le bon onglet
+            if (tab === 'list') {
+                document.getElementById('listTab').classList.add('active');
+                document.getElementById('listContent').classList.add('active');
+            } else {
+                document.getElementById('createTab').classList.add('active');
+                document.getElementById('createContent').classList.add('active');
+            }
+        }
+
+        // Charger les variants
+        async function loadVariants(produitId) {
+            const container = document.getElementById('variantsListContainer');
+            container.innerHTML = '<div class="text-center py-5"><i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #C2185B;"></i></div>';
+            
+            try {
+                const response = await fetch(`/api/variants/produit/${produitId}`);
+                const data = await response.json();
+                
+                if (data.success && data.variants.length > 0) {
+                    let html = '';
+                    data.variants.forEach(variant => {
+                        html += `
+                            <div class="variant-card">
+                                <div class="variant-header">
+                                    <div class="variant-name">
+                                        <i class="fas fa-tag"></i> ${variant.variant_name}
+                                        <small style="color: #999; font-weight: normal;">(${variant.sku})</small>
+                                    </div>
+                                    <div>
+                                        ${variant.is_alert_stock ? '<span class="badge-modern badge-danger-modern"><i class="fas fa-exclamation-triangle"></i> Stock Bas</span>' : ''}
+                                    </div>
+                                </div>
+                                
+                                <div class="variant-specs">
+                                    ${variant.specs.ram ? `<div class="spec-item"><i class="fas fa-memory"></i> <strong>RAM:</strong> ${variant.specs.ram}</div>` : ''}
+                                    ${variant.specs.ssd ? `<div class="spec-item"><i class="fas fa-hdd"></i> <strong>SSD:</strong> ${variant.specs.ssd}</div>` : ''}
+                                    ${variant.specs.cpu ? `<div class="spec-item"><i class="fas fa-microchip"></i> <strong>CPU:</strong> ${variant.specs.cpu}</div>` : ''}
+                                    ${variant.specs.gpu ? `<div class="spec-item"><i class="fas fa-desktop"></i> <strong>GPU:</strong> ${variant.specs.gpu}</div>` : ''}
+                                    ${variant.specs.ecran ? `<div class="spec-item"><i class="fas fa-tv"></i> <strong>Écran:</strong> ${variant.specs.ecran}</div>` : ''}
+                                </div>
+                                
+                                <div class="variant-footer">
+                                    <div>
+                                        <strong style="color: #4CAF50; font-size: 1.1rem;">${variant.prix_vente_final.toFixed(2)} DH</strong>
+                                        <span style="color: #999; margin-left: 10px;">Stock: <strong>${variant.stock}</strong></span>
+                                    </div>
+                                    <div class="action-btns">
+                                        <button onclick="editVariant(${variant.id})" class="btn-icon btn-edit" title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button onclick="deleteVariant(${variant.id}, '${variant.variant_name}')" class="btn-icon btn-delete" title="Supprimer">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = `
+                        <div class="text-center py-5">
+                            <i class="fas fa-box-open" style="font-size: 3rem; color: #ccc;"></i>
+                            <h5 class="text-muted mt-3">Aucun variant trouvé</h5>
+                            <p class="text-muted">Créez votre premier variant pour ce produit</p>
+                            <button onclick="switchTab('create')" class="btn-modern btn-primary-modern mt-3">
+                                <i class="fas fa-plus"></i> Créer un variant
+                            </button>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                container.innerHTML = '<div class="alert alert-danger">Erreur de chargement</div>';
+            }
+        }
+
+        // Soumettre le formulaire
+        async function submitVariant(e) {
+    e.preventDefault();
+    const form = document.getElementById('createVariantForm');
+    const formData = new FormData(form);
+    const variantId = document.getElementById('variant_id').value;
+    
+    // ✅ Construire l'objet de données
+    const data = {
+        ram: formData.get('ram'),
+        ssd: formData.get('ssd'),
+        cpu: formData.get('cpu'),
+        gpu: formData.get('gpu'),
+        ecran: formData.get('ecran'),
+        prix_supplement: formData.get('prix_supplement'),
+        quantite_stock: formData.get('quantite_stock'),
+        actif: formData.get('actif') ? 1 : 0
+    };
+    
+    const url = variantId 
+        ? `/produits/${currentProduitId}/variants/${variantId}`
+        : `/produits/${currentProduitId}/variants`;
+    
+    const method = variantId ? 'PUT' : 'POST';
+    
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('[name="_token"]').value,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json', // ✅ Important pour PUT
+            },
+            body: JSON.stringify(data) // ✅ Envoyer en JSON au lieu de FormData
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Succès!',
+                text: result.message || 'Variant enregistré avec succès',
+                timer: 2000
+            });
+            
+            resetForm();
+            switchTab('list');
+            loadVariants(currentProduitId);
+            
+            // Recharger la page pour mettre à jour le compteur
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            // ✅ Afficher les erreurs de validation
+            let errorMsg = result.message || 'Une erreur est survenue';
+            if (result.errors) {
+                errorMsg = Object.values(result.errors).flat().join('\n');
+            }
+            
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur de validation',
+                text: errorMsg
+            });
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Erreur',
+            text: 'Erreur de connexion au serveur'
+        });
+    }
+}
+
+        // Modifier un variant
+        async function editVariant(variantId) {
+            try {
+                const response = await fetch(`/api/variants/${variantId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const variant = data.variant;
+                    
+                    // Remplir le formulaire
+                    document.getElementById('variant_id').value = variant.id;
+                    document.querySelector('[name="ram"]').value = variant.specs.ram || '';
+                    document.querySelector('[name="ssd"]').value = variant.specs.ssd || '';
+                    document.querySelector('[name="cpu"]').value = variant.specs.cpu || '';
+                    document.querySelector('[name="gpu"]').value = variant.specs.gpu || '';
+                    document.querySelector('[name="ecran"]').value = variant.specs.ecran || '';
+                    document.querySelector('[name="prix_supplement"]').value = variant.prix_supplement;
+                    document.querySelector('[name="quantite_stock"]').value = variant.quantite_stock;
+                    document.querySelector('[name="actif"]').checked = variant.actif;
+                    
+                    document.getElementById('submitBtnText').textContent = 'Modifier Variant';
+                    switchTab('create');
+                }
+            } catch (error) {
+                Swal.fire('Erreur', 'Impossible de charger le variant', 'error');
+            }
+        }
+
+        // Supprimer un variant
+        function deleteVariant(variantId, variantName) {
+            Swal.fire({
+                title: 'Êtes-vous sûr?',
+                text: `Supprimer le variant "${variantName}"?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#D32F2F',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Oui, supprimer!',
+                cancelButtonText: 'Annuler'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const response = await fetch(`/produits/${currentProduitId}/variants/${variantId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('[name="_token"]').value,
+                                'Accept': 'application/json',
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            Swal.fire('Supprimé!', 'Le variant a été supprimé.', 'success');
+                            loadVariants(currentProduitId);
+                            setTimeout(() => location.reload(), 2000);
+                        } else {
+                            Swal.fire('Erreur', 'Impossible de supprimer le variant', 'error');
+                        }
+                    } catch (error) {
+                        Swal.fire('Erreur', 'Erreur de connexion', 'error');
+                    }
+                }
+            });
+        }
+
+        // Reset form
+        function resetForm() {
+            document.getElementById('createVariantForm').reset();
+            document.getElementById('variant_id').value = '';
+            document.getElementById('submitBtnText').textContent = 'Créer Variant';
+        }
+
+        // Fonction de suppression de produit (existante)
         function confirmDelete(id) {
             Swal.fire({
                 title: 'Êtes-vous sûr?',
@@ -601,6 +1165,14 @@
                     form.submit();
                 }
             });
+        }
+
+        // Fermer le modal en cliquant à l'extérieur
+        window.onclick = function(event) {
+            const modal = document.getElementById('variantsModal');
+            if (event.target == modal) {
+                closeVariantsModal();
+            }
         }
 
         // Success/Error Messages

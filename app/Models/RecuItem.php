@@ -5,14 +5,25 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+
 class RecuItem extends Model
 {
-    use HasFactory,SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'recu_ucg_id', 'produit_id', 'produit_nom', 'produit_reference',
-        'quantite', 'prix_unitaire', 'prix_achat',
-        'sous_total', 'marge_unitaire', 'marge_totale', 'notes'
+        'recu_ucg_id', 
+        'produit_id', 
+        'product_variant_id', // ✅ NOUVEAU
+        'produit_nom', 
+        'produit_reference',
+        'designation', // ✅ Pour afficher le variant (RAM/SSD/CPU)
+        'quantite', 
+        'prix_unitaire', 
+        'prix_achat',
+        'sous_total', 
+        'marge_unitaire', 
+        'marge_totale', 
+        'notes'
     ];
 
     protected $casts = [
@@ -35,6 +46,12 @@ class RecuItem extends Model
         return $this->belongsTo(Produit::class);
     }
 
+    // ✅ NOUVELLE RELATION
+    public function variant()
+    {
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
+    }
+
     // 🎯 Boot Events
     protected static function boot()
     {
@@ -42,55 +59,116 @@ class RecuItem extends Model
 
         // Avant création
         static::creating(function ($item) {
-            $produit = $item->produit;
+            // ✅ Priorité au variant si sélectionné
+            if ($item->product_variant_id) {
+                $variant = ProductVariant::find($item->product_variant_id);
+                
+                if (!$variant) {
+                    throw new \Exception("Variant non trouvé!");
+                }
 
-            if (!$produit) {
-                throw new \Exception("Produit non trouvez!");
+                // Vérifier stock du variant
+                if ($variant->quantite_stock < $item->quantite) {
+                    throw new \Exception("Stock insuffisant pour ce variant! Stock: {$variant->quantite_stock}");
+                }
+
+                // Remplir les infos depuis le variant
+                $item->produit_id = $variant->produit_id;
+                $item->produit_nom = $variant->produit->nom;
+                $item->produit_reference = $variant->produit->reference;
+                $item->designation = $variant->variant_name; // ✅ Ex: "16GB RAM / 512GB SSD / i7-9850H"
+                
+                if (empty($item->prix_unitaire)) {
+                    $item->prix_unitaire = $variant->prix_vente_final;
+                }
+                
+                if (empty($item->prix_achat)) {
+                    $item->prix_achat = $variant->prix_achat;
+                }
+
+            } else {
+                // Produit classique (sans variant)
+                $produit = $item->produit;
+
+                if (!$produit) {
+                    throw new \Exception("Produit non trouvé!");
+                }
+
+                // Vérifier stock
+                if ($produit->quantite_stock < $item->quantite) {
+                    throw new \Exception("Stock insuffisant! Stock: {$produit->quantite_stock}");
+                }
+
+                // Auto-remplir
+                if (empty($item->prix_unitaire)) {
+                    $item->prix_unitaire = $produit->prix_vente ?? 0;
+                }
+                
+                if (empty($item->prix_achat)) {
+                    $item->prix_achat = $produit->prix_achat ?? 0;
+                }
+
+                $item->produit_nom = $produit->nom;
+                $item->produit_reference = $produit->reference;
             }
 
-            // Vérifier stock
-            if ($produit->quantite_stock < $item->quantite) {
-                throw new \Exception("Stock ma kafich! Stock: {$produit->quantite_stock}");
-            }
-
-            // Auto-remplir
-            if (empty($item->prix_unitaire)) {
-                $item->prix_unitaire = $produit->prix_vente ?? $produit->prix_vendu ?? 0;
-            }
-            
-            if (empty($item->prix_achat)) {
-                $item->prix_achat = $produit->prix_achat ?? 0;
-            }
-
-            $item->produit_nom = $produit->nom;
-            $item->produit_reference = $produit->reference;
+            // Calculs communs
             $item->sous_total = $item->quantite * $item->prix_unitaire;
             $item->marge_unitaire = $item->prix_unitaire - $item->prix_achat;
             $item->marge_totale = $item->marge_unitaire * $item->quantite;
         });
 
-        // Après création - Diminuer stock AUTOMATIQUEMENT
+        // Après création - Diminuer stock
         static::created(function ($item) {
-            $produit = $item->produit;
-
-            if ($produit) {
-                $stockAvant = $produit->quantite_stock;
+            if ($item->product_variant_id) {
+                // ✅ Gérer stock du variant
+                $variant = $item->variant;
                 
-                // Diminuer stock
-                $produit->decrement('quantite_stock', $item->quantite);
-                $produit->increment('total_vendu', $item->quantite);
+                if ($variant) {
+                    $stockAvant = $variant->quantite_stock;
+                    
+                    // Diminuer stock du variant
+                    $variant->decrement('quantite_stock', $item->quantite);
+                    
+                    // Mettre à jour le stock total du produit parent
+                    $produit = $variant->produit;
+                    $totalStock = $produit->variants()->sum('quantite_stock');
+                    $produit->update(['quantite_stock' => $totalStock]);
 
-                // Enregistrer mouvement
-                StockMovement::create([
-                    'produit_id' => $produit->id,
-                    'recu_ucg_id' => $item->recu_ucg_id,
-                    'user_id' => auth()->id(),
-                    'type' => 'sortie',
-                    'quantite' => $item->quantite,
-                    'stock_avant' => $stockAvant,
-                    'stock_apres' => $produit->fresh()->quantite_stock,
-                    'motif' => "Vente - Reçu #{$item->recuUcg->numero_recu}"
-                ]);
+                    // Enregistrer mouvement de stock
+                    StockMovement::create([
+                        'produit_id' => $item->produit_id,
+                        'recu_ucg_id' => $item->recu_ucg_id,
+                        'user_id' => auth()->id(),
+                        'type' => 'sortie',
+                        'quantite' => $item->quantite,
+                        'stock_avant' => $stockAvant,
+                        'stock_apres' => $variant->fresh()->quantite_stock,
+                        'motif' => "Vente variant ({$variant->variant_name}) - Reçu #{$item->recuUcg->numero_recu}",
+                        'reference' => "VARIANT-{$variant->id}"
+                    ]);
+                }
+            } else {
+                // Produit classique
+                $produit = $item->produit;
+
+                if ($produit) {
+                    $stockAvant = $produit->quantite_stock;
+                    
+                    $produit->decrement('quantite_stock', $item->quantite);
+                    $produit->increment('total_vendu', $item->quantite);
+
+                    StockMovement::create([
+                        'produit_id' => $produit->id,
+                        'recu_ucg_id' => $item->recu_ucg_id,
+                        'user_id' => auth()->id(),
+                        'type' => 'sortie',
+                        'quantite' => $item->quantite,
+                        'stock_avant' => $stockAvant,
+                        'stock_apres' => $produit->fresh()->quantite_stock,
+                        'motif' => "Vente - Reçu #{$item->recuUcg->numero_recu}"
+                    ]);
+                }
             }
 
             // Recalculer total reçu
@@ -102,24 +180,51 @@ class RecuItem extends Model
             $item->recuUcg->calculerTotal();
         });
 
-        // Avant suppression
+        // Avant suppression - Remettre stock
         static::deleting(function ($item) {
-            $produit = $item->produit;
+            if ($item->product_variant_id) {
+                // ✅ Restaurer stock du variant
+                $variant = $item->variant;
+                
+                if ($variant) {
+                    $stockAvant = $variant->quantite_stock;
+                    $variant->increment('quantite_stock', $item->quantite);
+                    
+                    // Mettre à jour le stock total du produit parent
+                    $produit = $variant->produit;
+                    $totalStock = $produit->variants()->sum('quantite_stock');
+                    $produit->update(['quantite_stock' => $totalStock]);
 
-            if ($produit) {
-                $stockAvant = $produit->quantite_stock;
-                $produit->increment('quantite_stock', $item->quantite);
+                    StockMovement::create([
+                        'produit_id' => $item->produit_id,
+                        'recu_ucg_id' => $item->recu_ucg_id,
+                        'user_id' => auth()->id(),
+                        'type' => 'retour',
+                        'quantite' => $item->quantite,
+                        'stock_avant' => $stockAvant,
+                        'stock_apres' => $variant->fresh()->quantite_stock,
+                        'motif' => "Suppression item variant ({$variant->variant_name})"
+                    ]);
+                }
+            } else {
+                // Produit classique
+                $produit = $item->produit;
 
-                StockMovement::create([
-                    'produit_id' => $produit->id,
-                    'recu_ucg_id' => $item->recu_ucg_id,
-                    'user_id' => auth()->id(),
-                    'type' => 'retour',
-                    'quantite' => $item->quantite,
-                    'stock_avant' => $stockAvant,
-                    'stock_apres' => $produit->fresh()->quantite_stock,
-                    'motif' => "Suppression item"
-                ]);
+                if ($produit) {
+                    $stockAvant = $produit->quantite_stock;
+                    $produit->increment('quantite_stock', $item->quantite);
+
+                    StockMovement::create([
+                        'produit_id' => $produit->id,
+                        'recu_ucg_id' => $item->recu_ucg_id,
+                        'user_id' => auth()->id(),
+                        'type' => 'retour',
+                        'quantite' => $item->quantite,
+                        'stock_avant' => $stockAvant,
+                        'stock_apres' => $produit->fresh()->quantite_stock,
+                        'motif' => "Suppression item"
+                    ]);
+                }
             }
         });
     }

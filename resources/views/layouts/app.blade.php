@@ -109,7 +109,7 @@
 
             .main-content {
                 padding: 15px;
-                padding-bottom: 20px;
+                padding-bottom: 10px;
             }
         }
 

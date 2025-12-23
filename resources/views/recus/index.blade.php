@@ -480,7 +480,7 @@
                                 <span class="text-success fw-bold">{{ number_format($recu->montant_paye, 2) }} DH</span>
                             </td>
                             <td>
-                                <span class="text-danger fw-bold">{{ number_format($recu->reste_a_payer, 2) }} DH</span>
+                                <span class="text-danger fw-bold">{{ number_format($recu->reste, 2) }} DH</span>
                             </td>
                             <td>
                                 @if($recu->statut == 'en_cours')

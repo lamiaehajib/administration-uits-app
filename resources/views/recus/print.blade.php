@@ -542,13 +542,13 @@
             <div class="warranty-title">GARANTIE</div>
             <div class="warranty-text">
                 @if($recu->type_garantie === '90_jours')
-                    Garantie de 90 jours - Valable jusqu'au {{ $recu->created_at->addDays(90)->format('d/m/Y') }}
+                    Garantie de 90 jours 
                 @elseif($recu->type_garantie === '180_jours')
-                    Garantie de 180 jours - Valable jusqu'au {{ $recu->created_at->addDays(180)->format('d/m/Y') }}
+                    Garantie de 180 jours 
                 @elseif($recu->type_garantie === '360_jours')
-                    Garantie de 360 jours - Valable jusqu'au {{ $recu->created_at->addDays(360)->format('d/m/Y') }}
+                    Garantie de 360 jours
                     @elseif($recu->type_garantie === '30_jours')
-                    Garantie de 30 jours - Valable jusqu'au {{ $recu->created_at->addDays(30)->format('d/m/Y') }}
+                    Garantie de 30 jours 
                 @endif
             </div>
         </div>

@@ -296,7 +296,10 @@ Route::resource('produits', ProduitController::class);
 // 3. API/AJAX Route (غالباً في routes/api.php أو يتم إضافتها هنا)
 Route::get('produits/by-category/{category_id}', [ProduitController::class, 'getProduitsByCategory'])->name('produits.by_category');
 
+
+Route::get('/achats/get-produits', [AchatController::class, 'getProduits'])->name('achats.getProduits');
 Route::resource('achats', AchatController::class);
+
 Route::controller(App\Http\Controllers\RecuUcgController::class)->prefix('recus')->name('recus.')->group(function () {
     // Route pour afficher la corbeille
     Route::get('trash', 'trash')->name('trash');

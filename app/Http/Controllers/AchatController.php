@@ -279,4 +279,25 @@ class AchatController extends Controller
             return back()->with('error', 'Erreur: ' . $e->getMessage());
         }
     }
+
+    public function getProduits(Request $request)
+{
+    $categoryId = $request->input('category_id');
+    
+    $query = Produit::select('id', 'nom', 'quantite_stock')
+        ->orderBy('nom', 'asc');
+    
+    // Si une catégorie est sélectionnée, filtrer par catégorie
+    if ($categoryId) {
+        $query->where('category_id', $categoryId);
+    }
+    
+    $produits = $query->get();
+    
+    return response()->json([
+        'success' => true,
+        'produits' => $produits,
+        'count' => $produits->count()
+    ]);
+}
 }

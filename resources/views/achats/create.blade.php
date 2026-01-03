@@ -347,6 +347,26 @@
             border-color: var(--primary-color) !important;
         }
 
+        /* Loading state */
+        .loading-overlay {
+            position: relative;
+        }
+
+        .loading-overlay::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            z-index: 10;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .card-body {
@@ -370,15 +390,6 @@
                 width: 100%;
                 justify-content: center;
             }
-        }
-
-        /* Effet de survol sur les champs */
-        .form-floating {
-            position: relative;
-        }
-
-        .form-control::placeholder {
-            color: #bdc3c7;
         }
 
         /* Animation de chargement */
@@ -424,7 +435,7 @@
                                 <i class="fas fa-folder"></i> Catégorie
                             </label>
                             <select id="category_id" class="form-select select2">
-                                <option value="">-- Sélectionner une catégorie --</option>
+                                <option value="">-- Toutes les catégories --</option>
                                 @foreach($categories as $category)
                                     <option value="{{ $category->id }}">
                                         {{ $category->nom }} ({{ $category->produits->count() }} produits)
@@ -441,19 +452,11 @@
                             </label>
                             <select name="produit_id" id="produit_id" class="form-select select2 @error('produit_id') is-invalid @enderror" required>
                                 <option value="">-- Sélectionner un produit --</option>
-                                @foreach($categories as $category)
-                                    @foreach($category->produits as $produit)
-                                        <option value="{{ $produit->id }}" 
-                                                data-category="{{ $category->id }}"
-                                                {{ old('produit_id') == $produit->id ? 'selected' : '' }}>
-                                            {{ $produit->nom }} (Stock: {{ $produit->quantite_stock }})
-                                        </option>
-                                    @endforeach
-                                @endforeach
                             </select>
                             @error('produit_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                            <small class="text-muted" id="produit_count">Chargement des produits...</small>
                         </div>
 
                         <!-- Fournisseur -->
@@ -585,37 +588,74 @@
             // ====================================
             // INITIALISATION SELECT2
             // ====================================
-            $('.select2').select2({
+            $('#category_id').select2({
                 theme: 'bootstrap-5',
                 width: '100%'
             });
 
+            $('#produit_id').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: '-- Sélectionner un produit --'
+            });
+
             // ====================================
-            // FILTRAGE DES PRODUITS PAR CATÉGORIE
+            // CHARGEMENT INITIAL DES PRODUITS
+            // ====================================
+            function chargerProduits(categoryId = '') {
+                const $produitSelect = $('#produit_id');
+                const $produitCount = $('#produit_count');
+                
+                // Afficher un état de chargement
+                $produitSelect.prop('disabled', true);
+                $produitCount.html('<i class="fas fa-spinner fa-spin"></i> Chargement...');
+                
+                $.ajax({
+                    url: '{{ route("achats.getProduits") }}',
+                    type: 'GET',
+                    data: { category_id: categoryId },
+                    success: function(response) {
+                        // Vider le select
+                        $produitSelect.empty();
+                        $produitSelect.append('<option value="">-- Sélectionner un produit --</option>');
+                        
+                        // Ajouter les produits
+                        if (response.produits && response.produits.length > 0) {
+                            $.each(response.produits, function(index, produit) {
+                                $produitSelect.append(
+                                    $('<option>', {
+                                        value: produit.id,
+                                        text: produit.nom + ' (Stock: ' + produit.quantite_stock + ')',
+                                        'data-stock': produit.quantite_stock
+                                    })
+                                );
+                            });
+                            $produitCount.html(response.produits.length + ' produit(s) disponible(s)');
+                        } else {
+                            $produitCount.html('Aucun produit disponible');
+                        }
+                        
+                        // Réactiver le select
+                        $produitSelect.prop('disabled', false);
+                        $produitSelect.trigger('change');
+                    },
+                    error: function(xhr) {
+                        console.error('Erreur:', xhr);
+                        $produitCount.html('<span class="text-danger">Erreur de chargement</span>');
+                        $produitSelect.prop('disabled', false);
+                    }
+                });
+            }
+
+            // Charger tous les produits au démarrage
+            chargerProduits();
+
+            // ====================================
+            // FILTRAGE DES PRODUITS PAR CATÉGORIE (AJAX)
             // ====================================
             $('#category_id').on('change', function() {
                 const categoryId = $(this).val();
-                const $produitSelect = $('#produit_id');
-                
-                if (categoryId) {
-                    // Masquer tous les produits
-                    $produitSelect.find('option').each(function() {
-                        const $option = $(this);
-                        if ($option.val() === '') {
-                            $option.show();
-                        } else if ($option.data('category') == categoryId) {
-                            $option.show();
-                        } else {
-                            $option.hide();
-                        }
-                    });
-                } else {
-                    // Afficher tous les produits
-                    $produitSelect.find('option').show();
-                }
-                
-                // Réinitialiser la sélection
-                $produitSelect.val('').trigger('change');
+                chargerProduits(categoryId);
             });
 
             // ====================================

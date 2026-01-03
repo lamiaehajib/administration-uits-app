@@ -371,6 +371,205 @@
                 width: 100%;
             }
         }
+        
+
+
+
+
+
+                .categories-container {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(211, 47, 47, 0.3);
+        }
+
+        .page-header h1 {
+            color: white;
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+
+        /* ✅ Nouvelles cartes de statistiques */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(135deg, #C2185B, #D32F2F);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(211, 47, 47, 0.2);
+        }
+
+        .stat-card-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+
+        .stat-card-icon.purple {
+            background: linear-gradient(135deg, #9C27B0, #7B1FA2);
+            color: white;
+        }
+
+        .stat-card-icon.blue {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            color: white;
+        }
+
+        .stat-card-icon.green {
+            background: linear-gradient(135deg, #4CAF50, #388E3C);
+            color: white;
+        }
+
+        .stat-card-icon.orange {
+            background: linear-gradient(135deg, #FF9800, #F57C00);
+            color: white;
+        }
+
+        .stat-card-title {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-card-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* ✅ Cartes de catégories avec mini-stats */
+        .category-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .category-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(211, 47, 47, 0.15);
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .category-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .category-stats-mini {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .mini-stat {
+            text-align: center;
+            padding: 12px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 10px;
+        }
+
+        .mini-stat-value {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #C2185B;
+        }
+
+        .mini-stat-label {
+            font-size: 0.75rem;
+            color: #666;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+
+        /* ✅ Barre de progression */
+        .progress-bar-custom {
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #C2185B, #D32F2F);
+            transition: width 0.5s ease;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .category-stats-mini {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .btn-action {
+    padding: 8px 15px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: white !important;
+}
+
     </style>
 
     <div class="categories-container">
@@ -378,6 +577,41 @@
         <div class="page-header">
             <h1><i class="fas fa-layer-group"></i> Gestion des Catégories</h1>
             <p>Organisez et gérez vos catégories de produits</p>
+        </div>
+
+        <!-- ✅ Statistiques Globales -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-card-icon purple">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <div class="stat-card-title">Total Catégories</div>
+                <div class="stat-card-value">{{ $stats['total_categories'] }}</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-icon blue">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="stat-card-title">Total Produits</div>
+                <div class="stat-card-value">{{ $stats['total_produits'] }}</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-icon green">
+                    <i class="fas fa-warehouse"></i>
+                </div>
+                <div class="stat-card-title">Valeur Stock</div>
+                <div class="stat-card-value">{{ number_format($stats['valeur_stock_total'], 2) }} DH</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-icon orange">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-card-title">CA Total</div>
+                <div class="stat-card-value">{{ number_format($stats['ca_total'], 2) }} DH</div>
+            </div>
         </div>
 
         <!-- Search & Add Section -->
@@ -401,119 +635,121 @@
 
         <!-- Alert Messages -->
         @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert" style="border-radius: 12px; border-left: 4px solid #4caf50;">
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
                 <i class="fas fa-check-circle"></i> {{ session('success') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
 
-        <!-- Table Card -->
-        <div class="table-card">
-            <div class="table-responsive">
-                <table class="table modern-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Nom de la Catégorie</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($categories as $category)
-                            <tr>
-                                <td>
-                                    <span class="badge-number">{{ $loop->iteration }}</span>
-                                </td>
-                                <td style="font-weight: 600; color: #333; font-size: 1.05rem;">
-                                    {{ $category->nom }}
-                                </td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <button type="button" 
-                                                class="btn-action btn-edit" 
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#editModal{{ $category->id }}">
-                                            <i class="fas fa-edit"></i> Modifier
-                                        </button>
-                                        <form method="POST" 
-                                              action="{{ route('categories.destroy', $category->id) }}" 
-                                              style="display: inline;">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" 
-                                                    class="btn-action btn-delete" 
-                                                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette catégorie ?')">
-                                                <i class="fas fa-trash-alt"></i> Supprimer
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
+        @if(session('error'))
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
 
-                            <!-- Edit Modal for each category -->
-                            <div class="modal fade" id="editModal{{ $category->id }}" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">
-                                                <i class="fas fa-edit"></i> Modifier la Catégorie
-                                            </h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                        </div>
-                                        <form method="POST" action="{{ route('categories.update', $category->id) }}">
-                                            @csrf
-                                            @method('PUT')
-                                            <div class="modal-body">
-                                                <div class="mb-3">
-                                                    <label for="nom{{ $category->id }}" class="form-label">
-                                                        <i class="fas fa-tag"></i> Nom de la catégorie
-                                                    </label>
-                                                    <input type="text" 
-                                                           class="form-control @error('nom') is-invalid @enderror" 
-                                                           id="nom{{ $category->id }}" 
-                                                           name="nom" 
-                                                           value="{{ old('nom', $category->nom) }}" 
-                                                           required 
-                                                           placeholder="Entrez le nom de la catégorie">
-                                                    @error('nom')
-                                                        <div class="invalid-feedback">{{ $message }}</div>
-                                                    @enderror
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 10px;">
-                                                    <i class="fas fa-times"></i> Annuler
-                                                </button>
-                                                <button type="submit" class="btn btn-gradient">
-                                                    <i class="fas fa-save"></i> Enregistrer
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        @empty
-                            <tr>
-                                <td colspan="3">
-                                    <div class="empty-state">
-                                        <i class="fas fa-inbox"></i>
-                                        <h4>Aucune catégorie trouvée</h4>
-                                        <p>Commencez par créer votre première catégorie</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+        <!-- ✅ Liste des catégories avec stats -->
+        @forelse($categories as $category)
+            <div class="category-card">
+                <div class="category-header">
+                    <div class="category-name">
+                        <i class="fas fa-folder"></i> {{ $category->nom }}
+                    </div>
+                    <div class="action-buttons">
+                        <a href="{{ route('categories.show', $category->id) }}" class="btn-action" style="background: linear-gradient(135deg, #4CAF50, #388E3C);">
+                            <i class="fas fa-chart-bar"></i> Détails
+                        </a>
+                        <button type="button" 
+                                class="btn-action btn-edit" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#editModal{{ $category->id }}">
+                            <i class="fas fa-edit"></i> Modifier
+                        </button>
+                        <form method="POST" 
+                              action="{{ route('categories.destroy', $category->id) }}" 
+                              style="display: inline;">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" 
+                                    class="btn-action btn-delete" 
+                                    onclick="return confirm('Êtes-vous sûr ?')">
+                                <i class="fas fa-trash-alt"></i> Supprimer
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- ✅ Mini statistiques -->
+                <div class="category-stats-mini">
+                    <div class="mini-stat">
+                        <div class="mini-stat-value">{{ $category->total_produits }}</div>
+                        <div class="mini-stat-label">Produits</div>
+                    </div>
+                    <div class="mini-stat">
+                        <div class="mini-stat-value">{{ number_format($category->ca_total, 0) }} DH</div>
+                        <div class="mini-stat-label">CA Total</div>
+                    </div>
+                    <div class="mini-stat">
+                        <div class="mini-stat-value">{{ number_format($category->marge_totale, 0) }} DH</div>
+                        <div class="mini-stat-label">Marge</div>
+                    </div>
+                    <div class="mini-stat">
+                        <div class="mini-stat-value">{{ number_format($category->quantite_vendue, 0) }}</div>
+                        <div class="mini-stat-label">Quantité vendue</div>
+                    </div>
+                </div>
+
+                <!-- ✅ Barre de progression du stock -->
+                <div style="margin-top: 15px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #666; margin-bottom: 5px;">
+                        <span><i class="fas fa-box"></i> Stock: {{ number_format($category->valeur_stock, 2) }} DH</span>
+                        <span><i class="fas fa-exclamation-triangle"></i> Rupture: {{ $category->produits_rupture }}</span>
+                    </div>
+                    <div class="progress-bar-custom">
+                        <div class="progress-fill" style="width: {{ $category->total_produits > 0 ? (($category->produits_actifs / $category->total_produits) * 100) : 0 }}%"></div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Pagination -->
-            @if($categories->hasPages())
-                <div class="d-flex justify-content-center" style="padding: 20px;">
-                    {{ $categories->links() }}
+            <!-- Edit Modal -->
+            <div class="modal fade" id="editModal{{ $category->id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title"><i class="fas fa-edit"></i> Modifier la Catégorie</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form method="POST" action="{{ route('categories.update', $category->id) }}">
+                            @csrf
+                            @method('PUT')
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label"><i class="fas fa-tag"></i> Nom de la catégorie</label>
+                                    <input type="text" class="form-control" name="nom" value="{{ $category->nom }}" required>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                <button type="submit" class="btn btn-gradient">Enregistrer</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-            @endif
-        </div>
+            </div>
+        @empty
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <h4>Aucune catégorie trouvée</h4>
+                <p>Commencez par créer votre première catégorie</p>
+            </div>
+        @endforelse
+
+        <!-- Pagination -->
+        @if($categories->hasPages())
+            <div class="d-flex justify-content-center" style="padding: 20px;">
+                {{ $categories->links() }}
+            </div>
+        @endif
     </div>
 
     <!-- Create Modal -->
@@ -521,44 +757,25 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-plus-circle"></i> Nouvelle Catégorie
-                    </h5>
+                    <h5 class="modal-title"><i class="fas fa-plus-circle"></i> Nouvelle Catégorie</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form method="POST" action="{{ route('categories.store') }}">
                     @csrf
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label for="nom" class="form-label">
-                                <i class="fas fa-tag"></i> Nom de la catégorie
-                            </label>
-                            <input type="text" 
-                                   class="form-control @error('nom') is-invalid @enderror" 
-                                   id="nom" 
-                                   name="nom" 
-                                   value="{{ old('nom') }}" 
-                                   required 
-                                   placeholder="Entrez le nom de la catégorie"
-                                   autofocus>
-                            @error('nom')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                            <label class="form-label"><i class="fas fa-tag"></i> Nom de la catégorie</label>
+                            <input type="text" class="form-control" name="nom" required autofocus>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 10px;">
-                            <i class="fas fa-times"></i> Annuler
-                        </button>
-                        <button type="submit" class="btn btn-gradient">
-                            <i class="fas fa-save"></i> Créer
-                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-gradient">Créer</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-
     <!-- Scripts pour animations -->
     <script>
         // Animation au scroll

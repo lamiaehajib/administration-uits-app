@@ -746,10 +746,15 @@
 
         <!-- Pagination -->
         @if($categories->hasPages())
-            <div class="d-flex justify-content-center" style="padding: 20px;">
-                {{ $categories->links() }}
+            
+            <div class="d-flex justify-content-between align-items-center p-3">
+                
+                <div>
+                    {{ $categories->links('pagination.custom') }}
+                </div>
             </div>
         @endif
+        
     </div>
 
     <!-- Create Modal -->

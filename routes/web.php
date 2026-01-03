@@ -309,7 +309,9 @@ Route::controller(App\Http\Controllers\RecuUcgController::class)->prefix('recus'
     
     // Route pour supprimer définitivement un reçu
     Route::delete('{id}/force-delete', 'forceDelete')->name('forceDelete');
-});
+});Route::get('/api/produits/category/{categoryId}', [RecuUcgController::class, 'getProduitsByCategory'])
+    ->name('api.produits.by-category');
+    
 Route::resource('recus', RecuUcgController::class);
 Route::post('recus/{recu}/items', [RecuUcgController::class, 'addItem'])->name('recus.items.add');
 Route::delete('recus/{recu}/items/{item}', [RecuUcgController::class, 'removeItem'])->name('recus.items.remove');

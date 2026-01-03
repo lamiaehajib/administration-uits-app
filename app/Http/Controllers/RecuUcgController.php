@@ -54,16 +54,20 @@ class RecuUcgController extends Controller
         return view('recus.index', compact('recus'));
     }
 
-  public function create()
+public function create()
 {
-    // ✅ Charger produits AVEC leurs variants ACTIFS et EN STOCK (>0)
+    // Charger toutes les catégories actives
+    $categories = \App\Models\Category::
+        orderBy('nom')
+        ->get();
+
+    // Charger tous les produits (comme avant)
     $produits = Produit::with(['variants' => function($query) {
         $query->where('actif', true)
               ->where('quantite_stock', '>', 0);
     }])
     ->where('actif', true)
     ->where(function($q) {
-        // Produits qui ont du stock OU qui ont des variants actifs en stock
         $q->where('quantite_stock', '>', 0)
           ->orWhereHas('variants', function($query) {
               $query->where('actif', true)
@@ -73,7 +77,51 @@ class RecuUcgController extends Controller
     ->orderBy('nom')
     ->get();
 
-    return view('recus.create', compact('produits'));
+    return view('recus.create', compact('produits', 'categories'));
+}
+
+/**
+ * ✅ NOUVELLE MÉTHODE : Récupère les produits par catégorie via AJAX
+ */
+public function getProduitsByCategory($categoryId)
+{
+    try {
+        $produits = Produit::with(['variants' => function($query) {
+            $query->where('actif', true)
+                  ->where('quantite_stock', '>', 0);
+        }])
+        ->where('actif', true)
+        ->where('category_id', $categoryId)
+        ->where(function($q) {
+            $q->where('quantite_stock', '>', 0)
+              ->orWhereHas('variants', function($query) {
+                  $query->where('actif', true)
+                        ->where('quantite_stock', '>', 0);
+              });
+        })
+        ->orderBy('nom')
+        ->get()
+        ->map(function($produit) {
+            return [
+                'id' => $produit->id,
+                'nom' => $produit->nom,
+                'prix_vente' => $produit->prix_vente,
+                'quantite_stock' => $produit->quantite_stock,
+                'has_variants' => $produit->variants->count() > 0
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'produits' => $produits
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur lors du chargement des produits: ' . $e->getMessage()
+        ], 500);
+    }
 }
     /**
      * ✅ VERSION FIXED  - BASITA O KHDAM  100%

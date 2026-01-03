@@ -89,6 +89,31 @@
                 </div>
             </div>
 
+            <!-- ✅ NOUVEAU : Filtre par Catégorie -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filtre par Catégorie</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <select id="category-filter" class="form-select">
+                                <option value="">-- Toutes les catégories --</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category->id }}">{{ $category->nom }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <button type="button" id="reset-filter" class="btn btn-secondary">
+                                <i class="fas fa-redo me-2"></i>Réinitialiser
+                            </button>
+                            <small class="text-muted ms-3" id="filter-info"></small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Section Produits avec Variants -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-primary text-white">
@@ -107,6 +132,7 @@
                                             <option value="{{ $produit->id }}" 
                                                     data-prix="{{ $produit->prix_vente }}"
                                                     data-stock="{{ $produit->quantite_stock }}"
+                                                    data-category="{{ $produit->category_id }}"
                                                     data-has-variants="{{ $produit->variants->where('actif', true)->where('quantite_stock', '>', 0)->count() > 0 ? 'true' : 'false' }}">
                                                 {{ $produit->nom }} (Stock: {{ $produit->quantite_stock }})
                                             </option>
@@ -116,9 +142,9 @@
 
                                 <!-- Sélection Variant -->
                                 <div class="col-md-4 variant-container" style="display: none;">
-                                    <label class="form-label">Variant <span class="text-danger">*</span></label>
+                                    <label class="form-label">Variant (optionnel)</label>
                                     <select name="items[0][product_variant_id]" class="form-select variant-select">
-                                        <option value="">-- Choisir un variant --</option>
+                                        <option value="">-- Produit de base (sans variant) --</option>
                                     </select>
                                     <small class="text-muted variant-info"></small>
                                 </div>
@@ -218,230 +244,285 @@
 
     @push('scripts')
     <script>
-        console.log('✅ Script variants chargé');
-        console.log('jQuery version:', $.fn.jquery);
-
-       // ✅ SOLUTION : Permettre la création sans variant même si variants disponibles
-
-$(document).ready(function() {
-    console.log('✅ Script variants chargé');
-    let itemIndex = 1;
-
-    const produitsOptions = `
-        <option value="">-- Sélectionner un produit --</option>
-        @foreach($produits as $produit)
-            <option value="{{ $produit->id }}" 
-                    data-prix="{{ $produit->prix_vente }}"
-                    data-stock="{{ $produit->quantite_stock }}"
-                    data-has-variants="{{ $produit->variants->where('actif', true)->where('quantite_stock', '>', 0)->count() > 0 ? 'true' : 'false' }}">
-                {{ $produit->nom }} (Stock: {{ $produit->quantite_stock }})
-            </option>
-        @endforeach
-    `;
-
-    // Gestion sélection produit
-    $(document).on('change', '.produit-select', function() {
-        const row = $(this).closest('.item-row');
-        const produitId = $(this).val();
-        const hasVariants = $(this).find(':selected').data('has-variants') === true;
-        const prix = $(this).find(':selected').data('prix');
-        const stock = $(this).find(':selected').data('stock');
-
-        // Reset
-        row.find('.variant-container').hide();
-        row.find('.variant-select').html('<option value="">-- Choisir un variant --</option>');
-        row.find('.variant-specs').hide();
-        row.find('.prix-display').val('');
-
-        if (!produitId) return;
-
-        // ✅ TOUJOURS afficher le prix du produit de base
-        row.find('.prix-display').val(parseFloat(prix).toFixed(2) + ' DH');
-        row.find('.quantite-input').attr('max', stock);
-
-        if (hasVariants) {
-            console.log('⚡ Chargement variants...');
-            $.ajax({
-                url: `/api/variants/produit/${produitId}`,
-                method: 'GET',
-                beforeSend: function() {
-                    row.find('.variant-info').text('🔄 Chargement...');
-                },
-                success: function(response) {
-                    if (response.success && response.variants.length > 0) {
-                        row.find('.variant-container').show();
-                        let variantOptions = '<option value="">-- Produit de base (sans variant) --</option>'; // ✅ Option par défaut
-                        response.variants.forEach(variant => {
-                            variantOptions += `
-                                <option value="${variant.id}" 
-                                        data-prix="${variant.prix_vente_final}"
-                                        data-stock="${variant.stock}"
-                                        data-specs="${variant.variant_name}">
-                                    ${variant.variant_name} - ${variant.prix_vente_final} DH (Stock: ${variant.stock})
-                                </option>
-                            `;
-                        });
-                        row.find('.variant-select').html(variantOptions);
-                        row.find('.variant-info').html('<small class="text-info">💡 Vous pouvez choisir un variant ou laisser vide pour utiliser le produit de base</small>');
-                    }
-                },
-                error: function(xhr) {
-                    console.error('❌ Erreur API:', xhr.responseText);
-                    row.find('.variant-info').text('❌ Erreur chargement');
-                }
-            });
-        }
-        calculateTotal();
-    });
-
-    // Gestion sélection variant
-    $(document).on('change', '.variant-select', function() {
-        const row = $(this).closest('.item-row');
-        const variantId = $(this).val();
+        console.log('✅ Script variants + catégories chargé');
         
-        if (variantId) {
-            // Variant sélectionné
-            const prix = $(this).find(':selected').data('prix');
-            const stock = $(this).find(':selected').data('stock');
-            const specs = $(this).find(':selected').data('specs');
+        let itemIndex = 1;
+        let allProduits = []; // Stocker tous les produits
 
-            row.find('.prix-display').val(parseFloat(prix).toFixed(2) + ' DH');
-            row.find('.quantite-input').attr('max', stock);
-            row.find('.variant-specs').show();
-            row.find('.specs-text').html(`<strong>Specs:</strong> ${specs}`);
-        } else {
-            // Retour au produit de base
-            const produitSelect = row.find('.produit-select');
-            const prix = produitSelect.find(':selected').data('prix');
-            const stock = produitSelect.find(':selected').data('stock');
-            
-            row.find('.prix-display').val(parseFloat(prix).toFixed(2) + ' DH');
-            row.find('.quantite-input').attr('max', stock);
-            row.find('.variant-specs').hide();
-        }
-        calculateTotal();
-    });
+        // ✅ Stocker les produits au chargement
+        const produitsOptions = `
+            <option value="">-- Sélectionner un produit --</option>
+            @foreach($produits as $produit)
+                <option value="{{ $produit->id }}" 
+                        data-prix="{{ $produit->prix_vente }}"
+                        data-stock="{{ $produit->quantite_stock }}"
+                        data-category="{{ $produit->category_id }}"
+                        data-has-variants="{{ $produit->variants->where('actif', true)->where('quantite_stock', '>', 0)->count() > 0 ? 'true' : 'false' }}">
+                    {{ $produit->nom }} (Stock: {{ $produit->quantite_stock }})
+                </option>
+            @endforeach
+        `;
 
-    // Ajouter item
-    $('#add-item').click(function() {
-        const newItem = `
-            <div class="item-row mb-3 p-3 border rounded">
-                <div class="row g-3">
-                    <div class="col-md-5">
-                        <label class="form-label">Produit <span class="text-danger">*</span></label>
-                        <select name="items[${itemIndex}][produit_id]" class="form-select produit-select" required>
-                            ${produitsOptions}
-                        </select>
-                    </div>
-                    <div class="col-md-4 variant-container" style="display: none;">
-                        <label class="form-label">Variant (optionnel)</label>
-                        <select name="items[${itemIndex}][product_variant_id]" class="form-select variant-select">
-                            <option value="">-- Choisir un variant --</option>
-                        </select>
-                        <small class="text-muted variant-info"></small>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Quantité <span class="text-danger">*</span></label>
-                        <input type="number" name="items[${itemIndex}][quantite]" class="form-control quantite-input"
-                               min="1" value="1" required>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Prix Unit.</label>
-                        <input type="text" class="form-control prix-display" readonly>
-                    </div>
-                    <div class="col-md-1 d-flex align-items-end">
-                        <button type="button" class="btn btn-danger remove-item">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                    <div class="col-12 variant-specs" style="display: none;">
-                        <div class="alert alert-info mb-0 py-2">
-                            <small class="specs-text"></small>
+        $(document).ready(function() {
+            // ✅ FILTRE PAR CATÉGORIE
+            $('#category-filter').on('change', function() {
+                const categoryId = $(this).val();
+                
+                if (!categoryId) {
+                    // Réinitialiser : afficher tous les produits
+                    $('.produit-select').each(function() {
+                        $(this).html(produitsOptions);
+                    });
+                    $('#filter-info').text('');
+                    return;
+                }
+
+                // Charger les produits de cette catégorie via AJAX
+                $.ajax({
+                    url: `/api/produits/category/${categoryId}`,
+                    method: 'GET',
+                    beforeSend: function() {
+                        $('#filter-info').html('<span class="text-info">🔄 Chargement...</span>');
+                    },
+                    success: function(response) {
+                        if (response.success && response.produits.length > 0) {
+                            let options = '<option value="">-- Sélectionner un produit --</option>';
+                            
+                            response.produits.forEach(produit => {
+                                options += `
+                                    <option value="${produit.id}" 
+                                            data-prix="${produit.prix_vente}"
+                                            data-stock="${produit.quantite_stock}"
+                                            data-has-variants="${produit.has_variants}">
+                                        ${produit.nom} (Stock: ${produit.quantite_stock})
+                                    </option>
+                                `;
+                            });
+                            
+                            // Mettre à jour tous les selects de produits
+                            $('.produit-select').each(function() {
+                                const currentVal = $(this).val();
+                                $(this).html(options);
+                                $(this).val(currentVal); // Garder la sélection si possible
+                            });
+                            
+                            $('#filter-info').html(`<span class="text-success">✅ ${response.produits.length} produit(s) trouvé(s)</span>`);
+                        } else {
+                            $('.produit-select').html('<option value="">Aucun produit dans cette catégorie</option>');
+                            $('#filter-info').html('<span class="text-warning">⚠️ Aucun produit disponible</span>');
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error('❌ Erreur AJAX:', xhr.responseText);
+                        $('#filter-info').html('<span class="text-danger">❌ Erreur de chargement</span>');
+                    }
+                });
+            });
+
+            // Bouton réinitialiser
+            $('#reset-filter').on('click', function() {
+                $('#category-filter').val('').trigger('change');
+            });
+
+            // Gestion sélection produit
+            $(document).on('change', '.produit-select', function() {
+                const row = $(this).closest('.item-row');
+                const produitId = $(this).val();
+                const hasVariants = $(this).find(':selected').data('has-variants') === true;
+                const prix = $(this).find(':selected').data('prix');
+                const stock = $(this).find(':selected').data('stock');
+
+                // Reset
+                row.find('.variant-container').hide();
+                row.find('.variant-select').html('<option value="">-- Produit de base (sans variant) --</option>');
+                row.find('.variant-specs').hide();
+                row.find('.prix-display').val('');
+
+                if (!produitId) return;
+
+                // Afficher le prix du produit de base
+                row.find('.prix-display').val(parseFloat(prix).toFixed(2) + ' DH');
+                row.find('.quantite-input').attr('max', stock);
+
+                if (hasVariants) {
+                    console.log('⚡ Chargement variants...');
+                    $.ajax({
+                        url: `/api/variants/produit/${produitId}`,
+                        method: 'GET',
+                        beforeSend: function() {
+                            row.find('.variant-info').text('🔄 Chargement...');
+                        },
+                        success: function(response) {
+                            if (response.success && response.variants.length > 0) {
+                                row.find('.variant-container').show();
+                                let variantOptions = '<option value="">-- Produit de base (sans variant) --</option>';
+                                response.variants.forEach(variant => {
+                                    variantOptions += `
+                                        <option value="${variant.id}" 
+                                                data-prix="${variant.prix_vente_final}"
+                                                data-stock="${variant.stock}"
+                                                data-specs="${variant.variant_name}">
+                                            ${variant.variant_name} - ${variant.prix_vente_final} DH (Stock: ${variant.stock})
+                                        </option>
+                                    `;
+                                });
+                                row.find('.variant-select').html(variantOptions);
+                                row.find('.variant-info').html('<small class="text-info">💡 Optionnel</small>');
+                            }
+                        },
+                        error: function(xhr) {
+                            console.error('❌ Erreur API:', xhr.responseText);
+                            row.find('.variant-info').text('❌ Erreur');
+                        }
+                    });
+                }
+                calculateTotal();
+            });
+
+            // Gestion sélection variant
+            $(document).on('change', '.variant-select', function() {
+                const row = $(this).closest('.item-row');
+                const variantId = $(this).val();
+                
+                if (variantId) {
+                    const prix = $(this).find(':selected').data('prix');
+                    const stock = $(this).find(':selected').data('stock');
+                    const specs = $(this).find(':selected').data('specs');
+
+                    row.find('.prix-display').val(parseFloat(prix).toFixed(2) + ' DH');
+                    row.find('.quantite-input').attr('max', stock);
+                    row.find('.variant-specs').show();
+                    row.find('.specs-text').html(`<strong>Specs:</strong> ${specs}`);
+                } else {
+                    const produitSelect = row.find('.produit-select');
+                    const prix = produitSelect.find(':selected').data('prix');
+                    const stock = produitSelect.find(':selected').data('stock');
+                    
+                    row.find('.prix-display').val(parseFloat(prix).toFixed(2) + ' DH');
+                    row.find('.quantite-input').attr('max', stock);
+                    row.find('.variant-specs').hide();
+                }
+                calculateTotal();
+            });
+
+            // Ajouter item
+            $('#add-item').click(function() {
+                const currentOptions = $('.produit-select').first().html(); // Copier les options actuelles
+                const newItem = `
+                    <div class="item-row mb-3 p-3 border rounded">
+                        <div class="row g-3">
+                            <div class="col-md-5">
+                                <label class="form-label">Produit <span class="text-danger">*</span></label>
+                                <select name="items[${itemIndex}][produit_id]" class="form-select produit-select" required>
+                                    ${currentOptions}
+                                </select>
+                            </div>
+                            <div class="col-md-4 variant-container" style="display: none;">
+                                <label class="form-label">Variant (optionnel)</label>
+                                <select name="items[${itemIndex}][product_variant_id]" class="form-select variant-select">
+                                    <option value="">-- Produit de base (sans variant) --</option>
+                                </select>
+                                <small class="text-muted variant-info"></small>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Quantité <span class="text-danger">*</span></label>
+                                <input type="number" name="items[${itemIndex}][quantite]" class="form-control quantite-input"
+                                       min="1" value="1" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Prix Unit.</label>
+                                <input type="text" class="form-control prix-display" readonly>
+                            </div>
+                            <div class="col-md-1 d-flex align-items-end">
+                                <button type="button" class="btn btn-danger remove-item">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                            <div class="col-12 variant-specs" style="display: none;">
+                                <div class="alert alert-info mb-0 py-2">
+                                    <small class="specs-text"></small>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        `;
-        $('#items-container').append(newItem);
-        itemIndex++;
-        updateRemoveButtons();
-    });
-
-    // Supprimer item
-    $(document).on('click', '.remove-item', function() {
-        $(this).closest('.item-row').remove();
-        updateRemoveButtons();
-        calculateTotal();
-    });
-
-    // Calcul total
-    $(document).on('input', '.quantite-input, #remise, #tva', calculateTotal);
-
-    function calculateTotal() {
-        let sousTotal = 0;
-        $('.item-row').each(function() {
-            const row = $(this);
-            let prix = 0;
-            const variantSelect = row.find('.variant-select');
-            const produitSelect = row.find('.produit-select');
-            
-            // ✅ Si variant sélectionné, utiliser son prix, sinon utiliser le prix du produit
-            if (variantSelect.val()) {
-                prix = parseFloat(variantSelect.find(':selected').data('prix')) || 0;
-            } else {
-                prix = parseFloat(produitSelect.find(':selected').data('prix')) || 0;
-            }
-            
-            const quantite = parseInt(row.find('.quantite-input').val()) || 0;
-            sousTotal += prix * quantite;
-        });
-
-        const remise = parseFloat($('#remise').val()) || 0;
-        const tva = parseFloat($('#tva').val()) || 0;
-        const total = sousTotal - remise + tva;
-        $('#total-display').val(total.toFixed(2));
-    }
-
-    function updateRemoveButtons() {
-        const itemCount = $('.item-row').length;
-        $('.remove-item').prop('disabled', itemCount <= 1);
-    }
-
-    // ✅ VALIDATION CORRIGÉE : Accepter les produits SANS variant
-    $('#recuForm').on('submit', function(e) {
-        let valid = true;
-        let errors = [];
-
-        $('.item-row').each(function() {
-            const row = $(this);
-            const produitId = row.find('.produit-select').val();
-            const quantite = parseInt(row.find('.quantite-input').val());
-            const maxStock = parseInt(row.find('.quantite-input').attr('max'));
-
-            // Vérifier que le produit est sélectionné
-            if (!produitId) {
-                valid = false;
-                errors.push('Veuillez sélectionner un produit pour chaque ligne');
-            }
-
-            // Vérifier le stock
-            if (quantite > maxStock) {
-                valid = false;
-                errors.push(`Stock insuffisant pour "${row.find('.produit-select option:selected').text()}"`);
-            }
-        });
-
-        if (!valid) {
-            e.preventDefault();
-            Swal.fire({
-                icon: 'error',
-                title: 'Erreur de validation',
-                html: errors.join('<br>'),
-                confirmButtonText: 'OK'
+                `;
+                $('#items-container').append(newItem);
+                itemIndex++;
+                updateRemoveButtons();
             });
-        }
-    });
-});
+
+            // Supprimer item
+            $(document).on('click', '.remove-item', function() {
+                $(this).closest('.item-row').remove();
+                updateRemoveButtons();
+                calculateTotal();
+            });
+
+            // Calcul total
+            $(document).on('input', '.quantite-input, #remise, #tva', calculateTotal);
+
+            function calculateTotal() {
+                let sousTotal = 0;
+                $('.item-row').each(function() {
+                    const row = $(this);
+                    let prix = 0;
+                    const variantSelect = row.find('.variant-select');
+                    const produitSelect = row.find('.produit-select');
+                    
+                    if (variantSelect.val()) {
+                        prix = parseFloat(variantSelect.find(':selected').data('prix')) || 0;
+                    } else {
+                        prix = parseFloat(produitSelect.find(':selected').data('prix')) || 0;
+                    }
+                    
+                    const quantite = parseInt(row.find('.quantite-input').val()) || 0;
+                    sousTotal += prix * quantite;
+                });
+
+                const remise = parseFloat($('#remise').val()) || 0;
+                const tva = parseFloat($('#tva').val()) || 0;
+                const total = sousTotal - remise + tva;
+                $('#total-display').val(total.toFixed(2));
+            }
+
+            function updateRemoveButtons() {
+                const itemCount = $('.item-row').length;
+                $('.remove-item').prop('disabled', itemCount <= 1);
+            }
+
+            // Validation
+            $('#recuForm').on('submit', function(e) {
+                let valid = true;
+                let errors = [];
+
+                $('.item-row').each(function() {
+                    const row = $(this);
+                    const produitId = row.find('.produit-select').val();
+                    const quantite = parseInt(row.find('.quantite-input').val());
+                    const maxStock = parseInt(row.find('.quantite-input').attr('max'));
+
+                    if (!produitId) {
+                        valid = false;
+                        errors.push('Veuillez sélectionner un produit pour chaque ligne');
+                    }
+
+                    if (quantite > maxStock) {
+                        valid = false;
+                        errors.push(`Stock insuffisant pour "${row.find('.produit-select option:selected').text()}"`);
+                    }
+                });
+
+                if (!valid) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur de validation',
+                        html: errors.join('<br>'),
+                        confirmButtonText: 'OK'
+                    });
+                }
+            });
+        });
     </script>
     @endpush
 </x-app-layout>

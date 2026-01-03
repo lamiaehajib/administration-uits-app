@@ -101,6 +101,86 @@
             letter-spacing: 0.5px;
         }
 
+        /* ✅ NOUVELLE SECTION FILTRES */
+        .filters-bar {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .filter-group {
+            position: relative;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: #C2185B;
+            box-shadow: 0 0 0 3px rgba(194, 24, 91, 0.1);
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .active-filters {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .filter-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .filter-tag i {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .filter-tag i:hover {
+            transform: scale(1.2);
+        }
+
         /* Action Bar */
         .action-bar {
             background: white;
@@ -176,6 +256,16 @@
         .btn-outline-modern:hover {
             background: #C2185B;
             color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary-modern {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary-modern:hover {
+            background: #5a6268;
             transform: translateY(-2px);
         }
 
@@ -345,41 +435,6 @@
             color: white; 
         }
 
-        /* Pagination */
-        .pagination-modern {
-            margin-top: 25px;
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .pagination-modern .page-link {
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 8px 16px;
-            color: #666;
-            transition: all 0.3s ease;
-        }
-
-        .pagination-modern .page-link:hover {
-            border-color: #C2185B;
-            background: #C2185B;
-            color: white;
-        }
-
-        .pagination-modern .active .page-link {
-            background: linear-gradient(135deg, #C2185B, #D32F2F);
-            border-color: #C2185B;
-            color: white;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .products-header h1 { font-size: 1.8rem; }
-            .stats-grid { grid-template-columns: 1fr; }
-            .action-bar { flex-direction: column; }
-            .search-box { width: 100%; }
-        }
         .btn-variant { 
             background: #E8EAF6; 
             color: #3F51B5; 
@@ -389,6 +444,38 @@
             color: white; 
         }
 
+        .badge-purple-modern {
+            background: #F3E5F5;
+            color: #7B1FA2;
+        }
+
+        /* Pagination */
+        .pagination {
+            margin-top: 20px;
+        }
+
+        .page-link {
+            border: 1px solid #e5e7eb;
+            color: #C2185B;
+            border-radius: 8px;
+            margin: 0 3px;
+            padding: 8px 15px;
+            transition: all 0.3s ease;
+        }
+
+        .page-link:hover {
+            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            color: white;
+            border-color: #C2185B;
+            transform: translateY(-2px);
+        }
+
+        .page-item.active .page-link {
+            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            border-color: #C2185B;
+        }
+
+        /* Modal Styles */
         .modal {
             display: none;
             position: fixed;
@@ -577,41 +664,14 @@
             gap: 15px;
         }
 
-        .badge-purple-modern {
-            background: #F3E5F5;
-            color: #7B1FA2;
+        /* Responsive */
+        @media (max-width: 768px) {
+            .products-header h1 { font-size: 1.8rem; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .action-bar { flex-direction: column; }
+            .search-box { width: 100%; }
+            .filters-grid { grid-template-columns: 1fr; }
         }
-
-        /* Ajout colonne Variants dans le tableau */
-        .modern-table thead th {
-            white-space: nowrap;
-        }
- .pagination {
-            margin-top: 20px;
-        }
-
-        .page-link {
-            border: 1px solid #e5e7eb;
-            color: #C2185B;
-            border-radius: 8px;
-            margin: 0 3px;
-            padding: 8px 15px;
-            transition: all 0.3s ease;
-        }
-
-        .page-link:hover {
-            background: linear-gradient(135deg, #C2185B, #D32F2F);
-            color: white;
-            border-color: #C2185B;
-            transform: translateY(-2px);
-        }
-
-        .page-item.active .page-link {
-            background: linear-gradient(135deg, #C2185B, #D32F2F);
-            border-color: #C2185B;
-        }
-
-        
     </style>
 
     <div class="container-fluid">
@@ -650,14 +710,93 @@
             @endcan
         </div>
 
+        <!-- ✅ NOUVELLE SECTION FILTRES -->
+        <div class="filters-bar">
+            <form action="{{ route('produits.index') }}" method="GET" id="filtersForm">
+                <div class="filters-grid">
+                    <!-- Recherche -->
+                    <div class="filter-group">
+                        <label><i class="fas fa-search"></i> Recherche</label>
+                        <input type="text" name="search" placeholder="Nom ou référence..." value="{{ $search }}">
+                    </div>
+
+                    <!-- Catégorie -->
+                    <div class="filter-group">
+                        <label><i class="fas fa-tag"></i> Catégorie</label>
+                        <select name="category_id">
+                            <option value="">Toutes les catégories</option>
+                            @foreach($categories as $cat)
+                                <option value="{{ $cat->id }}" {{ $category_id == $cat->id ? 'selected' : '' }}>
+                                    {{ $cat->nom }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Statut -->
+                    <div class="filter-group">
+                        <label><i class="fas fa-info-circle"></i> Statut</label>
+                        <select name="statut">
+                            <option value="">Tous les statuts</option>
+                            <option value="actif" {{ $statut == 'actif' ? 'selected' : '' }}>Actifs</option>
+                            <option value="inactif" {{ $statut == 'inactif' ? 'selected' : '' }}>Inactifs</option>
+                            <option value="alerte_stock" {{ $statut == 'alerte_stock' ? 'selected' : '' }}>Alerte Stock</option>
+                        </select>
+                    </div>
+
+                    <!-- Tri -->
+                    <div class="filter-group">
+                        <label><i class="fas fa-sort"></i> Trier par</label>
+                        <select name="sort_by" onchange="this.form.submit()">
+                            <option value="nom" {{ $sort_by == 'nom' ? 'selected' : '' }}>Nom</option>
+                            <option value="prix_vente" {{ $sort_by == 'prix_vente' ? 'selected' : '' }}>Prix</option>
+                            <option value="stock" {{ $sort_by == 'stock' ? 'selected' : '' }}>Stock</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Actions des Filtres -->
+                <div class="filter-actions">
+                    <button type="submit" class="btn-modern btn-primary-modern">
+                        <i class="fas fa-filter"></i> Appliquer les filtres
+                    </button>
+                    <a href="{{ route('produits.index') }}" class="btn-modern btn-secondary-modern">
+                        <i class="fas fa-redo"></i> Réinitialiser
+                    </a>
+                </div>
+
+                <!-- ✅ Filtres Actifs -->
+                @if($search || $category_id || $statut)
+                <div class="active-filters">
+                    <span style="font-weight: 600; color: #666; margin-right: 10px;">Filtres actifs:</span>
+                    
+                    @if($search)
+                    <span class="filter-tag">
+                        <i class="fas fa-search"></i> Recherche: "{{ $search }}"
+                        <i class="fas fa-times" onclick="removeFilter('search')"></i>
+                    </span>
+                    @endif
+
+                    @if($category_id)
+                    <span class="filter-tag">
+                        <i class="fas fa-tag"></i> {{ $categories->find($category_id)->nom ?? '' }}
+                        <i class="fas fa-times" onclick="removeFilter('category_id')"></i>
+                    </span>
+                    @endif
+
+                    @if($statut)
+                    <span class="filter-tag">
+                        <i class="fas fa-info-circle"></i> {{ ucfirst($statut) }}
+                        <i class="fas fa-times" onclick="removeFilter('statut')"></i>
+                    </span>
+                    @endif
+                </div>
+                @endif
+            </form>
+        </div>
+
         <!-- Action Bar -->
         <div class="action-bar">
-            <form action="{{ route('produits.index') }}" method="GET" class="search-box">
-                <input type="text" name="search" placeholder="🔍 Rechercher un produit..." 
-                       value="{{ request('search') }}">
-                <i class="fas fa-search"></i>
-            </form>
-
             @can('produit-create')
             <a href="{{ route('produits.create') }}" class="btn-modern btn-primary-modern">
                 <i class="fas fa-plus-circle"></i> Nouveau Produit
@@ -675,11 +814,12 @@
                 <i class="fas fa-file-pdf"></i> Export PDF
             </a>
             @endcan
+            
             @can('produit-export')
-            <a href="{{ route('produits.trash') }}" class="btn-modern btn-outline-modern">
-                <i class="fas fa-trash"></i> Corbeille
-            </a>
-            @endcan
+            <a href="{{ route('produits.trash') }}" class="btn-modern btn-outline-modern">
+                <i class="fas fa-trash"></i> Corbeille
+            </a>
+            @endcan
         </div>
 
         <!-- Products Table -->
@@ -805,7 +945,7 @@
                             <td colspan="10" class="text-center py-5">
                                 <i class="fas fa-box-open" style="font-size: 3rem; color: #ccc; margin-bottom: 15px;"></i>
                                 <h5 class="text-muted">Aucun produit trouvé</h5>
-                                <p class="text-muted">Commencez par ajouter votre premier produit</p>
+                                <p class="text-muted">Aucun produit ne correspond à vos critères de recherche</p>
                             </td>
                         </tr>
                         @endforelse
@@ -814,9 +954,11 @@
             </div>
 
             <!-- Pagination -->
-             
             <div class="d-flex justify-content-between align-items-center p-3">
-                
+                <div>
+                    Affichage de {{ $produits->firstItem() ?? 0 }} à {{ $produits->lastItem() ?? 0 }} 
+                    sur {{ $produits->total() }} produits
+                </div>
                 <div>
                     {{ $produits->links('pagination.custom') }}
                 </div>
@@ -824,7 +966,7 @@
         </div>
     </div>
 
-    <!-- Modal Variants -->
+    <!-- Modal Variants (inchangé) -->
     <div id="variantsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -832,7 +974,6 @@
                 <button class="modal-close" onclick="closeVariantsModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <!-- Tabs Navigation -->
                 <div style="display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #e0e0e0;">
                     <button class="tab-btn active" onclick="switchTab('list')" id="listTab">
                         <i class="fas fa-list"></i> Liste des Variants
@@ -842,7 +983,6 @@
                     </button>
                 </div>
 
-                <!-- Tab Content: Liste -->
                 <div id="listContent" class="tab-content active">
                     <div id="variantsListContainer">
                         <div class="text-center py-5">
@@ -852,7 +992,6 @@
                     </div>
                 </div>
 
-                <!-- Tab Content: Créer -->
                 <div id="createContent" class="tab-content">
                     <form id="createVariantForm" onsubmit="submitVariant(event)">
                         @csrf
@@ -921,34 +1060,37 @@
         </div>
     </div>
 
-    <!-- Delete Confirmation & Scripts -->
     <script>
         let currentProduitId = null;
 
-        // Ouvrir le modal
+        // ✅ NOUVELLE FONCTION: Supprimer un filtre individuel
+        function removeFilter(filterName) {
+            const form = document.getElementById('filtersForm');
+            const input = form.querySelector(`[name="${filterName}"]`);
+            if (input) {
+                input.value = '';
+                form.submit();
+            }
+        }
+
+        // Fonctions existantes (inchangées)
         function openVariantsModal(produitId, produitNom) {
             currentProduitId = produitId;
             document.getElementById('modalTitle').textContent = `Variants - ${produitNom}`;
             document.getElementById('produit_id').value = produitId;
             document.getElementById('variantsModal').classList.add('show');
-            
-            // Charger la liste des variants
             loadVariants(produitId);
         }
 
-        // Fermer le modal
         function closeVariantsModal() {
             document.getElementById('variantsModal').classList.remove('show');
             resetForm();
         }
 
-        // Changer d'onglet
         function switchTab(tab) {
-            // Reset tabs
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             
-            // Activer le bon onglet
             if (tab === 'list') {
                 document.getElementById('listTab').classList.add('active');
                 document.getElementById('listContent').classList.add('active');
@@ -958,7 +1100,6 @@
             }
         }
 
-        // Charger les variants
         async function loadVariants(produitId) {
             const container = document.getElementById('variantsListContainer');
             container.innerHTML = '<div class="text-center py-5"><i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #C2185B;"></i></div>';
@@ -1025,82 +1166,76 @@
             }
         }
 
-        // Soumettre le formulaire
         async function submitVariant(e) {
-    e.preventDefault();
-    const form = document.getElementById('createVariantForm');
-    const formData = new FormData(form);
-    const variantId = document.getElementById('variant_id').value;
-    
-    // ✅ Construire l'objet de données
-    const data = {
-        ram: formData.get('ram'),
-        ssd: formData.get('ssd'),
-        cpu: formData.get('cpu'),
-        gpu: formData.get('gpu'),
-        ecran: formData.get('ecran'),
-        prix_supplement: formData.get('prix_supplement'),
-        quantite_stock: formData.get('quantite_stock'),
-        actif: formData.get('actif') ? 1 : 0
-    };
-    
-    const url = variantId 
-        ? `/produits/${currentProduitId}/variants/${variantId}`
-        : `/produits/${currentProduitId}/variants`;
-    
-    const method = variantId ? 'PUT' : 'POST';
-    
-    try {
-        const response = await fetch(url, {
-            method: method,
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('[name="_token"]').value,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json', // ✅ Important pour PUT
-            },
-            body: JSON.stringify(data) // ✅ Envoyer en JSON au lieu de FormData
-        });
-        
-        const result = await response.json();
-        
-        if (response.ok) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Succès!',
-                text: result.message || 'Variant enregistré avec succès',
-                timer: 2000
-            });
+            e.preventDefault();
+            const form = document.getElementById('createVariantForm');
+            const formData = new FormData(form);
+            const variantId = document.getElementById('variant_id').value;
             
-            resetForm();
-            switchTab('list');
-            loadVariants(currentProduitId);
+            const data = {
+                ram: formData.get('ram'),
+                ssd: formData.get('ssd'),
+                cpu: formData.get('cpu'),
+                gpu: formData.get('gpu'),
+                ecran: formData.get('ecran'),
+                prix_supplement: formData.get('prix_supplement'),
+                quantite_stock: formData.get('quantite_stock'),
+                actif: formData.get('actif') ? 1 : 0
+            };
             
-            // Recharger la page pour mettre à jour le compteur
-            setTimeout(() => location.reload(), 2000);
-        } else {
-            // ✅ Afficher les erreurs de validation
-            let errorMsg = result.message || 'Une erreur est survenue';
-            if (result.errors) {
-                errorMsg = Object.values(result.errors).flat().join('\n');
+            const url = variantId 
+                ? `/produits/${currentProduitId}/variants/${variantId}`
+                : `/produits/${currentProduitId}/variants`;
+            
+            const method = variantId ? 'PUT' : 'POST';
+            
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('[name="_token"]').value,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès!',
+                        text: result.message || 'Variant enregistré avec succès',
+                        timer: 2000
+                    });
+                    
+                    resetForm();
+                    switchTab('list');
+                    loadVariants(currentProduitId);
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    let errorMsg = result.message || 'Une erreur est survenue';
+                    if (result.errors) {
+                        errorMsg = Object.values(result.errors).flat().join('\n');
+                    }
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur de validation',
+                        text: errorMsg
+                    });
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Erreur de connexion au serveur'
+                });
             }
-            
-            Swal.fire({
-                icon: 'error',
-                title: 'Erreur de validation',
-                text: errorMsg
-            });
         }
-    } catch (error) {
-        console.error('Erreur:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Erreur',
-            text: 'Erreur de connexion au serveur'
-        });
-    }
-}
 
-        // Modifier un variant
         async function editVariant(variantId) {
             try {
                 const response = await fetch(`/api/variants/${variantId}`);
@@ -1109,7 +1244,6 @@
                 if (data.success) {
                     const variant = data.variant;
                     
-                    // Remplir le formulaire
                     document.getElementById('variant_id').value = variant.id;
                     document.querySelector('[name="ram"]').value = variant.specs.ram || '';
                     document.querySelector('[name="ssd"]').value = variant.specs.ssd || '';
@@ -1128,7 +1262,6 @@
             }
         }
 
-        // Supprimer un variant
         function deleteVariant(variantId, variantName) {
             Swal.fire({
                 title: 'Êtes-vous sûr?',
@@ -1164,14 +1297,12 @@
             });
         }
 
-        // Reset form
         function resetForm() {
             document.getElementById('createVariantForm').reset();
             document.getElementById('variant_id').value = '';
             document.getElementById('submitBtnText').textContent = 'Créer Variant';
         }
 
-        // Fonction de suppression de produit (existante)
         function confirmDelete(id) {
             Swal.fire({
                 title: 'Êtes-vous sûr?',
@@ -1197,7 +1328,6 @@
             });
         }
 
-        // Fermer le modal en cliquant à l'extérieur
         window.onclick = function(event) {
             const modal = document.getElementById('variantsModal');
             if (event.target == modal) {
@@ -1205,7 +1335,6 @@
             }
         }
 
-        // Success/Error Messages
         @if(session('success'))
             Swal.fire({
                 icon: 'success',

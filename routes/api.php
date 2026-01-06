@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Produit;
+use App\Models\StockMovement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -21,40 +22,45 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 
 
-Route::post('/wc/order-created', function (Illuminate\Http\Request $request) {
+Route::post('/wc/order-created', function (Request $request) {
+    // 1. جلب البيانات المرسلة
     $items = $request->input('line_items');
+    if (!$items) return response()->json(['message' => 'No items'], 400);
 
-    if (!$items) {
-        return response()->json(['message' => 'No items found'], 400);
-    }
+    DB::beginTransaction();
+    try {
+        foreach ($items as $item) {
+            $sku = $item['sku'];
+            $qtySold = (int)$item['quantity'];
 
-    foreach ($items as $item) {
-        $sku = $item['sku'];
-        $qtySold = $item['quantity'];
+            // 2. البحث عن المنتج (استخدام lockForUpdate لتفادي تضارب البيانات)
+            $produit = Produit::where('reference', $sku)->lockForUpdate()->first();
 
-        $produit = App\Models\Produit::where('reference', $sku)->first();
+            if ($produit) {
+                $oldStock = $produit->quantite_stock;
+                
+                // 3. تحديث المخزون يدوياً لتفادي أي Hooks تعيق العملية
+                $produit->quantite_stock = $oldStock - $qtySold;
+                $produit->save();
 
-        if ($produit) {
-            // 1. كنقصو السلعة مباشرة
-            $produit->quantite_stock = $produit->quantite_stock - $qtySold;
-            $produit->save();
-
-            // 2. كنسجلو الحركة بطريقة أضمن
-            try {
-                \App\Models\StockMovement::create([
+                // 4. تسجيل الحركة (تأكدي أن user_id = 1 موجود في جدول users)
+                StockMovement::create([
                     'produit_id'  => $produit->id,
+                    'user_id'     => 1, 
                     'type'        => 'sortie',
                     'quantite'    => $qtySold,
-                    'stock_avant' => $produit->quantite_stock + $qtySold,
+                    'stock_avant' => $oldStock,
                     'stock_apres' => $produit->quantite_stock,
-                    'motif'       => 'Vente WordPress Site',
-                    'user_id'     => 1
+                    'motif'       => 'Vente WordPress: ' . ($request->input('number') ?? 'Web'),
                 ]);
-            } catch (\Exception $e) {
-                // إيلا كان مشكل غير في تسجيل الحركة، السلعة غاتنقص والسيستم ما غايوقفش
-                \Illuminate\Support\Facades\Log::error("Movement Error: " . $e->getMessage());
             }
         }
+        DB::commit();
+        return response()->json(['message' => 'Success'], 200);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        \Illuminate\Support\Facades\Log::error("Webhook Sync Error: " . $e->getMessage());
+        return response()->json(['error' => 'Internal Error', 'details' => $e->getMessage()], 500);
     }
-    return response()->json(['message' => 'Success'], 200);
 });

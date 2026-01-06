@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Http;
 
 class Produit extends Model
 {
@@ -144,4 +145,32 @@ class Produit extends Model
     {
         return $query->withTrashed();
     }
+
+
+    protected static function booted()
+{
+    static::updated(function ($produit) {
+        // نتحقق إذا تغيرت كمية المخزون فقط
+        if ($produit->isDirty('quantite_stock')) {
+            $url = env('WOOCOMMERCE_STORE_URL') . '/wp-json/wc/v3/products';
+            $ck = env('WOOCOMMERCE_CONSUMER_KEY');
+            $cs = env('WOOCOMMERCE_CONSUMER_SECRET');
+
+            // 1. البحث عن المنتج في WordPress باستخدام الـ reference (SKU)
+            $response = Http::withBasicAuth($ck, $cs)->get($url, [
+                'sku' => $produit->reference
+            ]);
+
+            $wooProduct = $response->json()[0] ?? null;
+
+            if ($wooProduct) {
+                // 2. تحديث الكمية في WordPress
+                Http::withBasicAuth($ck, $cs)->put($url . '/' . $wooProduct['id'], [
+                    'stock_quantity' => $produit->quantite_stock,
+                    'manage_stock' => true
+                ]);
+            }
+        }
+    });
+}
 }

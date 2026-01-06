@@ -61,7 +61,7 @@ public function create()
         orderBy('nom')
         ->get();
 
-    // Charger tous les produits (comme avant)
+    // Charger tous les produits (comme avant) 
     $produits = Produit::with(['variants' => function($query) {
         $query->where('actif', true)
               ->where('quantite_stock', '>', 0);
@@ -80,9 +80,7 @@ public function create()
     return view('recus.create', compact('produits', 'categories'));
 }
 
-/**
- * ✅ NOUVELLE MÉTHODE : Récupère les produits par catégorie via AJAX
- */
+
 public function getProduitsByCategory($categoryId)
 {
     try {
@@ -147,7 +145,7 @@ public function store(Request $request)
         'notes' => 'nullable|string',
         'items' => 'required|array|min:1',
         'items.*.produit_id' => 'required|exists:produits,id',
-        'items.*.product_variant_id' => 'nullable|exists:product_variants,id', // ✅ NOUVEAU
+        'items.*.product_variant_id' => 'nullable|exists:product_variants,id', 
         'items.*.quantite' => 'required|integer|min:1',
     ]);
 
@@ -171,7 +169,7 @@ public function store(Request $request)
         ]);
 
         foreach ($validated['items'] as $itemData) {
-            // ✅ Vérifier si c'est un variant ou produit simple
+            
             if (!empty($itemData['product_variant_id'])) {
                 $variant = ProductVariant::findOrFail($itemData['product_variant_id']);
                 
@@ -182,7 +180,7 @@ public function store(Request $request)
                 // Créer item avec variant
                 $recu->items()->create([
                     'produit_id' => $itemData['produit_id'],
-                    'product_variant_id' => $itemData['product_variant_id'], // ✅ Important
+                    'product_variant_id' => $itemData['product_variant_id'], 
                     'quantite' => $itemData['quantite'],
                 ]);
 

@@ -239,7 +239,7 @@ public function store(Request $request)
 
     public function edit(RecuUcg $recu)
     {
-        if ($recu->statut !== 'en_cours') {
+        if (!in_array($recu->statut, ['en_cours', 'livre'])) {
             return back()->with('error', 'Ce reçu ne peut pas être modifié');
         }
 
@@ -254,7 +254,7 @@ public function store(Request $request)
 
     public function update(Request $request, RecuUcg $recu)
     {
-        if ($recu->statut !== 'en_cours') {
+        if (!in_array($recu->statut, ['en_cours', 'livre'])) {
             return back()->with('error', 'Ce reçu ne peut pas être modifié');
         }
 
@@ -341,7 +341,7 @@ public function store(Request $request)
 
     public function addItem(Request $request, RecuUcg $recu)
     {
-        if ($recu->statut !== 'en_cours') {
+        if (!in_array($recu->statut, ['en_cours', 'livre'])) {
             return back()->with('error', 'Impossible d\'ajouter des articles à ce reçu');
         }
 
@@ -373,7 +373,7 @@ public function store(Request $request)
 
     public function removeItem(RecuUcg $recu, $itemId)
     {
-        if ($recu->statut !== 'en_cours') {
+       if (!in_array($recu->statut, ['en_cours', 'livre'])) {
             return back()->with('error', 'Impossible de supprimer des articles de ce reçu');
         }
 

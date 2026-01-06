@@ -507,11 +507,11 @@
                                     <a href="{{ route('recus.show', $recu) }}" class="btn btn-action btn-info" title="Détails">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    @if($recu->statut == 'en_cours')
+                                  
                                         <a href="{{ route('recus.edit', $recu) }}" class="btn btn-action btn-warning" title="Modifier">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                    @endif
+                                   
                                     <form action="{{ route('recus.destroy', $recu) }}" method="POST" class="d-inline">
                                         @csrf
                                         @method('DELETE')

@@ -166,7 +166,7 @@ class RecuUcg extends Model
             ->first();
 
         $number = $lastRecu ? intval(substr($lastRecu->numero_recu, -4)) + 1 : 1;
-        return sprintf('UCG-%s-%04d', $year, $number);
+        return sprintf('UCGS-%s-%04d', $year, $number);
     }
 
     /**

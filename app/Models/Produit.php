@@ -150,25 +150,42 @@ class Produit extends Model
     protected static function booted()
 {
     static::updated(function ($produit) {
-        // نتحقق إذا تغيرت كمية المخزون فقط
-        if ($produit->isDirty('quantite_stock')) {
+        // التحقق من أن الكمية تغيرت فعلاً
+        if ($produit->wasChanged('quantite_stock')) {
+            
+            // نصيحة: استعملي config() بدلاً من env() أو اكتبي الروابط مباشرة للتأكد
             $url = env('WOOCOMMERCE_STORE_URL') . '/wp-json/wc/v3/products';
             $ck = env('WOOCOMMERCE_CONSUMER_KEY');
             $cs = env('WOOCOMMERCE_CONSUMER_SECRET');
 
-            // 1. البحث عن المنتج في WordPress باستخدام الـ reference (SKU)
-            $response = Http::withBasicAuth($ck, $cs)->get($url, [
-                'sku' => $produit->reference
-            ]);
+            \Illuminate\Support\Facades\Log::info("Attempting Sync for SKU: " . $produit->reference);
 
-            $wooProduct = $response->json()[0] ?? null;
-
-            if ($wooProduct) {
-                // 2. تحديث الكمية في WordPress
-                Http::withBasicAuth($ck, $cs)->put($url . '/' . $wooProduct['id'], [
-                    'stock_quantity' => $produit->quantite_stock,
-                    'manage_stock' => true
+            try {
+                // 1. البحث عن المنتج في WooCommerce
+                $response = Http::withBasicAuth($ck, $cs)->get($url, [
+                    'sku' => $produit->reference
                 ]);
+
+                $products = $response->json();
+                $wooProduct = $products[0] ?? null;
+
+                if ($wooProduct) {
+                    // 2. تحديث الكمية في WooCommerce
+                    $update = Http::withBasicAuth($ck, $cs)->put($url . '/' . $wooProduct['id'], [
+                        'stock_quantity' => (int)$produit->quantite_stock,
+                        'manage_stock' => true
+                    ]);
+
+                    if ($update->successful()) {
+                        \Illuminate\Support\Facades\Log::info("Successfully synced SKU: " . $produit->reference);
+                    } else {
+                        \Illuminate\Support\Facades\Log::error("WooCommerce Update Failed: " . $update->body());
+                    }
+                } else {
+                    \Illuminate\Support\Facades\Log::warning("SKU not found in WooCommerce: " . $produit->reference);
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Connection Error: " . $e->getMessage());
             }
         }
     });

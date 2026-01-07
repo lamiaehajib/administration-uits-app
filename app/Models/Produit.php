@@ -147,21 +147,25 @@ class Produit extends Model
     }
 
 
-    protected static function booted()
+   protected static function booted()
 {
     static::updated(function ($produit) {
         if ($produit->isDirty('quantite_stock')) {
-            // تنفيذ المزامنة في الخلفية أو بتجاهل الأخطاء تماماً
             try {
                 $url = env('WOOCOMMERCE_STORE_URL');
                 $ck = env('WOOCOMMERCE_CONSUMER_KEY');
                 $cs = env('WOOCOMMERCE_CONSUMER_SECRET');
 
-                // إضافة timeout قصير جداً و ignore errors
+                // ✅ فحص أمان: إذا كانت المفاتيح فارغة، لا تحاول الاتصال (يمنع TypeError)
+                if (empty($ck) || empty($cs)) {
+                    \Illuminate\Support\Facades\Log::warning("⚠️ WooCommerce keys are missing in .env");
+                    return; 
+                }
+
                 $response = \Illuminate\Support\Facades\Http::withBasicAuth($ck, $cs)
                     ->connectTimeout(3)
                     ->timeout(5)
-                    ->withoutVerifying() // لتجنب مشاكل SSL التي قد تسبب خطأ 500
+                    ->withoutVerifying() 
                     ->get(rtrim($url, '/') . '/wp-json/wc/v3/products', ['sku' => $produit->reference]);
 
                 if ($response->successful() && isset($response->json()[0])) {
@@ -173,9 +177,9 @@ class Produit extends Model
                             'manage_stock' => true
                         ]);
                 }
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("WooCommerce Sync Failed: " . $e->getMessage());
-                // لا نفعل شيئاً هنا ليتمكن المستخدم من رؤية الإيصال بنجاح
+            } catch (\Throwable $e) { 
+                // ✅ استخدام Throwable يضمن إمساك حتى أخطاء الـ Type (مثل التي ظهرت لك)
+                \Illuminate\Support\Facades\Log::error("🚨 WooCommerce Sync Failed: " . $e->getMessage());
             }
         }
     });

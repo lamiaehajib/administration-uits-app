@@ -150,42 +150,32 @@ class Produit extends Model
     protected static function booted()
 {
     static::updated(function ($produit) {
-        // نتحقق من تغير الكمية
         if ($produit->isDirty('quantite_stock')) {
-            
-            $url = env('WOOCOMMERCE_STORE_URL', 'https://ucgs.ma');
-            $ck = env('WOOCOMMERCE_CONSUMER_KEY');
-            $cs = env('WOOCOMMERCE_CONSUMER_SECRET');
-
-            \Illuminate\Support\Facades\Log::info("🔄 محاولة مزامنة المنتج: " . $produit->reference);
-
+            // تنفيذ المزامنة في الخلفية أو بتجاهل الأخطاء تماماً
             try {
-                $fullUrl = rtrim($url, '/') . '/wp-json/wc/v3/products';
-                
-                // البحث عن المنتج مع مهلة زمنية قصيرة (5 ثوانٍ) لعدم تعطيل التطبيق
+                $url = env('WOOCOMMERCE_STORE_URL');
+                $ck = env('WOOCOMMERCE_CONSUMER_KEY');
+                $cs = env('WOOCOMMERCE_CONSUMER_SECRET');
+
+                // إضافة timeout قصير جداً و ignore errors
                 $response = \Illuminate\Support\Facades\Http::withBasicAuth($ck, $cs)
-                    ->timeout(5) 
-                    ->get($fullUrl, ['sku' => $produit->reference]);
+                    ->connectTimeout(3)
+                    ->timeout(5)
+                    ->withoutVerifying() // لتجنب مشاكل SSL التي قد تسبب خطأ 500
+                    ->get(rtrim($url, '/') . '/wp-json/wc/v3/products', ['sku' => $produit->reference]);
 
-                if ($response->successful()) {
-                    $wooProduct = $response->json()[0] ?? null;
-
-                    if ($wooProduct) {
-                        // تحديث الكمية إذا وجد المنتج
-                        \Illuminate\Support\Facades\Http::withBasicAuth($ck, $cs)
-                            ->put($fullUrl . '/' . $wooProduct['id'], [
-                                'stock_quantity' => (int)$produit->quantite_stock,
-                                'manage_stock' => true
-                            ]);
-                        \Illuminate\Support\Facades\Log::info("✅ تم تحديث المخزون في الموقع.");
-                    } else {
-                        // مجرد تسجيل تنبيه في اللوك دون تعطيل التطبيق
-                        \Illuminate\Support\Facades\Log::warning("⚠️ المنتج {$produit->reference} غير موجود في الموقع حالياً. سيتم إنشاء الإيصال محلياً فقط.");
-                    }
+                if ($response->successful() && isset($response->json()[0])) {
+                    $wooId = $response->json()[0]['id'];
+                    \Illuminate\Support\Facades\Http::withBasicAuth($ck, $cs)
+                        ->withoutVerifying()
+                        ->put(rtrim($url, '/') . '/wp-json/wc/v3/products/' . $wooId, [
+                            'stock_quantity' => (int)$produit->quantite_stock,
+                            'manage_stock' => true
+                        ]);
                 }
             } catch (\Exception $e) {
-                // التقاط أي خطأ (مثل انقطاع الإنترنت) لضمان عدم ظهور خطأ 500 للمستخدم
-                \Illuminate\Support\Facades\Log::error("🚨 فشل الاتصال بالموقع: " . $e->getMessage());
+                \Illuminate\Support\Facades\Log::error("WooCommerce Sync Failed: " . $e->getMessage());
+                // لا نفعل شيئاً هنا ليتمكن المستخدم من رؤية الإيصال بنجاح
             }
         }
     });

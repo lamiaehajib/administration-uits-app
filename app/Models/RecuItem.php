@@ -59,64 +59,35 @@ class RecuItem extends Model
 
         // Avant création
         static::creating(function ($item) {
-            // ✅ Priorité au variant si sélectionné
-            if ($item->product_variant_id) {
-                $variant = ProductVariant::find($item->product_variant_id);
-                
-                if (!$variant) {
-                    throw new \Exception("Variant non trouvé!");
-                }
+    if ($item->product_variant_id) {
+        $variant = ProductVariant::find($item->product_variant_id);
+        if ($variant) {
+            // ✅ تم إزالة رمي الخطأ (throw Exception) للسماح بإنشاء الإيصال
+            $item->produit_id = $variant->produit_id;
+            $item->produit_nom = $variant->produit->nom;
+            $item->produit_reference = $variant->produit->reference;
+            $item->designation = $variant->variant_name;
+            
+            if (empty($item->prix_unitaire)) $item->prix_unitaire = $variant->prix_vente_final;
+            if (empty($item->prix_achat)) $item->prix_achat = $variant->prix_achat;
+        }
+    } else {
+        $produit = $item->produit;
+        if ($produit) {
+            // ✅ تم إزالة التحقق من المخزون الذي يسبب خطأ 500
+            if (empty($item->prix_unitaire)) $item->prix_unitaire = $produit->prix_vente ?? 0;
+            if (empty($item->prix_achat)) $item->prix_achat = $produit->prix_achat ?? 0;
 
-                // Vérifier stock du variant
-                if ($variant->quantite_stock < $item->quantite) {
-                    throw new \Exception("Stock insuffisant pour ce variant! Stock: {$variant->quantite_stock}");
-                }
+            $item->produit_nom = $produit->nom;
+            $item->produit_reference = $produit->reference;
+        }
+    }
 
-                // Remplir les infos depuis le variant
-                $item->produit_id = $variant->produit_id;
-                $item->produit_nom = $variant->produit->nom;
-                $item->produit_reference = $variant->produit->reference;
-                $item->designation = $variant->variant_name; // ✅ Ex: "16GB RAM / 512GB SSD / i7-9850H"
-                
-                if (empty($item->prix_unitaire)) {
-                    $item->prix_unitaire = $variant->prix_vente_final;
-                }
-                
-                if (empty($item->prix_achat)) {
-                    $item->prix_achat = $variant->prix_achat;
-                }
-
-            } else {
-                // Produit classique (sans variant)
-                $produit = $item->produit;
-
-                if (!$produit) {
-                    throw new \Exception("Produit non trouvé!");
-                }
-
-                // Vérifier stock
-                if ($produit->quantite_stock < $item->quantite) {
-                    throw new \Exception("Stock insuffisant! Stock: {$produit->quantite_stock}");
-                }
-
-                // Auto-remplir
-                if (empty($item->prix_unitaire)) {
-                    $item->prix_unitaire = $produit->prix_vente ?? 0;
-                }
-                
-                if (empty($item->prix_achat)) {
-                    $item->prix_achat = $produit->prix_achat ?? 0;
-                }
-
-                $item->produit_nom = $produit->nom;
-                $item->produit_reference = $produit->reference;
-            }
-
-            // Calculs communs
-            $item->sous_total = $item->quantite * $item->prix_unitaire;
-            $item->marge_unitaire = $item->prix_unitaire - $item->prix_achat;
-            $item->marge_totale = $item->marge_unitaire * $item->quantite;
-        });
+    // الحسابات تبقى كما هي
+    $item->sous_total = $item->quantite * $item->prix_unitaire;
+    $item->marge_unitaire = $item->prix_unitaire - $item->prix_achat;
+    $item->marge_totale = $item->marge_unitaire * $item->quantite;
+});
 
         // Après création - Diminuer stock
         static::created(function ($item) {

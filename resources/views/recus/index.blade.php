@@ -511,7 +511,7 @@
                                         <a href="{{ route('recus.edit', $recu) }}" class="btn btn-action btn-warning" title="Modifier">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                   
+                                    
                                     <form action="{{ route('recus.destroy', $recu) }}" method="POST" class="d-inline">
                                         @csrf
                                         @method('DELETE')

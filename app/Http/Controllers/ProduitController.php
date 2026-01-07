@@ -435,4 +435,45 @@ class ProduitController extends Controller
 
         return redirect()->route('produits.trash')->with('success', 'Produit supprimé définitivement avec succès.');
     }
+
+
+    public function quickUpdate(Request $request, $id)
+    {
+        $produit = Produit::findOrFail($id);
+        
+        $validatedData = $request->validate([
+            'nom' => 'required|string|max:255',
+            'category_id' => 'required|exists:categories,id',
+            'prix_achat' => 'nullable|numeric|min:0',
+            'prix_vente' => 'required|numeric|min:0',
+            'quantite_stock' => 'required|integer|min:0',
+            'stock_alerte' => 'nullable|integer|min:0',
+            'actif' => 'nullable|boolean',
+        ]);
+
+        $validatedData['actif'] = $request->has('actif') ? true : false;
+
+        $produit->update($validatedData);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Produit mis à jour avec succès',
+            'produit' => $produit->load('category')
+        ]);
+    }
+
+    /**
+     * ✅ NOUVELLE MÉTHODE: Get product data for quick edit
+     */
+    public function getQuickEditData($id)
+    {
+        $produit = Produit::with('category')->findOrFail($id);
+        $categories = Category::orderBy('nom')->get();
+        
+        return response()->json([
+            'success' => true,
+            'produit' => $produit,
+            'categories' => $categories
+        ]);
+    }
 }

@@ -672,6 +672,139 @@
             .search-box { width: 100%; }
             .filters-grid { grid-template-columns: 1fr; }
         }
+
+
+        .btn-quick-edit {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        .btn-quick-edit:hover {
+            background: #2E7D32;
+            color: white;
+        }
+
+        .quick-edit-row {
+            background: #f8f9fa !important;
+            border-left: 4px solid #C2185B;
+        }
+
+        .quick-edit-form {
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .quick-edit-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .quick-edit-form-group {
+            margin-bottom: 0;
+        }
+
+        .quick-edit-form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+            font-size: 0.85rem;
+        }
+
+        .quick-edit-form-group input,
+        .quick-edit-form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .quick-edit-form-group input:focus,
+        .quick-edit-form-group select:focus {
+            outline: none;
+            border-color: #C2185B;
+            box-shadow: 0 0 0 3px rgba(194, 24, 91, 0.1);
+        }
+
+        .quick-edit-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            padding-top: 15px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .btn-quick-save {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #2E7D32, #4CAF50);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-quick-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 125, 50, 0.3);
+        }
+
+        .btn-quick-cancel {
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-quick-cancel:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .pagination {
+            margin-top: 20px;
+        }
+
+        .page-link {
+            border: 1px solid #e5e7eb;
+            color: #C2185B;
+            border-radius: 8px;
+            margin: 0 3px;
+            padding: 8px 15px;
+            transition: all 0.3s ease;
+        }
+
+        .page-link:hover {
+            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            color: white;
+            border-color: #C2185B;
+            transform: translateY(-2px);
+        }
+
+        .page-item.active .page-link {
+            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            border-color: #C2185B;
+        }
+
+        @media (max-width: 768px) {
+            .products-header h1 { font-size: 1.8rem; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .action-bar { flex-direction: column; }
+            .search-box { width: 100%; }
+            .filters-grid { grid-template-columns: 1fr; }
+            .quick-edit-grid { grid-template-columns: 1fr; }
+        }
     </style>
 
     <div class="container-fluid">
@@ -908,6 +1041,14 @@
                             </td>
                             <td>
                                 <div class="action-btns" style="flex-wrap: wrap;">
+
+                                    @can('produit-edit')
+                                    <button onclick="openQuickEdit({{ $produit->id }})" 
+                                            class="btn-icon btn-quick-edit" 
+                                            title="Modification rapide">
+                                        <i class="fas fa-bolt"></i>
+                                    </button>
+                                    @endcan
                                     <a href="{{ route('produits.show', $produit->id) }}" 
                                        class="btn-icon btn-view" title="Voir">
                                         <i class="fas fa-eye"></i>
@@ -937,6 +1078,71 @@
                                         <i class="fas fa-exchange-alt"></i>
                                     </a>
                                     @endcan
+                                </div>
+                            </td>
+                        </tr>
+                        
+
+
+                         <!-- ✅ NOUVELLE LIGNE: Quick Edit Row (cachée par défaut) -->
+                        <tr id="quick-edit-row-{{ $produit->id }}" style="display: none;" class="quick-edit-row">
+                            <td colspan="10">
+                                <div class="quick-edit-form">
+                                    <h6 style="margin-bottom: 20px; color: #C2185B; font-weight: 700;">
+                                        <i class="fas fa-bolt"></i> Modification Rapide
+                                    </h6>
+                                    <form id="quick-edit-form-{{ $produit->id }}" onsubmit="submitQuickEdit(event, {{ $produit->id }})">
+                                        @csrf
+                                        <div class="quick-edit-grid">
+                                            <div class="quick-edit-form-group">
+                                                <label>Nom du produit</label>
+                                                <input type="text" name="nom" id="quick-nom-{{ $produit->id }}" required>
+                                            </div>
+
+                                            <div class="quick-edit-form-group">
+                                                <label>Catégorie</label>
+                                                <select name="category_id" id="quick-category-{{ $produit->id }}" required>
+                                                    <!-- Options chargées dynamiquement -->
+                                                </select>
+                                            </div>
+
+                                            <div class="quick-edit-form-group">
+                                                <label>Prix d'achat (DH)</label>
+                                                <input type="number" step="0.01" name="prix_achat" id="quick-prix-achat-{{ $produit->id }}">
+                                            </div>
+
+                                            <div class="quick-edit-form-group">
+                                                <label>Prix de vente (DH)</label>
+                                                <input type="number" step="0.01" name="prix_vente" id="quick-prix-vente-{{ $produit->id }}" required>
+                                            </div>
+
+                                            <div class="quick-edit-form-group">
+                                                <label>Quantité en stock</label>
+                                                <input type="number" name="quantite_stock" id="quick-stock-{{ $produit->id }}" required>
+                                            </div>
+
+                                            <div class="quick-edit-form-group">
+                                                <label>Seuil d'alerte</label>
+                                                <input type="number" name="stock_alerte" id="quick-alerte-{{ $produit->id }}">
+                                            </div>
+
+                                            <div class="quick-edit-form-group">
+                                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                                    <input type="checkbox" name="actif" id="quick-actif-{{ $produit->id }}" value="1" style="width: 20px; height: 20px;">
+                                                    <span>Produit actif</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="quick-edit-actions">
+                                            <button type="button" onclick="closeQuickEdit({{ $produit->id }})" class="btn-quick-cancel">
+                                                <i class="fas fa-times"></i> Annuler
+                                            </button>
+                                            <button type="submit" class="btn-quick-save">
+                                                <i class="fas fa-save"></i> Enregistrer
+                                            </button>
+                                        </div>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -1060,9 +1266,126 @@
         </div>
     </div>
 
-    <script>
+     <script>
         let currentProduitId = null;
 
+        // ✅ NOUVELLE FONCTION: Ouvrir Quick Edit
+        async function openQuickEdit(produitId) {
+            try {
+                // Cacher tous les autres quick edit
+                document.querySelectorAll('[id^="quick-edit-row-"]').forEach(row => {
+                    row.style.display = 'none';
+                });
+
+                const quickEditRow = document.getElementById(`quick-edit-row-${produitId}`);
+                
+                // Charger les données du produit
+                const response = await fetch(`/produits/${produitId}/quick-edit-data`);
+                const data = await response.json();
+
+                if (data.success) {
+                    const produit = data.produit;
+                    const categories = data.categories;
+
+                    // Remplir le formulaire
+                    document.getElementById(`quick-nom-${produitId}`).value = produit.nom;
+                    document.getElementById(`quick-prix-achat-${produitId}`).value = produit.prix_achat || '';
+                    document.getElementById(`quick-prix-vente-${produitId}`).value = produit.prix_vente;
+                    document.getElementById(`quick-stock-${produitId}`).value = produit.quantite_stock;
+                    document.getElementById(`quick-alerte-${produitId}`).value = produit.stock_alerte || '';
+                    document.getElementById(`quick-actif-${produitId}`).checked = produit.actif;
+
+                    // Remplir les catégories
+                    const categorySelect = document.getElementById(`quick-category-${produitId}`);
+                    categorySelect.innerHTML = categories.map(cat => 
+                        `<option value="${cat.id}" ${cat.id === produit.category_id ? 'selected' : ''}>${cat.nom}</option>`
+                    ).join('');
+
+                    // Afficher la ligne
+                    quickEditRow.style.display = 'table-row';
+                    
+                    // Scroll vers le formulaire
+                    quickEditRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                Swal.fire('Erreur', 'Impossible de charger les données du produit', 'error');
+            }
+        }
+
+        // ✅ NOUVELLE FONCTION: Fermer Quick Edit
+        function closeQuickEdit(produitId) {
+            const quickEditRow = document.getElementById(`quick-edit-row-${produitId}`);
+            quickEditRow.style.display = 'none';
+        }
+
+        // ✅ NOUVELLE FONCTION: Soumettre Quick Edit
+        async function submitQuickEdit(event, produitId) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const formData = new FormData(form);
+            
+            const data = {
+                nom: formData.get('nom'),
+                category_id: formData.get('category_id'),
+                prix_achat: formData.get('prix_achat'),
+                prix_vente: formData.get('prix_vente'),
+                quantite_stock: formData.get('quantite_stock'),
+                stock_alerte: formData.get('stock_alerte'),
+                actif: formData.get('actif') ? 1 : 0
+            };
+
+            try {
+                const response = await fetch(`/produits/${produitId}/quick-update`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('[name="_token"]').value,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès!',
+                        text: result.message,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+
+                    // Recharger la page pour afficher les nouvelles données
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    let errorMsg = result.message || 'Une erreur est survenue';
+                    if (result.errors) {
+                        errorMsg = Object.values(result.errors).flat().join('\n');
+                    }
+
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur de validation',
+                        text: errorMsg
+                    });
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Erreur de connexion au serveur'
+                });
+            }
+        }
+
+
+
+
+        
         // ✅ NOUVELLE FONCTION: Supprimer un filtre individuel
         function removeFilter(filterName) {
             const form = document.getElementById('filtersForm');

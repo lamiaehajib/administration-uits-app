@@ -277,6 +277,13 @@ Route::prefix('api/variants')->name('api.variants.')->group(function () {
     Route::get('/{id}', [ProductVariantController::class, 'getVariant'])->name('show');
     Route::get('/search', [ProductVariantController::class, 'search'])->name('search');
 });
+
+ Route::get('/produits/{id}/quick-edit-data', [ProduitController::class, 'getQuickEditData'])
+        ->name('produits.quick_edit_data');
+    Route::post('/produits/{id}/quick-update', [ProduitController::class, 'quickUpdate'])
+        ->name('produits.quick_update');
+
+        
 Route::controller(ProduitController::class)->prefix('produits')->name('produits.')->group(function () {
     Route::get('totals', 'getTotals')->name('totals');
     Route::get('export-pdf', 'exportPDF')->name('export_pdf');

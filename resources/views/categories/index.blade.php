@@ -1,383 +1,7 @@
 <x-app-layout>
     <style>
-        /* Container principal avec animations */
+        /* Container principal */
         .categories-container {
-            animation: fadeInUp 0.6s ease-out;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Header Section avec gradient */
-        .page-header {
-            background: linear-gradient(135deg, #C2185B, #D32F2F);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(211, 47, 47, 0.3);
-            animation: slideInDown 0.5s ease-out;
-        }
-
-        @keyframes slideInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .page-header h1 {
-            color: white;
-            margin: 0;
-            font-size: 2.5rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        .page-header p {
-            color: rgba(255, 255, 255, 0.9);
-            margin: 10px 0 0 0;
-            font-size: 1.1rem;
-        }
-
-        /* Search Bar Modern */
-        .search-section {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 25px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-            animation: fadeIn 0.7s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .search-wrapper {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .search-input-group {
-            flex: 1;
-            min-width: 250px;
-            position: relative;
-        }
-
-        .search-input-group input {
-            width: 100%;
-            padding: 12px 20px 12px 45px;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .search-input-group input:focus {
-            outline: none;
-            border-color: #D32F2F;
-            box-shadow: 0 0 0 4px rgba(211, 47, 47, 0.1);
-        }
-
-        .search-input-group i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #C2185B;
-            font-size: 1.1rem;
-        }
-
-        /* Boutons modernes */
-        .btn-gradient {
-            background: linear-gradient(135deg, #C2185B, #D32F2F);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(211, 47, 47, 0.3);
-        }
-
-        .btn-gradient:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(211, 47, 47, 0.4);
-            color: white;
-        }
-
-        .btn-gradient i {
-            margin-right: 8px;
-        }
-
-        /* Table moderne */
-        .table-card {
-            background: white;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-            animation: fadeInUp 0.8s ease-out;
-        }
-
-        .table-responsive {
-            border-radius: 15px;
-        }
-
-        .modern-table {
-            margin: 0;
-        }
-
-        .modern-table thead {
-            background: linear-gradient(135deg, #C2185B, #D32F2F);
-        }
-
-        .modern-table thead th {
-            color: white;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            padding: 18px 15px;
-            border: none;
-            font-size: 0.9rem;
-        }
-
-        .modern-table tbody tr {
-            transition: all 0.3s ease;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .modern-table tbody tr:hover {
-            background: linear-gradient(90deg, rgba(194, 24, 91, 0.05), rgba(211, 47, 47, 0.05));
-            transform: scale(1.01);
-        }
-
-        .modern-table tbody td {
-            padding: 15px;
-            vertical-align: middle;
-            color: #333;
-        }
-
-        /* Badges pour les numéros */
-        .badge-number {
-            background: linear-gradient(135deg, #C2185B, #D32F2F);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 10px;
-            font-weight: 600;
-            display: inline-block;
-            min-width: 40px;
-        }
-
-        /* Action buttons */
-        .action-buttons {
-            display: flex;
-            gap: 8px;
-            justify-content: center;
-        }
-
-        .btn-action {
-            padding: 8px 15px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-
-        .btn-edit {
-            background: linear-gradient(135deg, #2196F3, #1976D2);
-            color: white;
-        }
-
-        .btn-edit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
-        }
-
-        .btn-delete {
-            background: linear-gradient(135deg, #f44336, #d32f2f);
-            color: white;
-        }
-
-        .btn-delete:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
-        }
-
-        /* Modal moderne */
-        .modal-content {
-            border: none;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
-        }
-
-        .modal-header {
-            background: linear-gradient(135deg, #C2185B, #D32F2F);
-            color: white;
-            padding: 25px 30px;
-            border: none;
-        }
-
-        .modal-header h5 {
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin: 0;
-        }
-
-        .modal-header .btn-close {
-            filter: brightness(0) invert(1);
-            opacity: 0.8;
-        }
-
-        .modal-body {
-            padding: 30px;
-        }
-
-        .modal-footer {
-            border-top: 1px solid #e0e0e0;
-            padding: 20px 30px;
-        }
-
-        /* Form inputs modernes */
-        .form-label {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            font-size: 0.85rem;
-            letter-spacing: 0.5px;
-        }
-
-        .form-control {
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            padding: 12px 20px;
-            transition: all 0.3s ease;
-            font-size: 1rem;
-        }
-
-        .form-control:focus {
-            border-color: #D32F2F;
-            box-shadow: 0 0 0 4px rgba(211, 47, 47, 0.1);
-            outline: none;
-        }
-
-        .is-invalid {
-            border-color: #f44336 !important;
-        }
-
-        .invalid-feedback {
-            color: #f44336;
-            font-size: 0.875rem;
-            margin-top: 5px;
-        }
-
-        /* Pagination moderne */
-        .pagination {
-            margin-top: 25px;
-            justify-content: center;
-        }
-
-        .pagination .page-link {
-            border: 2px solid #e0e0e0;
-            color: #D32F2F;
-            margin: 0 5px;
-            border-radius: 10px;
-            padding: 10px 18px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .pagination .page-link:hover {
-            background: linear-gradient(135deg, #C2185B, #D32F2F);
-            color: white;
-            border-color: #D32F2F;
-            transform: translateY(-2px);
-        }
-
-        .pagination .page-item.active .page-link {
-            background: linear-gradient(135deg, #C2185B, #D32F2F);
-            border-color: #D32F2F;
-            box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);
-        }
-
-        /* Empty state */
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #999;
-        }
-
-        .empty-state i {
-            font-size: 4rem;
-            color: #e0e0e0;
-            margin-bottom: 20px;
-        }
-
-        .empty-state h4 {
-            color: #666;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .empty-state p {
-            color: #999;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .page-header h1 {
-                font-size: 1.8rem;
-            }
-
-            .search-wrapper {
-                flex-direction: column;
-            }
-
-            .search-input-group {
-                width: 100%;
-            }
-
-            .btn-gradient {
-                width: 100%;
-            }
-
-            .action-buttons {
-                flex-direction: column;
-            }
-
-            .btn-action {
-                width: 100%;
-            }
-        }
-        
-
-
-
-
-
-                .categories-container {
             animation: fadeInUp 0.6s ease-out;
         }
 
@@ -386,6 +10,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* Page Header */
         .page-header {
             background: linear-gradient(135deg, #C2185B, #D32F2F);
             border-radius: 20px;
@@ -401,7 +26,12 @@
             font-weight: bold;
         }
 
-        /* ✅ Nouvelles cartes de statistiques */
+        .page-header p {
+            color: rgba(255, 255, 255, 0.9);
+            margin: 10px 0 0 0;
+        }
+
+        /* Stats Cards */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -426,8 +56,12 @@
             left: 0;
             width: 5px;
             height: 100%;
-            background: linear-gradient(135deg, #C2185B, #D32F2F);
         }
+
+        .stat-card.purple::before { background: linear-gradient(135deg, #9C27B0, #7B1FA2); }
+        .stat-card.blue::before { background: linear-gradient(135deg, #2196F3, #1976D2); }
+        .stat-card.green::before { background: linear-gradient(135deg, #4CAF50, #388E3C); }
+        .stat-card.orange::before { background: linear-gradient(135deg, #FF9800, #F57C00); }
 
         .stat-card:hover {
             transform: translateY(-5px);
@@ -443,34 +77,19 @@
             justify-content: center;
             font-size: 1.8rem;
             margin-bottom: 15px;
-        }
-
-        .stat-card-icon.purple {
-            background: linear-gradient(135deg, #9C27B0, #7B1FA2);
             color: white;
         }
 
-        .stat-card-icon.blue {
-            background: linear-gradient(135deg, #2196F3, #1976D2);
-            color: white;
-        }
-
-        .stat-card-icon.green {
-            background: linear-gradient(135deg, #4CAF50, #388E3C);
-            color: white;
-        }
-
-        .stat-card-icon.orange {
-            background: linear-gradient(135deg, #FF9800, #F57C00);
-            color: white;
-        }
+        .stat-card.purple .stat-card-icon { background: linear-gradient(135deg, #9C27B0, #7B1FA2); }
+        .stat-card.blue .stat-card-icon { background: linear-gradient(135deg, #2196F3, #1976D2); }
+        .stat-card.green .stat-card-icon { background: linear-gradient(135deg, #4CAF50, #388E3C); }
+        .stat-card.orange .stat-card-icon { background: linear-gradient(135deg, #FF9800, #F57C00); }
 
         .stat-card-title {
             font-size: 0.9rem;
             color: #666;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
             margin-bottom: 8px;
         }
 
@@ -480,36 +99,121 @@
             color: #333;
         }
 
-        /* ✅ Cartes de catégories avec mini-stats */
-        .category-card {
+        /* Search Section */
+        .search-section {
             background: white;
             border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .search-wrapper {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-input-group {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+
+        .search-input-group input {
+            width: 100%;
+            padding: 12px 20px 12px 45px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
             transition: all 0.3s ease;
         }
 
-        .category-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 30px rgba(211, 47, 47, 0.15);
+        .search-input-group input:focus {
+            outline: none;
+            border-color: #D32F2F;
+            box-shadow: 0 0 0 4px rgba(211, 47, 47, 0.1);
         }
 
-        .category-header {
+        .search-input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #C2185B;
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(211, 47, 47, 0.3);
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(211, 47, 47, 0.4);
+            color: white;
+        }
+
+        /* ✅ Carte Catégorie Parent */
+        .parent-category-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            border-left: 5px solid #C2185B;
+        }
+
+        .parent-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             padding-bottom: 15px;
             border-bottom: 2px solid #f0f0f0;
         }
 
-        .category-name {
-            font-size: 1.3rem;
+        .parent-name {
+            font-size: 1.5rem;
             font-weight: bold;
-            color: #333;
+            color: #C2185B;
         }
 
+        /* ✅ Sous-catégories */
+        .children-container {
+            margin-top: 15px;
+            padding-left: 30px;
+            border-left: 3px dashed #e0e0e0;
+        }
+
+        .child-category-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #2196F3;
+            transition: all 0.3s ease;
+        }
+
+        .child-category-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.2);
+        }
+
+        .child-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2196F3;
+            margin-bottom: 10px;
+        }
+
+        /* Stats Mini */
         .category-stats-mini {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -520,8 +224,9 @@
         .mini-stat {
             text-align: center;
             padding: 12px;
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            background: white;
             border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
 
         .mini-stat-value {
@@ -537,7 +242,80 @@
             margin-top: 5px;
         }
 
-        /* ✅ Barre de progression */
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            padding: 8px 15px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: white !important;
+        }
+
+        .btn-details { background: linear-gradient(135deg, #4CAF50, #388E3C); }
+        .btn-edit { background: linear-gradient(135deg, #2196F3, #1976D2); }
+        .btn-delete { background: linear-gradient(135deg, #f44336, #d32f2f); }
+        .btn-move { background: linear-gradient(135deg, #FF9800, #F57C00); }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        /* Modal */
+        .modal-content {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            color: white;
+            padding: 25px 30px;
+            border: none;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .modal-header h5 {
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 12px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #D32F2F;
+            box-shadow: 0 0 0 4px rgba(211, 47, 47, 0.1);
+            outline: none;
+        }
+
+        /* Progress Bar */
         .progress-bar-custom {
             height: 8px;
             background: #e0e0e0;
@@ -552,65 +330,79 @@
             transition: width 0.5s ease;
         }
 
+        /* Badge hiérarchique */
+        .hierarchy-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-parent {
+            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            color: white;
+        }
+
+        .badge-child {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            color: white;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .category-stats-mini {
                 grid-template-columns: repeat(2, 1fr);
             }
+            .action-buttons {
+                flex-direction: column;
+            }
+            .btn-action {
+                width: 100%;
+            }
         }
-
-        .btn-action {
-    padding: 8px 15px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: white !important;
-}
-
     </style>
 
     <div class="categories-container">
         <!-- Page Header -->
         <div class="page-header">
             <h1><i class="fas fa-layer-group"></i> Gestion des Catégories</h1>
-            <p>Organisez et gérez vos catégories de produits</p>
+            <p>Organisez vos catégories de manière hiérarchique</p>
         </div>
 
         <!-- ✅ Statistiques Globales -->
         <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-card-icon purple">
+            <div class="stat-card purple">
+                <div class="stat-card-icon">
                     <i class="fas fa-layer-group"></i>
+                </div>
+                <div class="stat-card-title">Catégories Parent</div>
+                <div class="stat-card-value">{{ $stats['total_categories_parent'] }}</div>
+            </div>
+
+            <div class="stat-card blue">
+                <div class="stat-card-icon">
+                    <i class="fas fa-sitemap"></i>
                 </div>
                 <div class="stat-card-title">Total Catégories</div>
                 <div class="stat-card-value">{{ $stats['total_categories'] }}</div>
             </div>
 
-            <div class="stat-card">
-                <div class="stat-card-icon blue">
-                    <i class="fas fa-box"></i>
-                </div>
-                <div class="stat-card-title">Total Produits</div>
-                <div class="stat-card-value">{{ $stats['total_produits'] }}</div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-card-icon green">
+            <div class="stat-card green">
+                <div class="stat-card-icon">
                     <i class="fas fa-warehouse"></i>
                 </div>
                 <div class="stat-card-title">Valeur Stock</div>
-                <div class="stat-card-value">{{ number_format($stats['valeur_stock_total'], 2) }} DH</div>
+                <div class="stat-card-value">{{ number_format($stats['valeur_stock_total'], 0) }} DH</div>
             </div>
 
-            <div class="stat-card">
-                <div class="stat-card-icon orange">
+            <div class="stat-card orange">
+                <div class="stat-card-icon">
                     <i class="fas fa-chart-line"></i>
                 </div>
                 <div class="stat-card-title">CA Total</div>
-                <div class="stat-card-value">{{ number_format($stats['ca_total'], 2) }} DH</div>
+                <div class="stat-card-value">{{ number_format($stats['ca_total'], 0) }} DH</div>
             </div>
         </div>
 
@@ -622,7 +414,6 @@
                     <form method="GET" action="{{ route('categories.index') }}" style="flex: 1;">
                         <input type="text" 
                                name="search" 
-                               class="form-control" 
                                placeholder="Rechercher une catégorie..." 
                                value="{{ request('search') }}">
                     </form>
@@ -635,97 +426,224 @@
 
         <!-- Alert Messages -->
         @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <div class="alert alert-success alert-dismissible fade show">
                 <i class="fas fa-check-circle"></i> {{ session('success') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
 
         @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <div class="alert alert-danger alert-dismissible fade show">
                 <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
 
-        <!-- ✅ Liste des catégories avec stats -->
-        @forelse($categories as $category)
-            <div class="category-card">
-                <div class="category-header">
-                    <div class="category-name">
-                        <i class="fas fa-folder"></i> {{ $category->nom }}
+        <!-- ✅ Liste des Catégories Parent avec Enfants -->
+        @forelse($categories as $parent)
+            <div class="parent-category-card">
+                <!-- Header Parent -->
+                <div class="parent-header">
+                    <div>
+                        <span class="hierarchy-badge badge-parent">Parent</span>
+                        <div class="parent-name">
+                            <i class="fas fa-folder-open"></i> {{ $parent->nom }}
+                        </div>
                     </div>
                     <div class="action-buttons">
-                        <a href="{{ route('categories.show', $category->id) }}" class="btn-action" style="background: linear-gradient(135deg, #4CAF50, #388E3C);">
+                        <a href="{{ route('categories.show', $parent->id) }}" class="btn-action btn-details">
                             <i class="fas fa-chart-bar"></i> Détails
                         </a>
                         <button type="button" 
                                 class="btn-action btn-edit" 
                                 data-bs-toggle="modal" 
-                                data-bs-target="#editModal{{ $category->id }}">
+                                data-bs-target="#editModal{{ $parent->id }}">
                             <i class="fas fa-edit"></i> Modifier
                         </button>
-                        <form method="POST" 
-                              action="{{ route('categories.destroy', $category->id) }}" 
-                              style="display: inline;">
+                        <form method="POST" action="{{ route('categories.destroy', $parent->id) }}" style="display: inline;">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" 
-                                    class="btn-action btn-delete" 
-                                    onclick="return confirm('Êtes-vous sûr ?')">
+                            <button type="submit" class="btn-action btn-delete" onclick="return confirm('Êtes-vous sûr ?')">
                                 <i class="fas fa-trash-alt"></i> Supprimer
                             </button>
                         </form>
                     </div>
                 </div>
 
-                <!-- ✅ Mini statistiques -->
+                <!-- Stats Parent -->
                 <div class="category-stats-mini">
                     <div class="mini-stat">
-                        <div class="mini-stat-value">{{ $category->total_produits }}</div>
+                        <div class="mini-stat-value">{{ $parent->total_produits }}</div>
                         <div class="mini-stat-label">Produits</div>
                     </div>
                     <div class="mini-stat">
-                        <div class="mini-stat-value">{{ number_format($category->ca_total, 0) }} DH</div>
+                        <div class="mini-stat-value">{{ number_format($parent->ca_total, 0) }} DH</div>
                         <div class="mini-stat-label">CA Total</div>
                     </div>
                     <div class="mini-stat">
-                        <div class="mini-stat-value">{{ number_format($category->marge_totale, 0) }} DH</div>
+                        <div class="mini-stat-value">{{ number_format($parent->marge_totale, 0) }} DH</div>
                         <div class="mini-stat-label">Marge</div>
                     </div>
                     <div class="mini-stat">
-                        <div class="mini-stat-value">{{ number_format($category->quantite_vendue, 0) }}</div>
-                        <div class="mini-stat-label">Quantité vendue</div>
+                        <div class="mini-stat-value">{{ number_format($parent->quantite_vendue, 0) }}</div>
+                        <div class="mini-stat-label">Qté vendue</div>
                     </div>
                 </div>
 
-                <!-- ✅ Barre de progression du stock -->
+                <!-- ✅ Sous-catégories -->
+                @if($parent->children->count() > 0)
+                    <div class="children-container">
+                        <h6 style="color: #666; font-weight: 600; margin-bottom: 15px;">
+                            <i class="fas fa-sitemap"></i> Sous-catégories ({{ $parent->children->count() }})
+                        </h6>
+                        
+                        @foreach($parent->children as $child)
+                            <div class="child-category-card">
+                                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                                    <div>
+                                        <span class="hierarchy-badge badge-child">Sous-catégorie</span>
+                                        <div class="child-name">
+                                            <i class="fas fa-folder"></i> {{ $child->nom }}
+                                        </div>
+                                    </div>
+                                    <div class="action-buttons">
+                                        <a href="{{ route('categories.show', $child->id) }}" class="btn-action btn-details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button type="button" 
+                                                class="btn-action btn-edit" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#editModal{{ $child->id }}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <form method="POST" action="{{ route('categories.destroy', $child->id) }}" style="display: inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn-action btn-delete" onclick="return confirm('Êtes-vous sûr ?')">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <!-- Mini Stats Enfant -->
+                                <div class="category-stats-mini">
+                                    <div class="mini-stat">
+                                        <div class="mini-stat-value">{{ $child->total_produits }}</div>
+                                        <div class="mini-stat-label">Produits</div>
+                                    </div>
+                                    <div class="mini-stat">
+                                        <div class="mini-stat-value">{{ number_format($child->ca_total, 0) }} DH</div>
+                                        <div class="mini-stat-label">CA</div>
+                                    </div>
+                                    <div class="mini-stat">
+                                        <div class="mini-stat-value">{{ number_format($child->marge_totale, 0) }} DH</div>
+                                        <div class="mini-stat-label">Marge</div>
+                                    </div>
+                                    <div class="mini-stat">
+                                        <div class="mini-stat-value">{{ $child->produits_rupture }}</div>
+                                        <div class="mini-stat-label">Rupture</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Edit Modal Child -->
+                            <div class="modal fade" id="editModal{{ $child->id }}" tabindex="-1">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5><i class="fas fa-edit"></i> Modifier: {{ $child->nom }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <form method="POST" action="{{ route('categories.update', $child->id) }}">
+                                            @csrf
+                                            @method('PUT')
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label"><i class="fas fa-tag"></i> Nom</label>
+                                                    <input type="text" class="form-control" name="nom" value="{{ $child->nom }}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label"><i class="fas fa-sitemap"></i> Catégorie Parent</label>
+                                                    <select class="form-select" name="parent_id">
+                                                        <option value="">Aucun (Devenir parent)</option>
+                                                        @foreach($categoriesForSelect as $cat)
+                                                            @if($cat->id != $child->id)
+                                                                <option value="{{ $cat->id }}" {{ $child->parent_id == $cat->id ? 'selected' : '' }}>
+                                                                    {{ $cat->nom }}
+                                                                </option>
+                                                            @endif
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                <button type="submit" class="btn btn-gradient">Enregistrer</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div style="text-align: center; color: #999; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                        <i class="fas fa-info-circle"></i> Aucune sous-catégorie
+                    </div>
+                @endif
+
+                <!-- Progress Bar -->
                 <div style="margin-top: 15px;">
                     <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #666; margin-bottom: 5px;">
-                        <span><i class="fas fa-box"></i> Stock: {{ number_format($category->valeur_stock, 2) }} DH</span>
-                        <span><i class="fas fa-exclamation-triangle"></i> Rupture: {{ $category->produits_rupture }}</span>
+                        <span><i class="fas fa-box"></i> Valeur Stock: {{ number_format($parent->valeur_stock, 2) }} DH</span>
+                        <span><i class="fas fa-exclamation-triangle"></i> Rupture: {{ $parent->produits_rupture }}</span>
                     </div>
                     <div class="progress-bar-custom">
-                        <div class="progress-fill" style="width: {{ $category->total_produits > 0 ? (($category->produits_actifs / $category->total_produits) * 100) : 0 }}%"></div>
+                        <div class="progress-fill" style="width: {{ $parent->total_produits > 0 ? (($parent->produits_actifs / $parent->total_produits) * 100) : 0 }}%"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Edit Modal -->
-            <div class="modal fade" id="editModal{{ $category->id }}" tabindex="-1" aria-hidden="true">
+            <!-- Edit Modal Parent -->
+            <div class="modal fade" id="editModal{{ $parent->id }}" tabindex="-1">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title"><i class="fas fa-edit"></i> Modifier la Catégorie</h5>
+                            <h5><i class="fas fa-edit"></i> Modifier: {{ $parent->nom }}</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
-                        <form method="POST" action="{{ route('categories.update', $category->id) }}">
+                        <form method="POST" action="{{ route('categories.update', $parent->id) }}">
                             @csrf
                             @method('PUT')
                             <div class="modal-body">
                                 <div class="mb-3">
                                     <label class="form-label"><i class="fas fa-tag"></i> Nom de la catégorie</label>
-                                    <input type="text" class="form-control" name="nom" value="{{ $category->nom }}" required>
+                                    <input type="text" class="form-control" name="nom" value="{{ $parent->nom }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label"><i class="fas fa-sitemap"></i> Catégorie Parent (optionnel)</label>
+                                    <select class="form-select" name="parent_id">
+                                        <option value="">Aucun (Rester parent)</option>
+                                        @foreach($categoriesForSelect as $cat)
+                                            @if($cat->id != $parent->id)
+                                                <option value="{{ $cat->id }}">
+                                                    {{ $cat->nom }}
+                                                </option>
+                                            @endif
+                                        @endforeach
+                                    </select>
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle"></i> 
+                                        Sélectionnez un parent pour transformer cette catégorie en sous-catégorie
+                                    </small>
+                                    @if($parent->children->count() > 0)
+                                        <div class="alert alert-warning mt-2 mb-0" style="font-size: 0.85rem; padding: 10px;">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <strong>Attention:</strong> Cette catégorie contient {{ $parent->children->count() }} sous-catégorie(s).
+                                            Si vous lui assignez un parent, ses sous-catégories deviendront orphelines.
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                             <div class="modal-footer">
@@ -737,32 +655,27 @@
                 </div>
             </div>
         @empty
-            <div class="empty-state">
-                <i class="fas fa-inbox"></i>
-                <h4>Aucune catégorie trouvée</h4>
-                <p>Commencez par créer votre première catégorie</p>
+            <div style="text-align: center; padding: 60px; background: white; border-radius: 15px;">
+                <i class="fas fa-inbox" style="font-size: 4rem; color: #e0e0e0;"></i>
+                <h4 style="color: #666; margin-top: 20px;">Aucune catégorie trouvée</h4>
+                <p style="color: #999;">Commencez par créer votre première catégorie</p>
             </div>
         @endforelse
 
         <!-- Pagination -->
         @if($categories->hasPages())
-            
-            <div class="d-flex justify-content-between align-items-center p-3">
-                
-                <div>
-                    {{ $categories->links('pagination.custom') }}
-                </div>
+            <div class="d-flex justify-content-center mt-4">
+                {{ $categories->links() }}
             </div>
         @endif
-        
     </div>
 
-    <!-- Create Modal -->
-    <div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
+    <!-- ✅ Modal Création -->
+    <div class="modal fade" id="createModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-plus-circle"></i> Nouvelle Catégorie</h5>
+                    <h5><i class="fas fa-plus-circle"></i> Nouvelle Catégorie</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form method="POST" action="{{ route('categories.store') }}">
@@ -771,6 +684,16 @@
                         <div class="mb-3">
                             <label class="form-label"><i class="fas fa-tag"></i> Nom de la catégorie</label>
                             <input type="text" class="form-control" name="nom" required autofocus>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label"><i class="fas fa-sitemap"></i> Catégorie Parent (optionnel)</label>
+                            <select class="form-select" name="parent_id">
+                                <option value="">Aucun (Créer comme parent)</option>
+                                @foreach($categoriesForSelect as $cat)
+                                    <option value="{{ $cat->id }}">{{ $cat->nom }}</option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">Laissez vide pour créer une catégorie parent</small>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -781,59 +704,14 @@
             </div>
         </div>
     </div>
-    <!-- Scripts pour animations -->
+
     <script>
-        // Animation au scroll
-        document.addEventListener('DOMContentLoaded', function() {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.style.opacity = '1';
-                        entry.target.style.transform = 'translateY(0)';
-                    }
-                });
+        // Auto-dismiss alerts
+        setTimeout(() => {
+            document.querySelectorAll('.alert').forEach(alert => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
             });
-
-            document.querySelectorAll('.modern-table tbody tr').forEach((row, index) => {
-                row.style.opacity = '0';
-                row.style.transform = 'translateY(20px)';
-                row.style.transition = `all 0.5s ease ${index * 0.05}s`;
-                observer.observe(row);
-            });
-
-            // Auto-dismiss alerts
-            setTimeout(() => {
-                const alerts = document.querySelectorAll('.alert');
-                alerts.forEach(alert => {
-                    const bsAlert = new bootstrap.Alert(alert);
-                    bsAlert.close();
-                });
-            }, 5000);
-        });
-
-        // Confirmation de suppression avec SweetAlert2
-        document.querySelectorAll('form[action*="destroy"]').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                Swal.fire({
-                    title: 'Êtes-vous sûr?',
-                    text: "Cette action est irréversible!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'Oui, supprimer!',
-                    cancelButtonText: 'Annuler',
-                    background: '#fff',
-                    customClass: {
-                        popup: 'animated fadeInDown'
-                    }
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        form.submit();
-                    }
-                });
-            });
-        });
+        }, 5000);
     </script>
 </x-app-layout>

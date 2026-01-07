@@ -150,41 +150,42 @@ class Produit extends Model
     protected static function booted()
 {
     static::updated(function ($produit) {
+        // نتحقق من تغير الكمية
         if ($produit->isDirty('quantite_stock')) {
             
             $url = env('WOOCOMMERCE_STORE_URL', 'https://ucgs.ma');
             $ck = env('WOOCOMMERCE_CONSUMER_KEY');
             $cs = env('WOOCOMMERCE_CONSUMER_SECRET');
 
-            \Illuminate\Support\Facades\Log::info("🔄 محاولة مزامنة المخزون لـ: " . $produit->reference);
+            \Illuminate\Support\Facades\Log::info("🔄 محاولة مزامنة المنتج: " . $produit->reference);
 
             try {
                 $fullUrl = rtrim($url, '/') . '/wp-json/wc/v3/products';
                 
-                // كنحاول نلقاو المنتج
+                // البحث عن المنتج مع مهلة زمنية قصيرة (5 ثوانٍ) لعدم تعطيل التطبيق
                 $response = \Illuminate\Support\Facades\Http::withBasicAuth($ck, $cs)
-                    ->timeout(5) // مهلة قصيرة باش ميتعطلش الـ App
+                    ->timeout(5) 
                     ->get($fullUrl, ['sku' => $produit->reference]);
 
                 if ($response->successful()) {
                     $wooProduct = $response->json()[0] ?? null;
 
                     if ($wooProduct) {
-                        // إيلا لقى المنتج، كيدير التحديث
+                        // تحديث الكمية إذا وجد المنتج
                         \Illuminate\Support\Facades\Http::withBasicAuth($ck, $cs)
                             ->put($fullUrl . '/' . $wooProduct['id'], [
                                 'stock_quantity' => (int)$produit->quantite_stock,
                                 'manage_stock' => true
                             ]);
-                        \Illuminate\Support\Facades\Log::info("✅ تم تحديث الموقع بنجاح.");
+                        \Illuminate\Support\Facades\Log::info("✅ تم تحديث المخزون في الموقع.");
                     } else {
-                        // إيلا ملقاش المنتج، كيسجل غير ملاحظة ومكيحبسش الـ App
-                        \Illuminate\Support\Facades\Log::warning("⚠️ المنتج {$produit->reference} غير موجود في الموقع حالياً. سيتم تحديثه يدوياً لاحقاً.");
+                        // مجرد تسجيل تنبيه في اللوك دون تعطيل التطبيق
+                        \Illuminate\Support\Facades\Log::warning("⚠️ المنتج {$produit->reference} غير موجود في الموقع حالياً. سيتم إنشاء الإيصال محلياً فقط.");
                     }
                 }
             } catch (\Exception $e) {
-                // إيلا كاين مشكل في الكونيكسيون، كيدوز عادي
-                \Illuminate\Support\Facades\Log::error("🚨 مشكل اتصال مع WooCommerce: " . $e->getMessage());
+                // التقاط أي خطأ (مثل انقطاع الإنترنت) لضمان عدم ظهور خطأ 500 للمستخدم
+                \Illuminate\Support\Facades\Log::error("🚨 فشل الاتصال بالموقع: " . $e->getMessage());
             }
         }
     });

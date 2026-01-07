@@ -1084,7 +1084,7 @@
                         
 
 
-                         <!-- ✅ NOUVELLE LIGNE: Quick Edit Row (cachée par défaut) -->
+                         <!-- ✅ NOUVELLE LIGNE: Quick Edit Row (cachiée par défaut) -->
                         <tr id="quick-edit-row-{{ $produit->id }}" style="display: none;" class="quick-edit-row">
                             <td colspan="10">
                                 <div class="quick-edit-form">

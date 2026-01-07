@@ -147,48 +147,46 @@ class Produit extends Model
     }
 
 
-//     protected static function booted()
-// {
-//     static::updated(function ($produit) {
-//         // نستخدم isDirty هنا لضمان التقاط التغيير أثناء عملية الحفظ
-//         if ($produit->isDirty('quantite_stock')) {
+    protected static function booted()
+{
+    static::updated(function ($produit) {
+        if ($produit->isDirty('quantite_stock')) {
             
-//             // جلب الإعدادات مباشرة مع توفير قيم افتراضية في حال فشل env()
-//             $url = env('WOOCOMMERCE_STORE_URL', 'https://ucgs.ma');
-//             $ck = env('WOOCOMMERCE_CONSUMER_KEY');
-//             $cs = env('WOOCOMMERCE_CONSUMER_SECRET');
+            $url = env('WOOCOMMERCE_STORE_URL', 'https://ucgs.ma');
+            $ck = env('WOOCOMMERCE_CONSUMER_KEY');
+            $cs = env('WOOCOMMERCE_CONSUMER_SECRET');
 
-//             \Illuminate\Support\Facades\Log::info("🔄 بدأت المزامنة لـ: " . $produit->reference . " الكمية الجديدة: " . $produit->quantite_stock);
+            \Illuminate\Support\Facades\Log::info("🔄 محاولة مزامنة المخزون لـ: " . $produit->reference);
 
-//             try {
-//                 // البحث عن المنتج في WooCommerce
-//                 $fullUrl = rtrim($url, '/') . '/wp-json/wc/v3/products';
-//                 $response = \Illuminate\Support\Facades\Http::withBasicAuth($ck, $cs)
-//                     ->timeout(15) // إضافة مهلة زمنية
-//                     ->get($fullUrl, ['sku' => $produit->reference]);
+            try {
+                $fullUrl = rtrim($url, '/') . '/wp-json/wc/v3/products';
+                
+                // كنحاول نلقاو المنتج
+                $response = \Illuminate\Support\Facades\Http::withBasicAuth($ck, $cs)
+                    ->timeout(5) // مهلة قصيرة باش ميتعطلش الـ App
+                    ->get($fullUrl, ['sku' => $produit->reference]);
 
-//                 $wooProduct = $response->json()[0] ?? null;
+                if ($response->successful()) {
+                    $wooProduct = $response->json()[0] ?? null;
 
-//                 if ($wooProduct) {
-//                     // تحديث الكمية
-//                     $update = \Illuminate\Support\Facades\Http::withBasicAuth($ck, $cs)
-//                         ->put($fullUrl . '/' . $wooProduct['id'], [
-//                             'stock_quantity' => (int)$produit->quantite_stock,
-//                             'manage_stock' => true
-//                         ]);
-
-//                     if ($update->successful()) {
-//                         \Illuminate\Support\Facades\Log::info("✅ نجحت المزامنة مع الموقع.");
-//                     } else {
-//                         \Illuminate\Support\Facades\Log::error("❌ فشل التحديث في الموقع: " . $update->body());
-//                     }
-//                 } else {
-//                     \Illuminate\Support\Facades\Log::warning("⚠️ SKU غير موجود في الموقع: " . $produit->reference);
-//                 }
-//             } catch (\Exception $e) {
-//                 \Illuminate\Support\Facades\Log::error("🚨 خطأ اتصال: " . $e->getMessage());
-//             }
-//         }
-//     });
-// }
+                    if ($wooProduct) {
+                        // إيلا لقى المنتج، كيدير التحديث
+                        \Illuminate\Support\Facades\Http::withBasicAuth($ck, $cs)
+                            ->put($fullUrl . '/' . $wooProduct['id'], [
+                                'stock_quantity' => (int)$produit->quantite_stock,
+                                'manage_stock' => true
+                            ]);
+                        \Illuminate\Support\Facades\Log::info("✅ تم تحديث الموقع بنجاح.");
+                    } else {
+                        // إيلا ملقاش المنتج، كيسجل غير ملاحظة ومكيحبسش الـ App
+                        \Illuminate\Support\Facades\Log::warning("⚠️ المنتج {$produit->reference} غير موجود في الموقع حالياً. سيتم تحديثه يدوياً لاحقاً.");
+                    }
+                }
+            } catch (\Exception $e) {
+                // إيلا كاين مشكل في الكونيكسيون، كيدوز عادي
+                \Illuminate\Support\Facades\Log::error("🚨 مشكل اتصال مع WooCommerce: " . $e->getMessage());
+            }
+        }
+    });
+}
 }

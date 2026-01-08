@@ -42,7 +42,7 @@ Route::post('/wc/order-created', function (Request $request) {
                 $produit->quantite_stock = $oldStock - $qtySold;
                 $produit->save();
 
-                // تسجيل الحركة (تأكدي أن ID المستخدم 1 موجود فعلياً في جدول users)
+                // تسجيل الحركة (تأكدي أن ID المستخدم 1 موجو  فعلياً في جدول users)
                 StockMovement::create([
                     'produit_id'  => $produit->id,
                     'user_id'     => 1, 

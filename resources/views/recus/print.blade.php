@@ -608,7 +608,7 @@
             <div class="payments-title">HISTORIQUE DES PAIEMENTS</div>
             @foreach($recu->paiements as $paiement)
             <div class="payment-line">
-                {{ $paiement->date_paiement->format('d/m/Y H:i') }} - {{ strtoupper($paiement->mode_paiement) }}
+                {{ $paiement->date_paiement->format('d/m/Y') }} - {{ strtoupper($paiement->mode_paiement) }}
                 @if($paiement->reference) (Réf: {{ $paiement->reference }}) @endif
                 <span class="payment-amount">{{ number_format($paiement->montant, 2) }} DH</span>
             </div>

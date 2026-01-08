@@ -35,7 +35,7 @@ class Produit extends Model
         'total_vendu' => 'integer',
     ];
 
-    // ==================== RELATIONS ====================
+     // ================================= RELATIONS ==============================
 
     public function category()
     {
@@ -153,8 +153,8 @@ class Produit extends Model
         if ($produit->isDirty('quantite_stock')) {
             try {
                 $url = env('WOOCOMMERCE_STORE_URL');
-                $ck = env('WOOCOMMERCE_CONSUMER_KEY');
-                $cs = env('WOOCOMMERCE_CONSUMER_SECRET');
+$ck = env('WOOCOMMERCE_CONSUMER_KEY') ?? 'ck_013c2f62a3eaad92e36e444f031b38842b3b4c2f';
+$cs = env('WOOCOMMERCE_CONSUMER_SECRET') ?? 'cs_fbba429c8f7d69c9815da0914628e7c1c2817104';
 
                 // ✅ فحص أمان: إذا كانت المفاتيح فارغة، لا تحاول الاتصال (يمنع TypeError)
                 if (empty($ck) || empty($cs)) {

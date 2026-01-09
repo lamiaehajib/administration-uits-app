@@ -526,9 +526,10 @@
         </div>
 
         <!-- Pagination -->
-        <div class="d-flex justify-content-center mt-4">
-            {{ $factures->links() }}
-        </div>
+       
+        <div>
+                    {{ $factures->links('pagination.custom') }}
+                </div>
     </div>
 
     <!-- Top Produits (si factures produits) -->

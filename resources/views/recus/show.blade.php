@@ -73,64 +73,136 @@
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Produit</th>
-                                        <th>Référence</th>
-                                        <th>Qté</th>
-                                        <th>Prix Unit.</th>
-                                        <th>Sous-total</th>
-                                        @can('produit-rapport')
-                                            <th>Marge</th>
-                                        @endcan
-                                        @if($recu->statut == 'en_cours')
-                                            <th>Action</th>
-                                        @endif
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($recu->items as $item)
-                                        <tr>
-                                            <td>{{ $item->produit_nom }}</td>
-                                            <td class="text-muted">{{ $item->produit_reference }}</td>
-                                            <td><span class="badge bg-secondary">{{ $item->quantite }}</span></td>
-                                            <td>{{ number_format($item->prix_unitaire, 2) }} DH</td>
-                                            <td class="fw-bold">{{ number_format($item->sous_total, 2) }} DH</td>
-                                            @can('produit-rapport')
-                                                <td>
-                                                    <span class="text-success">
-                                                        {{ number_format($item->marge_totale, 2) }} DH
-                                                    </span>
-                                                </td>
-                                            @endcan
-                                            @if($recu->statut == 'en_cours')
-                                                <td>
-                                                    <button class="btn btn-sm btn-danger" 
-                                                            onclick="confirmDeleteItem({{ $recu->id }}, {{ $item->id }})">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                    <form id="delete-item-form-{{ $item->id }}" 
-                                                          action="{{ route('recus.items.remove', [$recu, $item]) }}" 
-                                                          method="POST" 
-                                                          style="display: none;">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                    </form>
-                                                </td>
-                                            @endif
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="{{ auth()->user()->can('produit-rapport') ? '7' : '6' }}" class="text-center py-3 text-muted">
-                                                <i class="fas fa-inbox fa-2x mb-2"></i>
-                                                <p>Aucun article</p>
-                                            </td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
+    <table class="table table-hover mb-0">
+        <thead class="table-light">
+            <tr>
+                @if($recu->remise > 0 && $recu->statut == 'en_cours')
+                    <th width="50">
+                        <i class="fas fa-tag text-warning" 
+                           title="Appliquer la remise"></i>
+                    </th>
+                @endif
+                <th>#</th>
+                <th>Produit</th>
+                <th>Qté</th>
+                <th>Prix Unit.</th>
+                <th>Sous-total</th>
+                @can('produit-rapport')
+                    <th>Marge Totale</th>
+                @endcan
+                @if($recu->statut == 'en_cours')
+                    <th>Action</th>
+                @endif
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($recu->items as $index => $item)
+                <tr class="{{ $item->remise_appliquee && $recu->remise > 0 ? 'table-warning' : '' }}">
+                    @if($recu->remise > 0 && $recu->statut == 'en_cours')
+                        <td class="text-center">
+                            <input type="radio" 
+                                   name="remise_item" 
+                                   value="{{ $item->id }}"
+                                   {{ $item->remise_appliquee ? 'checked' : '' }}
+                                   onchange="appliquerRemiseSurItem({{ $recu->id }}, {{ $item->id }})"
+                                   class="form-check-input"
+                                   title="Appliquer la remise sur cet article">
+                        </td>
+                    @endif
+                    <td>
+                        {{ $index + 1 }}
+                        @if($item->remise_appliquee && $recu->remise > 0)
+                            <span class="badge bg-warning text-dark ms-1" 
+                                  title="Remise appliquée">
+                                <i class="fas fa-tag"></i>
+                            </span>
+                        @endif
+                    </td>
+                    <td>
+                        <strong>{{ $item->produit_nom }}</strong>
+                        @if($item->designation)
+                            <br><small class="text-muted">{{ $item->designation }}</small>
+                        @endif
+                        @if($item->produit_reference)
+                            <br><small class="text-muted">Réf: {{ $item->produit_reference }}</small>
+                        @endif
+                    </td>
+                    <td><span class="badge bg-secondary">{{ $item->quantite }}</span></td>
+                    <td>{{ number_format($item->prix_unitaire, 2) }} DH</td>
+                    <td>
+                        <strong>{{ number_format($item->sous_total, 2) }} DH</strong>
+                        @if($item->remise_appliquee && $recu->remise > 0)
+                            <br>
+                            <small class="text-danger">
+                                - {{ number_format($recu->remise, 2) }} DH (remise)
+                            </small>
+                        @endif
+                    </td>
+                    @can('produit-rapport')
+                        <td>
+                            <div class="text-success">
+                                <strong>{{ number_format($item->marge_totale, 2) }} DH</strong>
+                                <br>
+                                <small class="text-muted">
+                                    ({{ number_format($item->marge_unitaire, 2) }} DH/u)
+                                </small>
+                                @if($item->remise_appliquee && $recu->remise > 0)
+                                    <br>
+                                    <small class="text-danger">
+                                        Après remise: {{ number_format($item->margeApresRemise(), 2) }} DH
+                                    </small>
+                                @endif
+                            </div>
+                        </td>
+                    @endcan
+                    @if($recu->statut == 'en_cours')
+                        <td>
+                            <button class="btn btn-sm btn-danger" 
+                                    onclick="confirmDeleteItem({{ $recu->id }}, {{ $item->id }})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <form id="delete-item-form-{{ $item->id }}" 
+                                  action="{{ route('recus.items.remove', [$recu, $item]) }}" 
+                                  method="POST" 
+                                  style="display: none;">
+                                @csrf
+                                @method('DELETE')
+                            </form>
+                        </td>
+                    @endif
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-muted">
+                        <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                        <p class="mb-0">Aucun article dans ce reçu</p>
+                    </td>
+                </tr>
+            @endforelse
+        </tbody>
+        @can('produit-rapport')
+        <tfoot class="table-light">
+            <tr>
+                <td colspan="{{ $recu->remise > 0 && $recu->statut == 'en_cours' ? 6 : 5 }}" 
+                    class="text-end fw-bold">
+                    <i class="fas fa-chart-line me-2"></i>Total Marges:
+                </td>
+                <td colspan="2">
+                    <div class="text-success fw-bold">
+                        {{ number_format($recu->margeGlobale(), 2) }} DH
+                        @if($recu->remise > 0)
+                            <br>
+                            <small class="text-danger">
+                                Après remise: {{ number_format($recu->margeApresRemise(), 2) }} DH
+                            </small>
+                        @endif
+                    </div>
+                </td>
+            </tr>
+        </tfoot>
+        @endcan
+    </table>
+</div>
                     </div>
                 </div>
 
@@ -169,9 +241,9 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="4" class="text-center py-3 text-muted">
-                                                <i class="fas fa-wallet fa-2x mb-2"></i>
-                                                <p>Aucun paiement enregistré</p>
+                                            <td colspan="4" class="text-center py-4 text-muted">
+                                                <i class="fas fa-wallet fa-3x mb-3 d-block"></i>
+                                                <p class="mb-0">Aucun paiement enregistré</p>
                                             </td>
                                         </tr>
                                     @endforelse
@@ -187,34 +259,112 @@
                 <!-- Résumé Financier -->
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0"><i class="fas fa-calculator me-2"></i>Résumé</h5>
+                        <h5 class="mb-0"><i class="fas fa-calculator me-2"></i>Résumé Financier</h5>
                     </div>
                     <div class="card-body">
                         <div class="d-flex justify-content-between mb-2">
                             <span>Sous-total:</span>
                             <strong>{{ number_format($recu->sous_total, 2) }} DH</strong>
                         </div>
+                        @if($recu->remise > 0)
                         <div class="d-flex justify-content-between mb-2">
-                            <span>Remise:</span>
+                            <span>
+                                <i class="fas fa-tag text-warning me-1"></i>Remise:
+                                <small class="text-muted d-block">Sur 1er article</small>
+                            </span>
                             <strong class="text-danger">-{{ number_format($recu->remise, 2) }} DH</strong>
                         </div>
+                        @endif
+                        @if($recu->tva > 0)
                         <div class="d-flex justify-content-between mb-2">
                             <span>TVA:</span>
-                            <strong>{{ number_format($recu->tva, 2) }} DH</strong>
+                            <strong>+{{ number_format($recu->tva, 2) }} DH</strong>
                         </div>
+                        @endif
                         <hr>
                         <div class="d-flex justify-content-between mb-3">
-                            <span class="h5">Total:</span>
-                            <strong class="h5 hight">{{ number_format($recu->total, 2) }} DH</strong>
+                            <span class="h5 mb-0">Total:</span>
+                            <strong class="h5 text-primary mb-0">{{ number_format($recu->total, 2) }} DH</strong>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
                             <span>Montant Payé:</span>
                             <strong class="text-success">{{ number_format($recu->montant_paye, 2) }} DH</strong>
                         </div>
-                        <div class="d-flex justify-content-between">
-                            <span class="h6">Reste à payer:</span>
-                            <strong class="h6 text-danger">{{ number_format($recu->reste, 2) }} DH</strong>
+                        <div class="d-flex justify-content-between mb-3">
+                            <span class="h6 mb-0">Reste à payer:</span>
+                            <strong class="h6 {{ $recu->reste > 0 ? 'text-danger' : 'text-success' }} mb-0">
+                                {{ number_format($recu->reste, 2) }} DH
+                            </strong>
                         </div>
+                        
+                        @can('produit-rapport')
+                        <hr>
+                        <div class="bg-light p-3 rounded">
+                            <h6 class="mb-3">
+                                <i class="fas fa-chart-line me-2 text-success"></i>Analyse de Marge
+                            </h6>
+                            
+                            <!-- Marge Brute (avant remise) -->
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>
+                                    <i class="fas fa-coins me-1 text-muted"></i>Marge Brute:
+                                    <small class="text-muted d-block">Prix vente - Prix achat</small>
+                                </span>
+                                <strong class="text-success">
+                                    {{ number_format($recu->margeGlobale(), 2) }} DH
+                                </strong>
+                            </div>
+                            
+                            @if($recu->remise > 0)
+                            <!-- Impact de la remise -->
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>
+                                    <i class="fas fa-tag me-1 text-warning"></i>Impact Remise:
+                                </span>
+                                <strong class="text-danger">
+                                    -{{ number_format($recu->remise, 2) }} DH
+                                </strong>
+                            </div>
+                            
+                            <!-- Marge Nette (après remise) -->
+                            <div class="d-flex justify-content-between mb-2 border-top pt-2">
+                                <span>
+                                    <i class="fas fa-hand-holding-usd me-1 text-success"></i>Marge Nette:
+                                    <small class="text-muted d-block">Après remise</small>
+                                </span>
+                                <strong class="text-success fw-bold">
+                                    {{ number_format($recu->margeApresRemise(), 2) }} DH
+                                </strong>
+                            </div>
+                            @endif
+                            
+                            <!-- Taux de marge -->
+                            <div class="d-flex justify-content-between border-top pt-2">
+                                <span>
+                                    <i class="fas fa-percent me-1 text-info"></i>Taux de Marge:
+                                </span>
+                                <strong class="text-info">
+                                    @if($recu->remise > 0)
+                                        {{ number_format($recu->tauxMargeReel(), 2) }}%
+                                    @else
+                                        {{ number_format($recu->tauxMarge(), 2) }}%
+                                    @endif
+                                </strong>
+                            </div>
+                            
+                            <!-- Note explicative -->
+                            <div class="alert alert-info mt-3 mb-0 py-2">
+                                <small>
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    @if($recu->remise > 0)
+                                        La remise réduit le prix de vente, donc impacte la marge du 1er article uniquement.
+                                    @else
+                                        Marges calculées sur (Prix Vente - Prix Achat) × Quantité
+                                    @endif
+                                </small>
+                            </div>
+                        </div>
+                        @endcan
                     </div>
                 </div>
 
@@ -275,10 +425,10 @@
                                 @method('PATCH')
                                 <div class="mb-3">
                                     <select name="statut" class="form-select" required>
-                                        <option value="en_cours" {{ $recu->statut == 'en_cours' ? 'selected' : '' }}>En cours</option>
-                                        <option value="livre" {{ $recu->statut == 'livre' ? 'selected' : '' }}>Livré</option>
-                                        <option value="annule" {{ $recu->statut == 'annule' ? 'selected' : '' }}>Annulé</option>
-                                        <option value="retour" {{ $recu->statut == 'retour' ? 'selected' : '' }}>Retour</option>
+                                        <option value="en_cours" selected>En cours</option>
+                                        <option value="livre">Livré</option>
+                                        <option value="annule">Annulé</option>
+                                        <option value="retour">Retour</option>
                                     </select>
                                 </div>
                                 <button type="submit" class="btn btn-primary w-100">
@@ -318,10 +468,12 @@
                             <label class="form-label">Quantité *</label>
                             <input type="number" name="quantite" class="form-control" min="1" value="1" required>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Notes</label>
-                            <textarea name="notes" class="form-control" rows="2"></textarea>
+                        @if($recu->remise > 0 && $recu->items->count() === 0)
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <small>La remise de {{ number_format($recu->remise, 2) }} DH sera appliquée sur ce premier article</small>
                         </div>
+                        @endif
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
@@ -374,10 +526,6 @@
                             <input type="text" name="reference" class="form-control" 
                                    placeholder="N° chèque, référence...">
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Notes</label>
-                            <textarea name="notes" class="form-control" rows="2"></textarea>
-                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
@@ -392,7 +540,6 @@
 
     @push('scripts')
     <script>
-        // Initialiser Select2
         $(document).ready(function() {
             $('.select2').select2({
                 dropdownParent: $('#addItemModal'),
@@ -401,7 +548,6 @@
             });
         });
 
-        // Confirmation suppression item
         function confirmDeleteItem(recuId, itemId) {
             Swal.fire({
                 title: 'Supprimer cet article?',
@@ -418,6 +564,56 @@
                 }
             });
         }
+
+        function appliquerRemiseSurItem(recuId, itemId) {
+    // Afficher un loader
+    Swal.fire({
+        title: 'Application de la remise...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    fetch(`/recus/${recuId}/items/${itemId}/appliquer-remise`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Remise appliquée!',
+                text: data.message,
+                timer: 1500,
+                showConfirmButton: false
+            }).then(() => {
+                // Recharger la page pour mettre à jour l'affichage
+                location.reload();
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: data.message
+            });
+            // Remettre l'ancien radio checked
+            location.reload();
+        }
+    })
+    .catch(error => {
+        Swal.fire({
+            icon: 'error',
+            title: 'Erreur',
+            text: 'Une erreur est survenue'
+        });
+        location.reload();
+    });
+}
     </script>
     @endpush
 </x-app-layout>

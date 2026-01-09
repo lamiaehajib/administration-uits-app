@@ -154,6 +154,8 @@ Route::get('/factures/corbeille', [FactureController::class, 'corbeille'])
 Route::put('/factures/{id}/restore', [FactureController::class, 'restore'])
       ->name('factures.restore');
 
+
+      
 // 3. Route dyal Suppression Définitive
 Route::delete('/factures/{id}/forceDelete', [FactureController::class, 'forceDelete'])
       ->name('factures.forceDelete');
@@ -162,6 +164,12 @@ Route::resource('factures', FactureController::class)->parameters(['facture' => 
 Route::get('factures/{id}/pdf', [FactureController::class, 'downloadPDF'])->name('factures.downloadPDF');
 
 
+
+Route::get('/factures/produits-by-category/{categoryId}', [FactureController::class, 'getProduitsByCategory'])
+    ->name('factures.produits-by-category');
+
+
+    
 Route::get('/facturef/corbeille', [FacturefController::class, 'corbeille'])
       ->name('facturef.corbeille');
 
@@ -318,7 +326,12 @@ Route::controller(App\Http\Controllers\RecuUcgController::class)->prefix('recus'
     Route::delete('{id}/force-delete', 'forceDelete')->name('forceDelete');
 });Route::get('/api/produits/category/{categoryId}', [RecuUcgController::class, 'getProduitsByCategory'])
     ->name('api.produits.by-category');
-    
+
+
+    Route::post('recus/{recu}/items/{item}/appliquer-remise', 
+    [RecuUcgController::class, 'appliquerRemise'])
+    ->name('recus.items.appliquer-remise');
+
 Route::resource('recus', RecuUcgController::class);
 Route::post('recus/{recu}/items', [RecuUcgController::class, 'addItem'])->name('recus.items.add');
 Route::delete('recus/{recu}/items/{item}', [RecuUcgController::class, 'removeItem'])->name('recus.items.remove');

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ProductVariant;
+use App\Models\RecuItem;
 use App\Models\RecuUcg;
 use App\Models\Produit;
 use Illuminate\Http\Request;
@@ -526,4 +527,60 @@ public function forceDelete($id)
         return back()->with('error', "Erreur lors de la suppression définitive: " . $e->getMessage());
     }
 }
+
+
+public function appliquerRemise(Request $request, RecuUcg $recu, RecuItem $item)
+    {
+        // Vérifier que l'item appartient bien au reçu
+        if ($item->recu_ucg_id !== $recu->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cet article n\'appartient pas à ce reçu'
+            ], 400);
+        }
+
+        // Vérifier qu'il y a une remise
+        if ($recu->remise <= 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Aucune remise définie sur ce reçu'
+            ], 400);
+        }
+
+        DB::beginTransaction();
+        try {
+            // 1️⃣ Enlever la remise de tous les autres items
+            RecuItem::where('recu_ucg_id', $recu->id)
+                ->where('id', '!=', $item->id)
+                ->update(['remise_appliquee' => false]);
+
+            // 2️⃣ Appliquer la remise sur l'item sélectionné
+            $item->update(['remise_appliquee' => true]);
+
+            // 3️⃣ Recalculer le total
+            $recu->calculerTotal();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Remise appliquée avec succès',
+                'recu' => [
+                    'sous_total' => number_format($recu->sous_total, 2),
+                    'remise' => number_format($recu->remise, 2),
+                    'total' => number_format($recu->total, 2),
+                    'marge_globale' => number_format($recu->margeGlobale(), 2),
+                    'marge_apres_remise' => number_format($recu->margeApresRemise(), 2),
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
 }

@@ -2,51 +2,68 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Carbon\Carbon;
 
 class RecuUcg extends Model
 {
     use HasFactory, SoftDeletes;
-    
-    // Constantes
-    public const STATUT_GARANTIE_SANS = 'sans_garantie';
-    public const STATUT_GARANTIE_30_JOURS = '30_jours';
-    public const STATUT_GARANTIE_90_JOURS = '90_jours';
-    public const STATUT_GARANTIE_180_JOURS = '180_jours';
-    public const STATUT_GARANTIE_360_JOURS = '360_jours';
-    
-    public const STATUT_PAIEMENT_IMPAYE = 'impaye';
-    public const STATUT_PAIEMENT_PARTIEL = 'partiel';
-    public const STATUT_PAIEMENT_PAYE = 'paye';
 
-    protected $table = 'recus_ucgs';
+    // Constantes
+    const STATUT_EN_COURS = 'en_cours';
+    const STATUT_LIVRE = 'livre';
+    const STATUT_ANNULE = 'annule';
+    const STATUT_RETOUR = 'retour';
+
+    const STATUT_PAIEMENT_PAYE = 'paye';
+    const STATUT_PAIEMENT_PARTIEL = 'partiel';
+    const STATUT_PAIEMENT_IMPAYE = 'impaye';
+
+    const STATUT_GARANTIE_30_JOURS = '30_jours';
+    const STATUT_GARANTIE_90_JOURS = '90_jours';
+    const STATUT_GARANTIE_180_JOURS = '180_jours';
+    const STATUT_GARANTIE_360_JOURS = '360_jours';
+    const STATUT_GARANTIE_SANS = 'sans_garantie';
+ protected $table = 'recus_ucgs';
     protected $fillable = [
-        'numero_recu', 'user_id',
-        'client_nom', 'client_prenom', 'client_telephone', 'client_email', 'client_adresse',
-        'equipement', 'details', 'notes',
-        'type_garantie', 'date_garantie_fin',
-        'statut', 'statut_paiement',
-        'sous_total', 'remise', 'tva', 'total', 'montant_paye', 'reste',
-        'mode_paiement', 'date_paiement'
+        'numero_recu',
+        'user_id',
+        'client_nom',
+        'client_prenom',
+        'client_telephone',
+        'client_email',
+        'client_adresse',
+        'equipement',
+        'details',
+        'type_garantie',
+        'date_garantie_fin',
+        'sous_total',
+        'remise',
+        'tva',
+        'total',
+        'montant_paye',
+        'reste',
+        'statut',
+        'statut_paiement',
+        'mode_paiement',
+        'date_paiement',
+        'notes',
     ];
 
     protected $casts = [
-        'date_garantie_fin' => 'date',
-        'date_paiement' => 'date',
         'sous_total' => 'decimal:2',
         'remise' => 'decimal:2',
         'tva' => 'decimal:2',
         'total' => 'decimal:2',
         'montant_paye' => 'decimal:2',
         'reste' => 'decimal:2',
+        'date_paiement' => 'datetime',
+        'date_garantie_fin' => 'datetime',
     ];
-    
-    protected $appends = ['garantie_status']; 
 
-    // Relations
+    // ================================= RELATIONS ==============================
     public function user()
     {
         return $this->belongsTo(\App\Models\User::class);
@@ -67,30 +84,29 @@ class RecuUcg extends Model
         return $this->hasMany(\App\Models\StockMovement::class);
     }
 
-    // Boot Events
+    // ================================= BOOT EVENTS ==============================
     protected static function boot()
     {
         parent::boot();
 
         static::creating(function ($recu) {
-    if (empty($recu->numero_recu)) {
-        $recu->numero_recu = self::generateNumeroRecu();
-    }
-    
-    if ($recu->type_garantie !== self::STATUT_GARANTIE_SANS) {
-        $jours = match($recu->type_garantie) {
-            self::STATUT_GARANTIE_30_JOURS => 30,   // ✅ ZIDHA
-            self::STATUT_GARANTIE_90_JOURS => 90,
-            self::STATUT_GARANTIE_180_JOURS => 180,
-            self::STATUT_GARANTIE_360_JOURS => 360,
-            default => 90
-        };
-        $recu->date_garantie_fin = Carbon::now()->addDays($jours);
-    }
-    
-    $recu->statut_paiement = self::STATUT_PAIEMENT_IMPAYE;
-});
-
+            if (empty($recu->numero_recu)) {
+                $recu->numero_recu = self::generateNumeroRecu();
+            }
+            
+            if ($recu->type_garantie !== self::STATUT_GARANTIE_SANS) {
+                $jours = match($recu->type_garantie) {
+                    self::STATUT_GARANTIE_30_JOURS => 30,
+                    self::STATUT_GARANTIE_90_JOURS => 90,
+                    self::STATUT_GARANTIE_180_JOURS => 180,
+                    self::STATUT_GARANTIE_360_JOURS => 360,
+                    default => 90
+                };
+                $recu->date_garantie_fin = Carbon::now()->addDays($jours);
+            }
+            
+            $recu->statut_paiement = self::STATUT_PAIEMENT_IMPAYE;
+        });
 
         static::updating(function ($recu) {
             if ($recu->isDirty('montant_paye') || $recu->isDirty('total')) {
@@ -131,7 +147,7 @@ class RecuUcg extends Model
         });
     }
 
-    // Mutateurs
+    // ================================= MUTATEURS ==============================
     public function setClientNomAttribute($value)
     {
         $this->attributes['client_nom'] = ucwords(strtolower($value));
@@ -142,7 +158,7 @@ class RecuUcg extends Model
         $this->attributes['client_prenom'] = ucwords(strtolower($value));
     }
 
-    // Accesseur
+    // ================================= ACCESSEURS ==============================
     public function getGarantieStatusAttribute()
     {
         if ($this->type_garantie === self::STATUT_GARANTIE_SANS || !$this->date_garantie_fin) {
@@ -156,7 +172,23 @@ class RecuUcg extends Model
         return 'Expirée';
     }
 
-    // Méthodes
+    /**
+     * ✅ MARGE GLOBALE - Somme des marges SANS affecter par remise
+     * La remise est appliquée sur le prix de vente, pas sur la marge
+     */
+    public function getTotalMargeAttribute()
+    {
+        if (!$this->relationLoaded('items')) {
+            $this->load('items'); 
+        }
+        
+        // Retourne la somme des marges calculées dans RecuItem
+        // (Prix Vente - Prix Achat) * Quantité pour chaque item
+        return $this->items->sum('marge_totale'); 
+    }
+
+    // ================================= MÉTHODES ==============================
+    
     public static function generateNumeroRecu()
     {
         $year = date('Y');
@@ -170,7 +202,10 @@ class RecuUcg extends Model
     }
 
     /**
-     * ✅ MÉTHODE CORRIGÉE - Calcule le total ET recalcule les marges avec remise
+     * ✅ CALCUL TOTAL SIMPLIFIÉ
+     * - Sous-total = somme des items
+     * - Total = Sous-total - Remise + TVA
+     * - Remise s'applique sur le PRIX, pas sur la MARGE
      */
     public function calculerTotal()
     {
@@ -182,70 +217,63 @@ class RecuUcg extends Model
         $this->sous_total = $this->items->sum('sous_total');
         
         // 2️⃣ Calculer total avec remise et TVA
+        // La remise diminue le prix de vente, PAS la marge
         $this->total = $this->sous_total - $this->remise + $this->tva;
         
-        // 3️⃣ Sauvegarder le reçu
-        $this->save();
+        // 3️⃣ Calculer reste à payer
+        $this->reste = $this->total - $this->montant_paye;
         
-        // 4️⃣ ✅ NOUVEAU : Recalculer les marges des items avec la remise proportionnelle
-        $this->recalculerMargesAvecRemise();
+        // 4️⃣ Sauvegarder
+        $this->saveQuietly();
     }
     
     /**
-     * ✅ NOUVELLE MÉTHODE - Recalcule les marges en tenant compte de la remise
-     * La remise est répartie proportionnellement sur chaque item
+     * ✅ MARGE GLOBALE - Retourne la vraie marge (Prix Vente - Prix Achat)
+     * NON affectée par la remise
      */
-    public function recalculerMargesAvecRemise()
-    {
-        if (!$this->relationLoaded('items')) {
-            $this->load('items'); 
-        }
-
-        // Si pas de remise, pas besoin de recalculer
-        if ($this->remise <= 0 || $this->sous_total <= 0) {
-            return;
-        }
-
-        // Pourcentage de remise globale
-        $tauxRemise = $this->remise / $this->sous_total;
-
-        foreach ($this->items as $item) {
-            // Remise proportionnelle pour cet item
-            $remiseItem = $item->sous_total * $tauxRemise;
-            
-            // Prix de vente effectif après remise
-            $prixVenteEffectif = ($item->sous_total - $remiseItem) / $item->quantite;
-            
-            // Nouvelle marge unitaire
-            $margeUnitaireAvecRemise = $prixVenteEffectif - $item->prix_achat;
-            
-            // Nouvelle marge totale
-            $margeTotaleAvecRemise = $margeUnitaireAvecRemise * $item->quantite;
-            
-            // ✅ Update l'item SANS déclencher les observers
-            $item->updateQuietly([
-                'marge_unitaire' => $margeUnitaireAvecRemise,
-                'marge_totale' => $margeTotaleAvecRemise
-            ]);
-        }
-    }
-    
-    /**
-     * ✅ MÉTHODE CORRIGÉE - Retourne la marge globale avec remise
-     */
-    public function getTotalMargeAttribute()
-    {
-        if (!$this->relationLoaded('items')) {
-            $this->load('items'); 
-        }
-        
-        // Retourne la somme des marges recalculées avec remise
-        return $this->items->sum('marge_totale'); 
-    }
-    
     public function margeGlobale(): float
     {
-        return $this->getTotalMargeAttribute();
+        if (!$this->relationLoaded('items')) {
+            $this->load('items'); 
+        }
+        
+        // Somme de toutes les marges des items
+        // Chaque marge = (Prix Vente - Prix Achat) * Quantité
+        return (float) $this->items->sum('marge_totale');
+    }
+
+    /**
+     * ✅ TAUX DE MARGE - Basé sur le TOTAL (après remise)
+     * C'est normal que le taux baisse quand tu fais une remise
+     */
+    public function tauxMarge(): float
+    {
+        if ($this->total == 0) {
+            return 0;
+        }
+        
+        return ($this->margeGlobale() / $this->total) * 100;
+    }
+
+    /**
+     * ✅ MARGE APRÈS REMISE - Si tu veux voir l'impact de la remise
+     * Marge réelle après avoir donné la remise
+     */
+    public function margeApresRemise(): float
+    {
+        return $this->margeGlobale() - $this->remise;
+    }
+
+    /**
+     * ✅ TAUX DE MARGE RÉEL - Prend en compte la remise
+     */
+    public function tauxMargeReel(): float
+    {
+        if ($this->total == 0) {
+            return 0;
+        }
+        
+        return ($this->margeApresRemise() / $this->total) * 100;
     }
 
     public function isGarantieValide(): bool
@@ -287,7 +315,7 @@ class RecuUcg extends Model
         return $paiement;
     }
 
-    // Scopes
+    // ================================= SCOPES ==============================
     public function scopeDuMois($query)
     {
         return $query->whereMonth('created_at', now()->month)

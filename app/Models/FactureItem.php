@@ -9,31 +9,37 @@ class FactureItem extends Model
 {
     use HasFactory;
 
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
     protected $table = 'factures_items';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
         'factures_id',
+        'produit_id', // ✅ NOUVEAU
         'libele',
         'quantite',
         'prix_ht',
+        'prix_achat', // ✅ NOUVEAU
+        'marge_unitaire', // ✅ NOUVEAU
+        'marge_totale', // ✅ NOUVEAU
         'prix_total',
     ];
 
-    /**
-     * Get the facture that owns the item.
-     */
+    protected $casts = [
+        'quantite' => 'decimal:2',
+        'prix_ht' => 'decimal:2',
+        'prix_achat' => 'decimal:2',
+        'marge_unitaire' => 'decimal:2',
+        'marge_totale' => 'decimal:2',
+        'prix_total' => 'decimal:2',
+    ];
+
     public function facture()
     {
         return $this->belongsTo(Facture::class, 'factures_id');
+    }
+
+    // ✅ NOUVEAU : Relation avec Produit
+    public function produit()
+    {
+        return $this->belongsTo(Produit::class);
     }
 }

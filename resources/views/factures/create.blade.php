@@ -1,20 +1,12 @@
 <x-app-layout>
     <style>
-        .gradient-bg {
-            background: linear-gradient(135deg, #C2185B, #D32F2F);
-        }
-        
+        /* Styles identiques à votre code original */
+        .gradient-bg { background: linear-gradient(135deg, #C2185B, #D32F2F); }
         .gradient-text {
             background: linear-gradient(135deg, #C2185B, #D32F2F);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-
-        .create-container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
         .form-card {
             background: white;
             border-radius: 20px;
@@ -22,7 +14,6 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
             margin-bottom: 30px;
         }
-
         .section-header {
             display: flex;
             align-items: center;
@@ -30,7 +21,6 @@
             padding-bottom: 15px;
             border-bottom: 3px solid #f3f4f6;
         }
-
         .section-icon {
             width: 50px;
             height: 50px;
@@ -43,52 +33,22 @@
             font-size: 22px;
             margin-right: 15px;
         }
-
         .section-title {
             font-size: 22px;
             font-weight: 700;
             color: #1f2937;
-            margin: 0;
         }
-
-        .form-label {
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 8px;
-            font-size: 14px;
-            display: block;
-        }
-
-        .form-label .required {
-            color: #ef4444;
-            margin-left: 3px;
-        }
-
         .form-control, .form-select {
             border: 2px solid #e5e7eb;
             border-radius: 10px;
             padding: 12px 16px;
             transition: all 0.3s ease;
-            font-size: 15px;
-            width: 100%; /* Ajouté pour garantir l'occupation complète de l'espace */
         }
-
         .form-control:focus, .form-select:focus {
             border-color: #D32F2F;
             box-shadow: 0 0 0 4px rgba(211, 47, 47, 0.1);
             outline: none;
         }
-
-        .form-control:disabled, .form-control[readonly] {
-            background-color: #f9fafb;
-            cursor: not-allowed;
-        }
-
-        textarea.form-control {
-            resize: vertical;
-            min-height: 100px;
-        }
-
         .product-row {
             background: #f9fafb;
             border: 2px solid #e5e7eb;
@@ -96,14 +56,7 @@
             padding: 25px;
             margin-bottom: 20px;
             position: relative;
-            transition: all 0.3s ease;
         }
-
-        .product-row:hover {
-            border-color: #D32F2F;
-            box-shadow: 0 5px 20px rgba(211, 47, 47, 0.1);
-        }
-
         .product-number {
             position: absolute;
             top: -15px;
@@ -117,26 +70,7 @@
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 14px;
-            box-shadow: 0 4px 10px rgba(211, 47, 47, 0.3);
         }
-
-        .important-row {
-            background: #fef3c7;
-            border: 2px solid #fbbf24;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 15px;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .important-row input {
-            flex: 1;
-            margin-bottom: 0 !important;
-        }
-
         .btn-gradient {
             background: linear-gradient(135deg, #C2185B, #D32F2F);
             color: white;
@@ -144,18 +78,7 @@
             padding: 12px 30px;
             border-radius: 10px;
             font-weight: 600;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
         }
-
-        .btn-gradient:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(211, 47, 47, 0.3);
-            color: white;
-        }
-
         .btn-add {
             background: linear-gradient(135deg, #10b981, #059669);
             color: white;
@@ -163,15 +86,7 @@
             padding: 10px 25px;
             border-radius: 10px;
             font-weight: 600;
-            transition: all 0.3s ease;
         }
-
-        .btn-add:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3);
-            color: white;
-        }
-
         .btn-remove {
             background: linear-gradient(135deg, #ef4444, #dc2626);
             color: white;
@@ -179,178 +94,63 @@
             padding: 8px 20px;
             border-radius: 8px;
             font-weight: 600;
-            transition: all 0.3s ease;
-            white-space: nowrap;
         }
-
-        .btn-remove:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.3);
-            color: white;
-        }
-
-        .btn-important {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: white;
-            border: none;
-            padding: 10px 25px;
-            border-radius: 10px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-important:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(245, 158, 11, 0.3);
-            color: white;
-        }
-
-        .total-section {
-            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-            border: 2px solid #10b981;
-            border-radius: 15px;
-            padding: 25px;
-            margin-top: 30px;
-        }
-
-        .total-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #d1fae5;
-        }
-
-        .total-row:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-        }
-
-        .total-label {
-            font-size: 16px;
-            font-weight: 600;
-            color: #065f46;
-        }
-
-        .total-value {
-            font-size: 18px;
-            font-weight: 700;
-            color: #059669;
-        }
-
-        .total-ttc-row {
-            background: linear-gradient(135deg, #C2185B, #D32F2F);
-            color: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 15px;
-        }
-
-        .total-ttc-row .total-label,
-        .total-ttc-row .total-value {
-            color: white;
-        }
-
-        .total-ttc-row .total-value {
-            font-size: 28px;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: flex-end;
-            margin-top: 30px;
-            padding-top: 30px;
-            border-top: 2px solid #e5e7eb;
-        }
-
-        .btn-cancel {
-            background: #6b7280;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 10px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            text-decoration: none; /* Pour les liens */
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-cancel:hover {
-            background: #4b5563;
-            transform: translateY(-2px);
-            color: white;
-        }
-
-        .alert-info {
-            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-            border: 2px solid #3b82f6;
-            border-radius: 12px;
-            padding: 15px 20px;
-            color: #1e40af;
-            font-weight: 500;
-            margin-bottom: 25px;
-        }
-
-        .grid-2 {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-        }
-
-        .grid-3 {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-        }
-
-        .grid-4 {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-        }
-
-        .fade-in {
-            animation: fadeIn 0.5s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
         
-        /* Réduire le grid en mobile */
-        @media (max-width: 992px) {
-            .grid-4, .grid-3, .grid-2 {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        .type-selector {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
         }
-
-        @media (max-width: 576px) {
-            .grid-4, .grid-3, .grid-2 {
-                grid-template-columns: 1fr;
-            }
+        .type-card {
+            flex: 1;
+            padding: 30px;
+            border: 3px solid #e5e7eb;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .type-card:hover {
+            border-color: #D32F2F;
+            box-shadow: 0 5px 20px rgba(211, 47, 47, 0.2);
+        }
+        .type-card.active {
+            border-color: #D32F2F;
+            background: linear-gradient(135deg, rgba(194, 24, 91, 0.1), rgba(211, 47, 47, 0.1));
+        }
+        .type-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .stock-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .stock-ok { background: #d1fae5; color: #065f46; }
+        .stock-low { background: #fef3c7; color: #92400e; }
+        .stock-out { background: #fee2e2; color: #991b1b; }
+        
+        @media (max-width: 768px) {
+            .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+            .type-selector { flex-direction: column; }
         }
     </style>
 
-    <div class="create-container px-4">
+    <div class="container px-4" style="max-width: 1200px;">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h2 class="gradient-text mb-1" style="font-size: 32px; font-weight: 700;">
                     <i class="fas fa-file-invoice"></i> Créer une Nouvelle Facture
                 </h2>
-                <p class="text-muted mb-0">Remplissez les informations pour générer votre facture</p>
+                <p class="text-muted mb-0">Choisissez le type de facture et remplissez les informations</p>
             </div>
-            <a href="{{ route('factures.index') }}" class="btn btn-cancel">
+            <a href="{{ route('factures.index') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left me-2"></i> Retour
             </a>
         </div>
@@ -358,249 +158,229 @@
         <form action="{{ route('factures.store') }}" method="POST" id="facture-form">
             @csrf
             
-            <div class="form-card fade-in">
+            <!-- Sélection du Type -->
+            <div class="form-card">
                 <div class="section-header">
-                    <div class="section-icon">
-                        <i class="fas fa-info-circle"></i>
+                    <div class="section-icon"><i class="fas fa-layer-group"></i></div>
+                    <h3 class="section-title">Type de Facture</h3>
+                </div>
+
+                <div class="type-selector">
+                    <div class="type-card active" onclick="selectType('service')">
+                        <input type="radio" name="type" value="service" id="type_service" checked hidden>
+                        <div class="type-icon">💼</div>
+                        <h4>Services</h4>
+                        <p class="text-muted mb-0">Prestations, consultations, main d'œuvre...</p>
                     </div>
+                    <div class="type-card" onclick="selectType('produit')">
+                        <input type="radio" name="type" value="produit" id="type_produit" hidden>
+                        <div class="type-icon">📦</div>
+                        <h4>Produits</h4>
+                        <p class="text-muted mb-0">Vente de produits depuis le stock</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations Générales -->
+            <div class="form-card">
+                <div class="section-header">
+                    <div class="section-icon"><i class="fas fa-info-circle"></i></div>
                     <h3 class="section-title">Informations Générales</h3>
                 </div>
 
-                <div class="alert-info">
-                    <i class="fas fa-lightbulb me-2"></i>
-                    Le numéro de facture sera **généré automatiquement** après la création.
-                </div>
-
-                @if (isset($devis))
-                    <div class="alert-info" style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); border-color: #059669; color: #065f46;">
-                        <i class="fas fa-link me-2"></i>
-                        Création d'une facture à partir du **Devis #{{ $devis->id }}** (Informations pré-remplies).
-                    </div>
-                    <input type="hidden" name="devis_id" value="{{ $devis->id }}">
-                @endif
-        
                 <div class="grid-3 mb-3">
                     <div>
-                        <label class="form-label">Numéro du Facture</label>
-                        <input type="text" name="facture_num" id="facture_num" class="form-control" value="{{ old('facture_num', 'Généré automatiquement') }}" readonly>
+                        <label class="form-label">Numéro Facture</label>
+                        <input type="text" class="form-control" value="Généré automatiquement" readonly>
                     </div>
                     <div>
-                        <label class="form-label">Date <span class="required">*</span></label>
-                        <input type="date" name="date" class="form-control" value="{{ old('date', now()->format('Y-m-d')) }}" required>
+                        <label class="form-label">Date <span class="text-danger">*</span></label>
+                        <input type="date" name="date" class="form-control" value="{{ now()->format('Y-m-d') }}" required>
                     </div>
                     <div>
-                        <label class="form-label">Afficher le cachet ? <span class="required">*</span></label>
+                        <label class="form-label">Afficher le cachet ?</label>
                         <select name="afficher_cachet" class="form-select">
-                            <option value="1" {{ old('afficher_cachet', isset($devis) ? ($devis->afficher_cachet ?? 1) : 1) == 1 ? 'selected' : '' }}>Oui</option>
-                            <option value="0" {{ old('afficher_cachet', isset($devis) ? ($devis->afficher_cachet ?? 0) : 0) == 0 ? 'selected' : '' }}>Non</option>
+                            <option value="1" selected>Oui</option>
+                            <option value="0">Non</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Titre <span class="required">*</span></label>
-                    <input type="text" name="titre" class="form-control" placeholder="Titre de la facture" value="{{ old('titre', isset($devis) ? $devis->titre : '') }}" required>
+                    <label class="form-label">Titre <span class="text-danger">*</span></label>
+                    <input type="text" name="titre" class="form-control" placeholder="Titre de la facture" required>
                 </div>
 
                 <div class="grid-3 mb-3">
                     <div>
-                        <label class="form-label">Client <span class="required">*</span></label>
-                        <input type="text" name="client" class="form-control" placeholder="Nom du client" value="{{ old('client', isset($devis) ? $devis->client : '') }}" required>
+                        <label class="form-label">Client <span class="text-danger">*</span></label>
+                        <input type="text" name="client" class="form-control" placeholder="Nom du client" required>
                     </div>
                     <div>
                         <label class="form-label">ICE</label>
-                        <input type="text" name="ice" class="form-control" placeholder="Numéro ICE du client" value="{{ old('ice', isset($devis) ? ($devis->ice ?? '') : '') }}">
+                        <input type="text" name="ice" class="form-control" placeholder="Numéro ICE">
                     </div>
                     <div>
                         <label class="form-label">Référence</label>
-                        <input type="text" name="ref" class="form-control" placeholder="Référence ou Bon de Commande" value="{{ old('ref', isset($devis) ? ($devis->ref ?? '') : '') }}">
+                        <input type="text" name="ref" class="form-control" placeholder="Bon de commande">
                     </div>
                 </div>
                 
                 <div class="mb-3">
                     <label class="form-label">Adresse</label>
-                    <textarea name="adresse" class="form-control" placeholder="Adresse complète du client">{{ old('adresse', isset($devis) ? ($devis->adresse ?? '') : '') }}</textarea>
+                    <textarea name="adresse" class="form-control" rows="2" placeholder="Adresse complète"></textarea>
                 </div>
             </div>
             
-            <div class="form-card fade-in">
+            <!-- SECTION SERVICES (visible par défaut) -->
+            <div class="form-card" id="services-section">
                 <div class="section-header">
-                    <div class="section-icon">
-                        <i class="fas fa-boxes"></i>
-                    </div>
-                    <h3 class="section-title">Produits & Services</h3>
+                    <div class="section-icon"><i class="fas fa-briefcase"></i></div>
+                    <h3 class="section-title">Services & Prestations</h3>
                 </div>
 
-                <div id="product-container">
-                    @php $i = 1; @endphp
-                    @if (isset($devis) && $devis->items)
-                        @foreach ($devis->items as $index => $item)
-                            <div class="product-row fade-in">
-                                <div class="product-number">{{ $i++ }}</div>
-                                <div class="mb-3">
-                                    <label class="form-label">Description / Libellé <span class="required">*</span></label>
-                                    <textarea name="libele[]" class="form-control" rows="3" required>{{ $item->libele }}</textarea>
-                                </div>
-
-                                <div class="grid-4">
-                                    <div>
-                                        <label class="form-label">Quantité <span class="required">*</span></label>
-                                        <input type="number" name="quantite[]" class="form-control quantity" value="{{ $item->quantite }}" oninput="calculatePrixTotal()" min="0" step="0.01" required>
-                                    </div>
-                                    <div>
-                                        <label class="form-label">Prix Unitaire HT <span class="required">*</span></label>
-                                        <input type="number" step="0.01" name="prix_ht[]" class="form-control prix_ht" value="{{ $item->prix_unitaire }}" oninput="calculatePrixTotal()" min="0" required>
-                                    </div>
-                                    <div>
-                                        <label class="form-label">Prix Total HT</label>
-                                        <input type="number" step="0.01" name="prix_total[]" class="form-control total-price" value="{{ $item->prix_total }}" readonly>
-                                    </div>
-                                    <div class="d-flex align-items-end">
-                                        <button type="button" class="btn btn-remove w-100 remove-product">
-                                            <i class="fas fa-trash me-2"></i> Supprimer
-                                        </button>
-                                    </div>
-                                </div>
+                <div id="services-container">
+                    <div class="product-row">
+                        <div class="product-number">1</div>
+                        <div class="mb-3">
+                            <label class="form-label">Description <span class="text-danger">*</span></label>
+                            <textarea name="libele[]" class="form-control" rows="3" required></textarea>
+                        </div>
+                        <div class="grid-4">
+                            <div>
+                                <label class="form-label">Quantité <span class="text-danger">*</span></label>
+                                <input type="number" name="quantite[]" class="form-control quantity" value="1" min="0" step="0.01" oninput="calculateTotals()" required>
                             </div>
-                        @endforeach
-                    @else
-                        <div class="product-row fade-in">
-                            <div class="product-number">1</div>
-                            <div class="mb-3">
-                                <label class="form-label">Description / Libellé <span class="required">*</span></label>
-                                <textarea name="libele[]" class="form-control" rows="3" placeholder="Description détaillée du produit ou service..." required></textarea>
+                            <div>
+                                <label class="form-label">Prix Unitaire HT <span class="text-danger">*</span></label>
+                                <input type="number" name="prix_ht[]" class="form-control prix_ht" value="0" min="0" step="0.01" oninput="calculateTotals()" required>
                             </div>
-
-                            <div class="grid-4">
-                                <div>
-                                    <label class="form-label">Quantité <span class="required">*</span></label>
-                                    <input type="number" name="quantite[]" class="form-control quantity" oninput="calculatePrixTotal()" min="0" step="0.01" required value="{{ old('quantite.0', 1) }}">
-                                </div>
-                                <div>
-                                    <label class="form-label">Prix Unitaire HT <span class="required">*</span></label>
-                                    <input type="number" step="0.01" name="prix_ht[]" class="form-control prix_ht" oninput="calculatePrixTotal()" min="0" required value="{{ old('prix_ht.0', 0) }}">
-                                </div>
-                                <div>
-                                    <label class="form-label">Prix Total HT</label>
-                                    <input type="number" step="0.01" name="prix_total[]" class="form-control total-price" readonly>
-                                </div>
-                                <div class="d-flex align-items-end">
-                                    <button type="button" class="btn btn-remove w-100 remove-product">
-                                        <i class="fas fa-trash me-2"></i> Supprimer
-                                    </button>
-                                </div>
+                            <div>
+                                <label class="form-label">Prix Total HT</label>
+                                <input type="number" class="form-control total-price" readonly>
+                            </div>
+                            <div class="d-flex align-items-end">
+                                <button type="button" class="btn btn-remove w-100" onclick="removeRow(this)">
+                                    <i class="fas fa-trash"></i> Supprimer
+                                </button>
                             </div>
                         </div>
-                    @endif
+                    </div>
                 </div>
 
-                <button type="button" class="btn btn-add mt-3" onclick="addProduct()">
+                <button type="button" class="btn btn-add mt-3" onclick="addService()">
+                    <i class="fas fa-plus-circle me-2"></i> Ajouter un Service
+                </button>
+            </div>
+
+            <!-- SECTION PRODUITS (cachée par défaut) -->
+            <div class="form-card" id="produits-section" style="display: none;">
+                <div class="section-header">
+                    <div class="section-icon"><i class="fas fa-box"></i></div>
+                    <h3 class="section-title">Produits</h3>
+                </div>
+
+                <div id="produits-container">
+                    <div class="product-row">
+                        <div class="product-number">1</div>
+                        <div class="grid-2 mb-3">
+                            <div>
+                                <label class="form-label">Catégorie <span class="text-danger">*</span></label>
+                                <select class="form-select category-select" onchange="loadProduits(this)" required>
+                                    <option value="">-- Sélectionner --</option>
+                                    @foreach($categories as $category)
+                                        <option value="{{ $category->id }}">{{ $category->nom }}</option>
+                                        @foreach($category->children as $child)
+                                            <option value="{{ $child->id }}">-- {{ $child->nom }}</option>
+                                        @endforeach
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">Produit <span class="text-danger">*</span></label>
+                                <select name="produit_id[]" class="form-select produit-select" onchange="selectProduit(this)" required disabled>
+                                    <option value="">-- Choisir une catégorie d'abord --</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info produit-info" style="display: none;">
+                            <strong>Prix d'achat:</strong> <span class="prix-achat-display">0</span> DH | 
+                            <strong>Prix de vente suggéré:</strong> <span class="prix-vente-display">0</span> DH | 
+                            <strong>Stock:</strong> <span class="stock-display">0</span>
+                        </div>
+
+                        <div class="grid-4">
+                            <div>
+                                <label class="form-label">Quantité <span class="text-danger">*</span></label>
+                                <input type="number" name="quantite[]" class="form-control quantity-produit" value="1" min="1" step="1" oninput="calculateTotals()" required>
+                            </div>
+                            <div>
+                                <label class="form-label">Prix Unitaire HT <span class="text-danger">*</span></label>
+                                <input type="number" name="prix_ht[]" class="form-control prix-vente-input" value="0" min="0" step="0.01" oninput="calculateTotals()" required>
+                            </div>
+                            <div>
+                                <label class="form-label">Marge Unitaire</label>
+                                <input type="text" class="form-control marge-display" readonly>
+                            </div>
+                            <div class="d-flex align-items-end">
+                                <button type="button" class="btn btn-remove w-100" onclick="removeRow(this)">
+                                    <i class="fas fa-trash"></i> Supprimer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-add mt-3" onclick="addProduit()">
                     <i class="fas fa-plus-circle me-2"></i> Ajouter un Produit
                 </button>
             </div>
 
-            <div class="form-card fade-in">
+            <!-- Calculs & Totaux -->
+            <div class="form-card">
                 <div class="section-header">
-                    <div class="section-icon">
-                        <i class="fas fa-calculator"></i>
-                    </div>
+                    <div class="section-icon"><i class="fas fa-calculator"></i></div>
                     <h3 class="section-title">Calculs & Totaux</h3>
                 </div>
 
                 <div class="grid-3 mb-3">
                     <div>
-                        <label class="form-label">Devise <span class="required">*</span></label>
+                        <label class="form-label">Devise <span class="text-danger">*</span></label>
                         <select name="currency" class="form-select" required>
-                            <option value="DH" {{ old('currency', isset($devis) ? $devis->currency : 'DH') == 'DH' ? 'selected' : '' }}>Dirham (DH)</option>
-                            <option value="EUR" {{ old('currency', isset($devis) ? $devis->currency : 'DH') == 'EUR' ? 'selected' : '' }}>Euro (€)</option>
-                            <option value="CFA" {{ old('currency', isset($devis) ? $devis->currency : 'DH') == 'CFA' ? 'selected' : '' }}>CFA</option>
+                            <option value="DH" selected>Dirham (DH)</option>
+                            <option value="EUR">Euro (€)</option>
+                            <option value="CFA">CFA</option>
                         </select>
                     </div>
                     <div>
-                        <label class="form-label">TVA (%) <span class="required">*</span></label>
-                        <select name="tva" class="form-select" onchange="calculateTTC()" required>
-                            @php
-                                // Calculer la TVA du devis s'il existe
-                                $default_tva_percent = 20;
-                                if (isset($devis) && $devis->total_ht > 0) {
-                                    $default_tva_percent = round(($devis->tva / $devis->total_ht) * 100);
-                                } else {
-                                    $default_tva_percent = old('tva', 20);
-                                }
-                            @endphp
-                            <option value="20" {{ $default_tva_percent == 20 ? 'selected' : '' }}>TVA 20%</option>
-                            <option value="0" {{ $default_tva_percent == 0 ? 'selected' : '' }}>Aucune TVA (0%)</option>
+                        <label class="form-label">TVA (%) <span class="text-danger">*</span></label>
+                        <select name="tva" class="form-select" onchange="calculateTotals()" required>
+                            <option value="20" selected>20%</option>
+                            <option value="0">0%</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="total-section">
-                    <div class="total-row">
-                        <span class="total-label">Total HT (Hors Taxes)</span>
-                        <span class="total-value" id="display_total_ht">{{ old('total_ht', isset($devis) ? number_format($devis->total_ht, 2) : '0.00') }}</span>
+                <div style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 2px solid #10b981; border-radius: 15px; padding: 25px;">
+                    <div class="d-flex justify-content-between mb-3">
+                        <strong>Total HT:</strong>
+                        <span id="display_total_ht">0.00</span>
                     </div>
-                    <div class="total-row">
-                        <span class="total-label">Montant TVA</span>
-                        <span class="total-value" id="display_tva">{{ old('tva_amount', isset($devis) ? number_format($devis->tva, 2) : '0.00') }}</span>
+                    <div class="d-flex justify-content-between mb-3">
+                        <strong>Montant TVA:</strong>
+                        <span id="display_tva">0.00</span>
                     </div>
-                    <div class="total-ttc-row">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="total-label" style="font-size: 20px;">
-                                <i class="fas fa-coins me-2"></i> Total TTC (Toutes Taxes Comprises)
-                            </span>
-                            <span class="total-value" id="display_total_ttc">{{ old('total_ttc', isset($devis) ? number_format($devis->total_ttc, 2) : '0.00') }}</span>
-                        </div>
+                    <div class="d-flex justify-content-between" style="background: linear-gradient(135deg, #C2185B, #D32F2F); color: white; border-radius: 10px; padding: 15px;">
+                        <strong style="font-size: 20px;">Total TTC:</strong>
+                        <span id="display_total_ttc" style="font-size: 24px; font-weight: 700;">0.00</span>
                     </div>
                 </div>
-
-                <input type="hidden" name="total_ht" id="total_ht" value="{{ old('total_ht', isset($devis) ? $devis->total_ht : 0) }}">
-                <input type="hidden" name="tva_amount" id="tva_amount" value="{{ old('tva_amount', isset($devis) ? $devis->tva : 0) }}">
-                <input type="hidden" name="total_ttc" id="total_ttc" value="{{ old('total_ttc', isset($devis) ? $devis->total_ttc : 0) }}">
             </div>
 
-
-            <div class="form-card fade-in">
-                <div class="section-header">
-                    <div class="section-icon">
-                        <i class="fas fa-exclamation-triangle"></i>
-                    </div>
-                    <h3 class="section-title">Informations Importantes</h3>
-                </div>
-
-                <div id="important-container">
-                    @php $j = 0; @endphp
-                    @if (isset($devis) && $devis->importantInfos)
-                        @foreach ($devis->importantInfos as $info)
-                            <div class="important-row fade-in">
-                                <i class="fas fa-star" style="color: #f59e0b; font-size: 18px;"></i>
-                                <input type="text" name="important[]" class="form-control" placeholder="Ajouter une information importante" value="{{ $info->info }}">
-                                <button type="button" class="btn btn-remove remove-important" onclick="removeImportant(this)">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                            @php $j++; @endphp
-                        @endforeach
-                    @endif
-                    @if (!isset($devis) || (isset($devis) && count($devis->importantInfos) == 0))
-                        <div class="important-row fade-in">
-                            <i class="fas fa-star" style="color: #f59e0b; font-size: 18px;"></i>
-                            <input type="text" name="important[]" class="form-control" placeholder="Ajouter une information importante">
-                            <button type="button" class="btn btn-remove remove-important" onclick="removeImportant(this)">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    @endif
-                </div>
-
-                <button type="button" class="btn btn-important mt-3" onclick="addImportant()">
-                    <i class="fas fa-plus-circle me-2"></i> Ajouter une Information
-                </button>
-            </div>
-
-
-            <div class="action-buttons">
-                <a href="{{ route('factures.index') }}" class="btn btn-cancel">
-                    <i class="fas fa-times-circle me-2"></i> Annuler
+            <div class="d-flex justify-content-end gap-3 mt-4">
+                <a href="{{ route('factures.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i> Annuler
                 </a>
                 <button type="submit" class="btn btn-gradient">
                     <i class="fas fa-check-circle me-2"></i> Créer la Facture
@@ -609,145 +389,293 @@
         </form>
     </div>
     
-    <script>
-        let productCount = document.querySelectorAll('.product-row').length || 1;
+   <script>
+let productCount = 1;
+let produitsData = {};
 
-        // Fonction pour mettre à jour le numéro des lignes de produits
-        function updateProductNumbers() {
-            const rows = document.querySelectorAll('#product-container .product-row');
-            rows.forEach((row, index) => {
-                let numberDiv = row.querySelector('.product-number');
-                if (!numberDiv) {
-                    numberDiv = document.createElement('div');
-                    numberDiv.classList.add('product-number');
-                    row.prepend(numberDiv);
-                }
-                numberDiv.textContent = index + 1;
-            });
-            productCount = rows.length;
-        }
-
-        function calculatePrixTotal() {
-            let totalHT = 0;
-            let rows = document.querySelectorAll('.product-row');
+// Sélection du type
+function selectType(type) {
+    document.querySelectorAll('.type-card').forEach(card => card.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    
+    document.getElementById('type_' + type).checked = true;
+    
+    if (type === 'service') {
+        // Afficher Services, masquer Produits
+        document.getElementById('services-section').style.display = 'block';
+        document.getElementById('produits-section').style.display = 'none';
         
-            rows.forEach(function(row) {
-                let quantity = parseFloat(row.querySelector('.quantity').value) || 0;
-                let unitPrice = parseFloat(row.querySelector('.prix_ht').value) || 0;
-                let totalPriceInput = row.querySelector('.total-price');
-                
-                let productTotal = quantity * unitPrice;
-                totalPriceInput.value = productTotal.toFixed(2);
-                totalHT += productTotal;
-            });
-        
-            document.getElementById('total_ht').value = totalHT.toFixed(2);
-            document.getElementById('display_total_ht').textContent = totalHT.toFixed(2);
-            calculateTTC();
-        }
-        
-        function calculateTTC() {
-            let totalHT = parseFloat(document.getElementById('total_ht').value) || 0;
-            let tva_percent = parseFloat(document.querySelector('[name="tva"]').value) || 0;
-            
-            let tvaAmount = totalHT * (tva_percent / 100);
-            let totalTTC = totalHT + tvaAmount;
-            
-            document.getElementById('tva_amount').value = tvaAmount.toFixed(2);
-            document.getElementById('display_tva').textContent = tvaAmount.toFixed(2);
-            document.getElementById('total_ttc').value = totalTTC.toFixed(2);
-            document.getElementById('display_total_ttc').textContent = totalTTC.toFixed(2);
-        }
-        
-        function addProduct() {
-            let productContainer = document.getElementById('product-container');
-            productCount++;
-            let newRow = document.createElement('div');
-            newRow.classList.add('product-row', 'fade-in');
-            newRow.innerHTML = `
-                <div class="product-number">${productCount}</div>
-                <div class="mb-3">
-                    <label class="form-label">Description / Libellé <span class="required">*</span></label>
-                    <textarea name="libele[]" class="form-control" rows="3" placeholder="Description détaillée du produit ou service..." required></textarea>
-                </div>
-
-                <div class="grid-4">
-                    <div>
-                        <label class="form-label">Quantité <span class="required">*</span></label>
-                        <input type="number" name="quantite[]" class="form-control quantity" value="1" oninput="calculatePrixTotal()" min="0" step="0.01" required>
-                    </div>
-                    <div>
-                        <label class="form-label">Prix Unitaire HT <span class="required">*</span></label>
-                        <input type="number" step="0.01" name="prix_ht[]" class="form-control prix_ht" value="0" oninput="calculatePrixTotal()" min="0" required>
-                    </div>
-                    <div>
-                        <label class="form-label">Prix Total HT</label>
-                        <input type="number" step="0.01" name="prix_total[]" class="form-control total-price" readonly>
-                    </div>
-                    <div class="d-flex align-items-end">
-                        <button type="button" class="btn btn-remove w-100 remove-product">
-                            <i class="fas fa-trash me-2"></i> Supprimer
-                        </button>
-                    </div>
-                </div>
-            `;
-            productContainer.appendChild(newRow);
-            // Ajouter les écouteurs d'événements pour les nouveaux inputs
-            newRow.querySelectorAll('.quantity, .prix_ht').forEach(input => {
-                input.addEventListener('input', calculatePrixTotal);
-            });
-            updateProductNumbers();
-            calculatePrixTotal(); // Recalculer après ajout
-        }
-
-        // Utilisation de la délégation d'événements pour supprimer les lignes
-        document.addEventListener('click', function(e) {
-            if (e.target.closest('.remove-product')) {
-                const row = e.target.closest('.product-row');
-                if (document.querySelectorAll('.product-row').length > 1) {
-                    row.remove();
-                    updateProductNumbers(); // Mise à jour des numéros après suppression
-                    calculatePrixTotal(); // Recalculer après suppression
-                } else {
-                    alert('Vous devez avoir au moins un produit ou service.');
-                }
-            }
+        // ✅ ACTIVER les champs Services
+        document.querySelectorAll('#services-section input, #services-section textarea, #services-section select').forEach(el => {
+            el.disabled = false;
         });
         
-        // Les fonctions d'ajout/suppression d'informations importantes
-        function addImportant() {
-            const container = document.getElementById('important-container');
-            const newRow = document.createElement('div');
-            newRow.className = 'important-row fade-in';
-            newRow.innerHTML = `
-                <i class="fas fa-star" style="color: #f59e0b; font-size: 18px;"></i>
-                <input type="text" name="important[]" class="form-control" placeholder="Ajouter une information importante">
-                <button type="button" class="btn btn-remove remove-important" onclick="removeImportant(this)">
-                    <i class="fas fa-times"></i>
+        // ✅ DÉSACTIVER les champs Produits (pour éviter l'erreur de validation)
+        document.querySelectorAll('#produits-section input, #produits-section textarea, #produits-section select').forEach(el => {
+            el.disabled = true;
+        });
+    } else {
+        // Afficher Produits, masquer Services
+        document.getElementById('services-section').style.display = 'none';
+        document.getElementById('produits-section').style.display = 'block';
+        
+        // ✅ DÉSACTIVER les champs Services (pour éviter l'erreur de validation)
+        document.querySelectorAll('#services-section input, #services-section textarea, #services-section select').forEach(el => {
+            el.disabled = true;
+        });
+        
+        // ✅ ACTIVER les champs Produits (mais ne pas réactiver le select produit si désactivé volontairement)
+        document.querySelectorAll('#produits-container .product-row').forEach(row => {
+            row.querySelectorAll('input, textarea').forEach(el => {
+                el.disabled = false;
+            });
+            row.querySelector('.category-select').disabled = false;
+            // Le produit-select reste disabled jusqu'à ce qu'une catégorie soit sélectionnée
+        });
+    }
+    
+    calculateTotals();
+}
+
+// Charger les produits d'une catégorie
+async function loadProduits(selectElement) {
+    const categoryId = selectElement.value;
+    const row = selectElement.closest('.product-row');
+    const produitSelect = row.querySelector('.produit-select');
+    
+    produitSelect.disabled = true;
+    produitSelect.innerHTML = '<option value="">Chargement...</option>';
+    
+    if (!categoryId) {
+        produitSelect.innerHTML = '<option value="">-- Choisir une catégorie d\'abord --</option>';
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/factures/produits-by-category/${categoryId}`);
+        const produits = await response.json();
+        
+        produitSelect.innerHTML = '<option value="">-- Sélectionner un produit --</option>';
+        
+        produits.forEach(produit => {
+            const option = document.createElement('option');
+            option.value = produit.id;
+            option.textContent = `${produit.nom} (Stock: ${produit.quantite_stock})`;
+            option.dataset.produit = JSON.stringify(produit);
+            produitSelect.appendChild(option);
+        });
+        
+        produitSelect.disabled = false;
+    } catch (error) {
+        console.error('Erreur:', error);
+        produitSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+    }
+}
+
+// Sélectionner un produit
+function selectProduit(selectElement) {
+    const option = selectElement.options[selectElement.selectedIndex];
+    const row = selectElement.closest('.product-row');
+    
+    if (!option.dataset.produit) return;
+    
+    const produit = JSON.parse(option.dataset.produit);
+    
+    row.querySelector('.produit-info').style.display = 'block';
+    row.querySelector('.prix-achat-display').textContent = produit.prix_achat.toFixed(2);
+    row.querySelector('.prix-vente-display').textContent = produit.prix_vente.toFixed(2);
+    row.querySelector('.stock-display').textContent = produit.quantite_stock;
+    
+    row.querySelector('.prix-vente-input').value = produit.prix_vente;
+    row.querySelector('.quantity-produit').max = produit.quantite_stock;
+    
+    produitsData[row.dataset.rowId || Date.now()] = produit;
+    
+    calculateTotals();
+}
+
+// Calculer les totaux
+function calculateTotals() {
+    let totalHT = 0;
+    const type = document.querySelector('input[name="type"]:checked').value;
+    
+    if (type === 'service') {
+        document.querySelectorAll('#services-container .product-row').forEach(row => {
+            const qty = parseFloat(row.querySelector('.quantity').value) || 0;
+            const price = parseFloat(row.querySelector('.prix_ht').value) || 0;
+            const total = qty * price;
+            row.querySelector('.total-price').value = total.toFixed(2);
+            totalHT += total;
+        });
+    } else {
+        document.querySelectorAll('#produits-container .product-row').forEach(row => {
+            const qty = parseFloat(row.querySelector('.quantity-produit').value) || 0;
+            const prixVente = parseFloat(row.querySelector('.prix-vente-input').value) || 0;
+            const prixAchat = parseFloat(row.querySelector('.prix-achat-display').textContent) || 0;
+            
+            const marge = prixVente - prixAchat;
+            row.querySelector('.marge-display').value = marge.toFixed(2) + ' DH';
+            
+            totalHT += qty * prixVente;
+        });
+    }
+    
+    const tvaRate = parseFloat(document.querySelector('[name="tva"]').value) || 0;
+    const tva = totalHT * (tvaRate / 100);
+    const totalTTC = totalHT + tva;
+    
+    document.getElementById('display_total_ht').textContent = totalHT.toFixed(2);
+    document.getElementById('display_tva').textContent = tva.toFixed(2);
+    document.getElementById('display_total_ttc').textContent = totalTTC.toFixed(2);
+}
+
+// Ajouter service
+function addService() {
+    productCount++;
+    const container = document.getElementById('services-container');
+    const newRow = document.createElement('div');
+    newRow.className = 'product-row';
+    newRow.innerHTML = `
+        <div class="product-number">${productCount}</div>
+        <div class="mb-3">
+            <label class="form-label">Description <span class="text-danger">*</span></label>
+            <textarea name="libele[]" class="form-control" rows="3" required></textarea>
+        </div>
+        <div class="grid-4">
+            <div>
+                <label class="form-label">Quantité <span class="text-danger">*</span></label>
+                <input type="number" name="quantite[]" class="form-control quantity" value="1" min="0" step="0.01" oninput="calculateTotals()" required>
+            </div>
+            <div>
+                <label class="form-label">Prix Unitaire HT <span class="text-danger">*</span></label>
+                <input type="number" name="prix_ht[]" class="form-control prix_ht" value="0" min="0" step="0.01" oninput="calculateTotals()" required>
+            </div>
+            <div>
+                <label class="form-label">Prix Total HT</label>
+                <input type="number" class="form-control total-price" readonly>
+            </div>
+            <div class="d-flex align-items-end">
+                <button type="button" class="btn btn-remove w-100" onclick="removeRow(this)">
+                    <i class="fas fa-trash"></i> Supprimer
                 </button>
-            `;
-            container.appendChild(newRow);
-        }
+            </div>
+        </div>
+    `;
+    container.appendChild(newRow);
+}
 
-        function removeImportant(button) {
-            const row = button.closest('.important-row');
-            // Laisser au moins une ligne d'information importante
-            if (document.querySelectorAll('.important-row').length > 1) {
-                row.remove();
-            } else {
-                alert('Vous devez avoir au moins une information importante.');
+// Ajouter produit
+function addProduit() {
+    productCount++;
+    const container = document.getElementById('produits-container');
+    const newRow = document.createElement('div');
+    newRow.className = 'product-row';
+    newRow.dataset.rowId = Date.now();
+    newRow.innerHTML = `
+        <div class="product-number">${productCount}</div>
+        <div class="grid-2 mb-3">
+            <div>
+                <label class="form-label">Catégorie <span class="text-danger">*</span></label>
+                <select class="form-select category-select" onchange="loadProduits(this)" required>
+                    <option value="">-- Sélectionner --</option>
+                    @foreach($categories as $category)
+                        <option value="{{ $category->id }}">{{ $category->nom }}</option>
+                        @foreach($category->children as $child)
+                            <option value="{{ $child->id }}">-- {{ $child->nom }}</option>
+                        @endforeach
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label class="form-label">Produit <span class="text-danger">*</span></label>
+                <select name="produit_id[]" class="form-select produit-select" onchange="selectProduit(this)" required disabled>
+                    <option value="">-- Choisir une catégorie d'abord --</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="alert alert-info produit-info" style="display: none;">
+            <strong>Prix d'achat:</strong> <span class="prix-achat-display">0</span> DH | 
+            <strong>Prix de vente suggéré:</strong> <span class="prix-vente-display">0</span> DH | 
+            <strong>Stock:</strong> <span class="stock-display">0</span>
+        </div>
+
+        <div class="grid-4">
+            <div>
+                <label class="form-label">Quantité <span class="text-danger">*</span></label>
+                <input type="number" name="quantite[]" class="form-control quantity-produit" value="1" min="1" step="1" oninput="calculateTotals()" required>
+            </div>
+            <div>
+                <label class="form-label">Prix Unitaire HT <span class="text-danger">*</span></label>
+                <input type="number" name="prix_ht[]" class="form-control prix-vente-input" value="0" min="0" step="0.01" oninput="calculateTotals()" required>
+            </div>
+            <div>
+                <label class="form-label">Marge Unitaire</label>
+                <input type="text" class="form-control marge-display" readonly>
+            </div>
+            <div class="d-flex align-items-end">
+                <button type="button" class="btn btn-remove w-100" onclick="removeRow(this)">
+                    <i class="fas fa-trash"></i> Supprimer
+                </button>
+            </div>
+        </div>
+    `;
+    container.appendChild(newRow);
+}
+
+// Supprimer ligne
+function removeRow(button) {
+    const container = button.closest('.product-row').parentElement;
+    if (container.children.length > 1) {
+        button.closest('.product-row').remove();
+        updateRowNumbers();
+        calculateTotals();
+    } else {
+        alert('Vous devez avoir au moins une ligne.');
+    }
+}
+
+// Mettre à jour numéros
+function updateRowNumbers() {
+    const type = document.querySelector('input[name="type"]:checked').value;
+    const container = type === 'service' ? '#services-container' : '#produits-container';
+    document.querySelectorAll(container + ' .product-row').forEach((row, index) => {
+        row.querySelector('.product-number').textContent = index + 1;
+    });
+    productCount = document.querySelectorAll(container + ' .product-row').length;
+}
+
+// ✅ Validation avant soumission
+document.getElementById('facture-form').addEventListener('submit', function(e) {
+    const type = document.querySelector('input[name="type"]:checked').value;
+    
+    if (type === 'produit') {
+        const rows = document.querySelectorAll('#produits-container .product-row');
+        let hasError = false;
+        
+        rows.forEach(row => {
+            const qty = parseFloat(row.querySelector('.quantity-produit').value) || 0;
+            const stock = parseFloat(row.querySelector('.stock-display').textContent) || 0;
+            
+            if (qty > stock) {
+                hasError = true;
+                alert(`Stock insuffisant! Quantité demandée: ${qty}, Stock disponible: ${stock}`);
             }
-        }
-
-        // Lancement des calculs au chargement de la page
-        window.onload = function() {
-            updateProductNumbers();
-            calculatePrixTotal();
-        };
-
-        // Ajout des écouteurs d'événements pour les inputs existants (si chargés via old() ou devis)
-        document.querySelectorAll('.quantity, .prix_ht').forEach(input => {
-            input.addEventListener('input', calculatePrixTotal);
         });
-    </script>
+        
+        if (hasError) {
+            e.preventDefault();
+            return false;
+        }
+    }
+});
+
+// ✅ INITIALISATION : Désactiver les champs Produits au chargement (puisque Services est actif par défaut)
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('#produits-section input, #produits-section textarea, #produits-section select').forEach(el => {
+        el.disabled = true;
+    });
+});
+</script>
+
 </x-app-layout>

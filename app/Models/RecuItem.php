@@ -13,16 +13,17 @@ class RecuItem extends Model
     protected $fillable = [
         'recu_ucg_id', 
         'produit_id', 
-        'product_variant_id', // ✅ NOUVEAU
+        'product_variant_id',
         'produit_nom', 
         'produit_reference',
-        'designation', // ✅ Pour afficher le variant (RAM/SSD/CPU)
+        'designation',
         'quantite', 
         'prix_unitaire', 
         'prix_achat',
         'sous_total', 
         'marge_unitaire', 
-        'marge_totale', 
+        'marge_totale',
+        'remise_appliquee', // ✅ NOUVEAU CHAMP
         'notes'
     ];
 
@@ -33,9 +34,10 @@ class RecuItem extends Model
         'sous_total' => 'decimal:2',
         'marge_unitaire' => 'decimal:2',
         'marge_totale' => 'decimal:2',
+        'remise_appliquee' => 'boolean', // ✅ CAST BOOLEAN
     ];
 
-    // 🔗 Relations
+    // Relations (inchangées)
     public function recuUcg()
     {
         return $this->belongsTo(RecuUcg::class);
@@ -46,67 +48,66 @@ class RecuItem extends Model
         return $this->belongsTo(Produit::class);
     }
 
-    // ✅ NOUVELLE RELATION
     public function variant()
     {
         return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
 
-    // 🎯 Boot Events
+    // ================================= BOOT EVENTS ==============================
     protected static function boot()
     {
         parent::boot();
 
-        // Avant création
         static::creating(function ($item) {
-    if ($item->product_variant_id) {
-        $variant = ProductVariant::find($item->product_variant_id);
-        if ($variant) {
-            // ✅ تم إزالة رمي الخطأ (throw Exception) للسماح بإنشاء الإيصال
-            $item->produit_id = $variant->produit_id;
-            $item->produit_nom = $variant->produit->nom;
-            $item->produit_reference = $variant->produit->reference;
-            $item->designation = $variant->variant_name;
-            
-            if (empty($item->prix_unitaire)) $item->prix_unitaire = $variant->prix_vente_final;
-            if (empty($item->prix_achat)) $item->prix_achat = $variant->prix_achat;
-        }
-    } else {
-        $produit = $item->produit;
-        if ($produit) {
-            // ✅ تم إزالة التحقق من المخزون الذي يسبب خطأ 500
-            if (empty($item->prix_unitaire)) $item->prix_unitaire = $produit->prix_vente ?? 0;
-            if (empty($item->prix_achat)) $item->prix_achat = $produit->prix_achat ?? 0;
+            // Gérer les variants
+            if ($item->product_variant_id) {
+                $variant = ProductVariant::find($item->product_variant_id);
+                if ($variant) {
+                    $item->produit_id = $variant->produit_id;
+                    $item->produit_nom = $variant->produit->nom;
+                    $item->produit_reference = $variant->produit->reference;
+                    $item->designation = $variant->variant_name;
+                    
+                    if (empty($item->prix_unitaire)) {
+                        $item->prix_unitaire = $variant->prix_vente_final;
+                    }
+                    if (empty($item->prix_achat)) {
+                        $item->prix_achat = $variant->prix_achat;
+                    }
+                }
+            } else {
+                $produit = $item->produit;
+                if ($produit) {
+                    if (empty($item->prix_unitaire)) {
+                        $item->prix_unitaire = $produit->prix_vente ?? 0;
+                    }
+                    if (empty($item->prix_achat)) {
+                        $item->prix_achat = $produit->prix_achat ?? 0;
+                    }
 
-            $item->produit_nom = $produit->nom;
-            $item->produit_reference = $produit->reference;
-        }
-    }
+                    $item->produit_nom = $produit->nom;
+                    $item->produit_reference = $produit->reference;
+                }
+            }
 
-    // الحسابات تبقى كما هي
-    $item->sous_total = $item->quantite * $item->prix_unitaire;
-    $item->marge_unitaire = $item->prix_unitaire - $item->prix_achat;
-    $item->marge_totale = $item->marge_unitaire * $item->quantite;
-});
+            // Calcul de base (sans remise)
+            $item->sous_total = $item->quantite * $item->prix_unitaire;
+            $item->marge_unitaire = $item->prix_unitaire - $item->prix_achat;
+            $item->marge_totale = $item->marge_unitaire * $item->quantite;
+        });
 
-        // Après création - Diminuer stock
         static::created(function ($item) {
             if ($item->product_variant_id) {
-                // ✅ Gérer stock du variant
                 $variant = $item->variant;
                 
                 if ($variant) {
                     $stockAvant = $variant->quantite_stock;
-                    
-                    // Diminuer stock du variant
                     $variant->decrement('quantite_stock', $item->quantite);
                     
-                    // Mettre à jour le stock total du produit parent
                     $produit = $variant->produit;
                     $totalStock = $produit->variants()->sum('quantite_stock');
                     $produit->update(['quantite_stock' => $totalStock]);
 
-                    // Enregistrer mouvement de stock
                     StockMovement::create([
                         'produit_id' => $item->produit_id,
                         'recu_ucg_id' => $item->recu_ucg_id,
@@ -120,7 +121,6 @@ class RecuItem extends Model
                     ]);
                 }
             } else {
-                // Produit classique
                 $produit = $item->produit;
 
                 if ($produit) {
@@ -142,26 +142,21 @@ class RecuItem extends Model
                 }
             }
 
-            // Recalculer total reçu
             $item->recuUcg->calculerTotal();
         });
 
-        // Après mise à jour
         static::updated(function ($item) {
             $item->recuUcg->calculerTotal();
         });
 
-        // Avant suppression - Remettre stock
         static::deleting(function ($item) {
             if ($item->product_variant_id) {
-                // ✅ Restaurer stock du variant
                 $variant = $item->variant;
                 
                 if ($variant) {
                     $stockAvant = $variant->quantite_stock;
                     $variant->increment('quantite_stock', $item->quantite);
                     
-                    // Mettre à jour le stock total du produit parent
                     $produit = $variant->produit;
                     $totalStock = $produit->variants()->sum('quantite_stock');
                     $produit->update(['quantite_stock' => $totalStock]);
@@ -178,7 +173,6 @@ class RecuItem extends Model
                     ]);
                 }
             } else {
-                // Produit classique
                 $produit = $item->produit;
 
                 if ($produit) {
@@ -198,5 +192,37 @@ class RecuItem extends Model
                 }
             }
         });
+
+        static::deleted(function ($item) {
+            if ($item->recuUcg) {
+                $item->recuUcg->calculerTotal();
+            }
+        });
+    }
+
+    // ================================= MÉTHODES ==============================
+    
+    /**
+     * ✅ MARGE APRÈS REMISE
+     * Maintenant basée sur remise_appliquee plutôt que isPremierItem()
+     */
+    public function margeApresRemise(): float
+    {
+        $recu = $this->recuUcg;
+        
+        // Si remise appliquée SUR CET ITEM
+        if ($recu && $recu->remise > 0 && $this->remise_appliquee) {
+            return max(0, $this->marge_totale - $recu->remise);
+        }
+        
+        return $this->marge_totale;
+    }
+
+    /**
+     * ✅ VÉRIFIE SI LA REMISE EST APPLIQUÉE SUR CET ITEM
+     */
+    public function aRemiseAppliquee(): bool
+    {
+        return (bool) $this->remise_appliquee;
     }
 }

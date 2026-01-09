@@ -28,20 +28,19 @@ class ProduitController extends Controller
      * عرض جميع المنتجات مع معلومات المبيعات والمارج من RecuItem
      * ✅ AVEC FILTRES PERSISTANTS
      */
-    public function index(Request $request)
+     public function index(Request $request)
     {
         $search = $request->input('search');
         $category_id = $request->input('category_id');
-        $statut = $request->input('statut'); // actif, inactif, alerte_stock
-        $sort_by = $request->input('sort_by', 'nom'); // nom, prix_vente, stock, ventes
-        $sort_order = $request->input('sort_order', 'asc'); // asc, desc
+        $statut = $request->input('statut');
+        $sort_by = $request->input('sort_by', 'nom');
+        $sort_order = $request->input('sort_order', 'asc');
 
-        // ✅ Récupérer toutes les catégories pour le filtre
         $categories = Category::orderBy('nom')->get();
 
         $query = Produit::with(['category']);
 
-        // Filtrer par recherche
+        // Filtres (inchangés)
         if ($search) {
             $query->where(function($q) use ($search) {
                 $q->where('nom', 'like', '%' . $search . '%')
@@ -49,12 +48,10 @@ class ProduitController extends Controller
             });
         }
 
-        // Filtrer par catégorie
         if ($category_id) {
             $query->where('category_id', $category_id);
         }
 
-        // Filtrer par statut
         if ($statut) {
             switch ($statut) {
                 case 'actif':
@@ -69,7 +66,7 @@ class ProduitController extends Controller
             }
         }
 
-        // ✅ Tri dynamique
+        // Tri (inchangé)
         switch ($sort_by) {
             case 'prix_vente':
                 $query->orderBy('prix_vente', $sort_order);
@@ -83,7 +80,6 @@ class ProduitController extends Controller
                 break;
         }
 
-        // ✅ Pagination avec append pour garder les filtres
         $produits = $query->paginate(10)->appends([
             'search' => $search,
             'category_id' => $category_id,
@@ -92,39 +88,61 @@ class ProduitController extends Controller
             'sort_order' => $sort_order
         ]);
 
-        // إضافة حسابات إضافية لكل منتج
+        // ✅ CORRECTION: Calculer la marge RÉELLE (après remise)
         foreach ($produits as $produit) {
-            // حساب إجمالي الكمية المباعة
+            // Quantité vendue (inchangée)
             $produit->quantite_vendue = RecuItem::where('produit_id', $produit->id)
                 ->whereHas('recuUcg', function($q) {
                     $q->whereIn('statut', ['en_cours', 'livre']);
                 })
                 ->sum('quantite');
 
-            // حساب إجمالي المبيعات
+            // Total ventes (inchangé)
             $produit->total_vendu_montant = RecuItem::where('produit_id', $produit->id)
                 ->whereHas('recuUcg', function($q) {
                     $q->whereIn('statut', ['en_cours', 'livre']);
                 })
                 ->sum('sous_total');
 
-            // ✅ حساب إجمالي المارج (مع الremise)
-            $produit->marge_totale = RecuItem::where('produit_id', $produit->id)
-                ->whereHas('recuUcg', function($q) {
-                    $q->whereIn('statut', ['en_cours', 'livre']);
-                })
-                ->sum('marge_totale');
+            // ✅ MARGE RÉELLE = Marge Brute - Part de remise
+            $recusAvecItems = RecuUcg::with(['items' => function($q) use ($produit) {
+                $q->where('produit_id', $produit->id);
+            }])
+            ->whereIn('statut', ['en_cours', 'livre'])
+            ->whereHas('items', function($q) use ($produit) {
+                $q->where('produit_id', $produit->id);
+            })
+            ->get();
 
-            // آخر سعر شراء
+            $marge_reelle = 0;
+            foreach ($recusAvecItems as $recu) {
+                foreach ($recu->items as $item) {
+                    if ($item->produit_id == $produit->id) {
+                        // Marge brute de l'item
+                        $marge_item = $item->marge_totale;
+                        
+                        // ✅ Si remise appliquée sur CET item
+                        if ($recu->remise > 0 && $item->remise_appliquee) {
+                            $marge_item -= $recu->remise;
+                        }
+                        
+                        $marge_reelle += $marge_item;
+                    }
+                }
+            }
+            
+            $produit->marge_totale = $marge_reelle;
+
+            // Dernier prix d'achat (inchangé)
             $dernierAchat = Achat::where('produit_id', $produit->id)
                 ->latest('date_achat')
                 ->first();
             $produit->dernier_prix_achat = $dernierAchat ? $dernierAchat->prix_achat : ($produit->prix_achat ?? 0);
 
-            // الكاتيغوري
+            // Catégorie (inchangée)
             $produit->categorie_nom = $produit->category ? $produit->category->nom : 'N/A';
 
-            // المارج بالنسبة المئوية
+            // Marge en pourcentage (inchangée)
             if ($produit->prix_achat > 0 && $produit->prix_vente > 0) {
                 $produit->marge_pourcentage = (($produit->prix_vente - $produit->prix_achat) / $produit->prix_achat) * 100;
             } else {
@@ -135,7 +153,7 @@ class ProduitController extends Controller
         return view('produits.index', compact('produits', 'categories', 'search', 'category_id', 'statut', 'sort_by', 'sort_order'));
     }
 
-    // ... (reste du code inchangé)
+    
     
     public function getTotals(Request $request)
     {
@@ -258,24 +276,59 @@ class ProduitController extends Controller
         $produit = Produit::with(['category', 'achats', 'stockMovements'])
             ->findOrFail($id);
 
+        // Total achats (inchangé)
+        $totalAchats = Achat::where('produit_id', $id)->sum('quantite');
+        
+        // Total ventes (inchangé)
+        $totalVentes = RecuItem::where('produit_id', $id)
+            ->whereHas('recuUcg', function($q) {
+                $q->whereIn('statut', ['en_cours', 'livre']);
+            })
+            ->sum('quantite');
+
+        // Valeur stock (inchangée)
+        $valeurStock = $produit->quantite_stock * ($produit->prix_achat ?? 0);
+
+        // CA total (inchangé)
+        $caTotal = RecuItem::where('produit_id', $id)
+            ->whereHas('recuUcg', function($q) {
+                $q->whereIn('statut', ['en_cours', 'livre']);
+            })
+            ->sum('sous_total');
+
+        // ✅ MARGE RÉELLE = Marge Brute - Part de remise
+        $recusAvecItems = RecuUcg::with(['items' => function($q) use ($id) {
+            $q->where('produit_id', $id);
+        }])
+        ->whereIn('statut', ['en_cours', 'livre'])
+        ->whereHas('items', function($q) use ($id) {
+            $q->where('produit_id', $id);
+        })
+        ->get();
+
+        $marge_reelle = 0;
+        foreach ($recusAvecItems as $recu) {
+            foreach ($recu->items as $item) {
+                if ($item->produit_id == $id) {
+                    // Marge brute de l'item
+                    $marge_item = $item->marge_totale;
+                    
+                    // ✅ Si remise appliquée sur CET item
+                    if ($recu->remise > 0 && $item->remise_appliquee) {
+                        $marge_item -= $recu->remise;
+                    }
+                    
+                    $marge_reelle += $marge_item;
+                }
+            }
+        }
+
         $stats = [
-            'total_achats' => Achat::where('produit_id', $id)->sum('quantite'),
-            'total_ventes' => RecuItem::where('produit_id', $id)
-                ->whereHas('recuUcg', function($q) {
-                    $q->whereIn('statut', ['en_cours', 'livre']);
-                })
-                ->sum('quantite'),
-            'valeur_stock' => $produit->quantite_stock * ($produit->prix_achat ?? 0),
-            'ca_total' => RecuItem::where('produit_id', $id)
-                ->whereHas('recuUcg', function($q) {
-                    $q->whereIn('statut', ['en_cours', 'livre']);
-                })
-                ->sum('sous_total'),
-            'marge_totale' => RecuItem::where('produit_id', $id)
-                ->whereHas('recuUcg', function($q) {
-                    $q->whereIn('statut', ['en_cours', 'livre']);
-                })
-                ->sum('marge_totale'),
+            'total_achats' => $totalAchats,
+            'total_ventes' => $totalVentes,
+            'valeur_stock' => $valeurStock,
+            'ca_total' => $caTotal,
+            'marge_totale' => $marge_reelle, // ✅ Marge corrigée
         ];
 
         $derniersAchats = Achat::where('produit_id', $id)
@@ -291,6 +344,8 @@ class ProduitController extends Controller
 
         return view('produits.show', compact('produit', 'stats', 'derniersAchats', 'dernieresVentes'));
     }
+
+
 
     public function edit($id)
     {
@@ -351,45 +406,9 @@ class ProduitController extends Controller
         $dateDebut = $request->input('date_debut', now()->startOfMonth());
         $dateFin = $request->input('date_fin', now()->endOfMonth());
 
-        $topVentes = DB::table('produits')
-            ->leftJoin('recu_items', 'produits.id', '=', 'recu_items.produit_id')
-            ->leftJoin('recus_ucgs', 'recu_items.recu_ucg_id', '=', 'recus_ucgs.id')
-            ->whereBetween('recus_ucgs.created_at', [$dateDebut, $dateFin])
-            ->whereIn('recus_ucgs.statut', ['en_cours', 'livre'])
-            ->whereNull('produits.deleted_at')
-            ->whereNull('recus_ucgs.deleted_at')
-            ->select(
-                'produits.id',
-                'produits.nom',
-                'produits.reference',
-                DB::raw('SUM(recu_items.quantite) as quantite_vendue'),
-                DB::raw('SUM(recu_items.sous_total) as total_ventes'),
-                DB::raw('SUM(recu_items.marge_totale) as marge_totale')
-            )
-            ->groupBy('produits.id', 'produits.nom', 'produits.reference')
-            ->orderByDesc('quantite_vendue')
-            ->take(10)
-            ->get();
-
-        $topMarges = DB::table('produits')
-            ->leftJoin('recu_items', 'produits.id', '=', 'recu_items.produit_id')
-            ->leftJoin('recus_ucgs', 'recu_items.recu_ucg_id', '=', 'recus_ucgs.id')
-            ->whereBetween('recus_ucgs.created_at', [$dateDebut, $dateFin])
-            ->whereIn('recus_ucgs.statut', ['en_cours', 'livre'])
-            ->whereNull('produits.deleted_at')
-            ->whereNull('recus_ucgs.deleted_at')
-            ->select(
-                'produits.id',
-                'produits.nom',
-                'produits.reference',
-                DB::raw('SUM(recu_items.marge_totale) as marge_totale'),
-                DB::raw('SUM(recu_items.quantite) as quantite_vendue'),
-                DB::raw('SUM(recu_items.sous_total) as total_ventes')
-            )
-            ->groupBy('produits.id', 'produits.nom', 'produits.reference')
-            ->orderByDesc('marge_totale')
-            ->take(10)
-            ->get();
+        // ✅ Top ventes avec marge réelle
+        $topVentes = $this->getTopProduits($dateDebut, $dateFin, 'quantite_vendue');
+        $topMarges = $this->getTopProduits($dateDebut, $dateFin, 'marge_totale'); // ✅ Corrigé ici
 
         $alerteStock = Produit::whereColumn('quantite_stock', '<=', 'stock_alerte')
             ->where('actif', true)
@@ -404,6 +423,62 @@ class ProduitController extends Controller
             'dateFin'
         ));
     }
+
+    /**
+     * ✅ HELPER - Calcul top produits avec marge réelle
+     * @param string $orderBy 'quantite_vendue' ou 'marge_totale'
+     */
+    private function getTopProduits($dateDebut, $dateFin, $orderBy = 'quantite_vendue')
+    {
+        $produits = Produit::whereHas('recuItems.recuUcg', function($q) use ($dateDebut, $dateFin) {
+            $q->whereBetween('created_at', [$dateDebut, $dateFin])
+              ->whereIn('statut', ['en_cours', 'livre']);
+        })
+        ->with(['recuItems' => function($q) use ($dateDebut, $dateFin) {
+            $q->whereHas('recuUcg', function($q2) use ($dateDebut, $dateFin) {
+                $q2->whereBetween('created_at', [$dateDebut, $dateFin])
+                   ->whereIn('statut', ['en_cours', 'livre']);
+            });
+        }])
+        ->get();
+
+        $results = $produits->map(function($produit) {
+            $quantite_vendue = 0;
+            $total_ventes = 0;
+            $marge_reelle = 0;
+
+            foreach ($produit->recuItems as $item) {
+                $recu = $item->recuUcg;
+                
+                $quantite_vendue += $item->quantite;
+                $total_ventes += $item->sous_total;
+                
+                // Marge brute
+                $marge_item = $item->marge_totale;
+                
+                // ✅ Si remise appliquée sur CET item
+                if ($recu && $recu->remise > 0 && $item->remise_appliquee) {
+                    $marge_item -= $recu->remise;
+                }
+                
+                $marge_reelle += $marge_item;
+            }
+
+            return (object)[
+                'id' => $produit->id,
+                'nom' => $produit->nom,
+                'reference' => $produit->reference,
+                'quantite_vendue' => $quantite_vendue,
+                'total_ventes' => $total_ventes,
+                'marge_totale' => $marge_reelle, // ✅ Utiliser marge_totale pour la vue
+            ];
+        });
+
+        return $results->sortByDesc($orderBy)->take(10);
+    }
+
+
+
 
     public function trash(Request $request)
     {

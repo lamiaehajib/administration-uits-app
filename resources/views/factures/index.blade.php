@@ -6,6 +6,9 @@
             --accent-red: #ef4444;
             --gradient-primary: linear-gradient(135deg, #C2185B, #D32F2F);
             --gradient-light: linear-gradient(135deg, rgba(194, 24, 91, 0.1), rgba(211, 47, 47, 0.1));
+            --gradient-blue: linear-gradient(135deg, #3b82f6, #2563eb);
+            --gradient-green: linear-gradient(135deg, #10b981, #059669);
+            --gradient-purple: linear-gradient(135deg, #8b5cf6, #7c3aed);
         }
 
         .page-header {
@@ -60,13 +63,10 @@
             box-shadow: 0 8px 25px rgba(211, 47, 47, 0.2);
         }
 
-        .stat-card.primary {
-            border-left-color: var(--primary-red);
-        }
-
-        .stat-card.accent {
-            border-left-color: var(--accent-red);
-        }
+        .stat-card.blue { border-left-color: #3b82f6; }
+        .stat-card.green { border-left-color: #10b981; }
+        .stat-card.purple { border-left-color: #8b5cf6; }
+        .stat-card.orange { border-left-color: #f59e0b; }
 
         .stat-label {
             font-size: 0.875rem;
@@ -86,6 +86,31 @@
             -webkit-text-fill-color: transparent;
             position: relative;
             z-index: 1;
+        }
+
+        .type-stats-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .type-card-stats {
+            background: var(--gradient-light);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border-left: 4px solid var(--primary-pink);
+        }
+
+        .type-card-stats.service {
+            border-left-color: #3b82f6;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1));
+        }
+
+        .type-card-stats.produit {
+            border-left-color: #10b981;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
         }
 
         .filter-section {
@@ -129,31 +154,11 @@
             box-shadow: 0 5px 15px rgba(211, 47, 47, 0.3);
         }
 
-        .btn-outline-primary {
-            border: 2px solid var(--primary-pink);
-            color: var(--primary-pink);
-            background: transparent;
-            padding: 0.75rem 2rem;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-outline-primary:hover {
-            background: var(--gradient-primary);
-            color: white;
-            border-color: transparent;
-        }
-
         .table-container {
             background: white;
             border-radius: 12px;
             padding: 1.5rem;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        }
-
-        .table {
-            margin-bottom: 0;
         }
 
         .table thead {
@@ -170,94 +175,32 @@
             padding: 1rem;
         }
 
-        .table tbody tr {
-            transition: all 0.3s ease;
-        }
-
         .table tbody tr:hover {
             background: var(--gradient-light);
             transform: scale(1.01);
         }
 
-        .table tbody td {
-            vertical-align: middle;
-            padding: 1rem;
-        }
-
-        .badge {
+        .badge-type {
             padding: 0.5rem 1rem;
             border-radius: 20px;
             font-weight: 600;
             font-size: 0.75rem;
-        }
-
-        .badge-success {
-            background: linear-gradient(135deg, #10b981, #059669);
-        }
-
-        .badge-warning {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-        }
-
-        .action-btn {
-            padding: 0.5rem;
-            border-radius: 6px;
-            transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
-            justify-content: center;
-            width: 35px;
-            height: 35px;
+            gap: 0.25rem;
         }
 
-        .action-btn:hover {
-            transform: translateY(-2px);
-        }
-
-        .btn-view {
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        .badge-service {
+            background: var(--gradient-blue);
             color: white;
         }
 
-        .btn-edit {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
+        .badge-produit {
+            background: var(--gradient-green);
             color: white;
         }
 
-        .btn-delete {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            color: white;
-        }
-
-        .btn-duplicate {
-            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-            color: white;
-        }
-
-        .pagination {
-            margin-top: 2rem;
-        }
-
-        .page-link {
-            color: var(--primary-pink);
-            border: 1px solid #e2e8f0;
-            padding: 0.5rem 1rem;
-            margin: 0 0.25rem;
-            border-radius: 6px;
-        }
-
-        .page-link:hover {
-            background: var(--gradient-primary);
-            color: white;
-            border-color: transparent;
-        }
-
-        .page-item.active .page-link {
-            background: var(--gradient-primary);
-            border-color: transparent;
-        }
-
-        .top-clients-section {
+        .top-produits-section {
             background: white;
             border-radius: 12px;
             padding: 2rem;
@@ -265,27 +208,23 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
         }
 
-        .client-item {
+        .produit-item {
             padding: 1rem;
-            border-left: 3px solid var(--primary-pink);
+            border-left: 3px solid #10b981;
             margin-bottom: 1rem;
-            background: var(--gradient-light);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
             border-radius: 8px;
             transition: all 0.3s ease;
         }
 
-        .client-item:hover {
+        .produit-item:hover {
             transform: translateX(5px);
-            box-shadow: 0 4px 10px rgba(194, 24, 91, 0.15);
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.15);
         }
 
         @media (max-width: 768px) {
             .stats-container {
                 grid-template-columns: 1fr;
-            }
-            
-            .page-title {
-                font-size: 1.5rem;
             }
         }
     </style>
@@ -296,12 +235,14 @@
             <h1 class="page-title">
                 <i class="fas fa-file-invoice"></i> Gestion des Factures
             </h1>
-            <a href="{{ route('factures.create') }}" class="btn btn-light btn-lg">
-                <i class="fas fa-plus-circle"></i> Nouvelle Facture
-            </a>
-                 <a href="{{ route('factures.corbeille') }}" class="btn btn-danger">
-    <i class="fa fa-trash"></i> Corbeille
-</a>
+            <div class="d-flex gap-2">
+                <a href="{{ route('factures.create') }}" class="btn btn-light btn-lg">
+                    <i class="fas fa-plus-circle"></i> Nouvelle Facture
+                </a>
+                <a href="{{ route('factures.corbeille') }}" class="btn btn-danger">
+                    <i class="fa fa-trash"></i> Corbeille
+                </a>
+            </div>
         </div>
     </div>
 
@@ -314,27 +255,86 @@
             <div class="stat-value">{{ number_format($stats['total_factures']) }}</div>
         </div>
 
-        <div class="stat-card primary">
+        <div class="stat-card blue">
             <div class="stat-label">
-                <i class="fas fa-money-bill-wave"></i> Montant HT
+                <i class="fas fa-briefcase"></i> Factures Services
             </div>
-            <div class="stat-value">{{ number_format($stats['total_montant_ht'], 2) }} DH</div>
+            <div class="stat-value">{{ number_format($stats['factures_services']) }}</div>
+            <small class="text-muted">{{ number_format($stats['montant_services'], 2) }} DH</small>
         </div>
 
-        <div class="stat-card accent">
+        <div class="stat-card green">
+            <div class="stat-label">
+                <i class="fas fa-box"></i> Factures Produits
+            </div>
+            <div class="stat-value">{{ number_format($stats['factures_produits']) }}</div>
+            <small class="text-muted">{{ number_format($stats['montant_produits'], 2) }} DH</small>
+        </div>
+
+        <div class="stat-card orange">
             <div class="stat-label">
                 <i class="fas fa-chart-line"></i> Montant TTC
             </div>
             <div class="stat-value">{{ number_format($stats['total_montant_ttc'], 2) }} DH</div>
         </div>
 
-        <div class="stat-card">
+        @if(isset($statsMarges) && $statsMarges->marge_totale)
+        <div class="stat-card purple">
             <div class="stat-label">
-                <i class="fas fa-percent"></i> Total TVA
+                <i class="fas fa-percentage"></i> Marge Produits
             </div>
-            <div class="stat-value">{{ number_format($stats['total_tva'], 2) }} DH</div>
+            <div class="stat-value">{{ number_format($statsMarges->marge_totale, 2) }} DH</div>
+            <small class="text-success">Taux: {{ number_format($tauxMarge, 1) }}%</small>
+        </div>
+        @endif
+    </div>
+
+    <!-- Stats par Type -->
+    @if($statsByType->count() > 0)
+    <div class="type-stats-section">
+        <h3 class="filter-title">
+            <i class="fas fa-chart-pie"></i> Répartition par Type
+        </h3>
+        <div class="row g-3">
+            @foreach($statsByType as $type => $data)
+            <div class="col-md-6">
+                <div class="type-card-stats {{ $type }}">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">
+                            @if($type === 'service')
+                                <i class="fas fa-briefcase text-primary"></i> Services
+                            @else
+                                <i class="fas fa-box text-success"></i> Produits
+                            @endif
+                        </h5>
+                        <span class="badge badge-type badge-{{ $type }}">
+                            {{ $data->count }} facture(s)
+                        </span>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <small class="text-muted d-block">Total HT</small>
+                            <strong>{{ number_format($data->total_ht, 2) }} DH</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Total TTC</small>
+                            <strong>{{ number_format($data->total_ttc, 2) }} DH</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">TVA</small>
+                            <strong>{{ number_format($data->total_tva, 2) }} DH</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Moyenne</small>
+                            <strong>{{ number_format($data->moyenne_ttc, 2) }} DH</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endforeach
         </div>
     </div>
+    @endif
 
     <!-- Filters Section -->
     <div class="filter-section">
@@ -344,6 +344,20 @@
         
         <form method="GET" action="{{ route('factures.index') }}">
             <div class="row g-3">
+                <!-- Type Filter -->
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Type</label>
+                    <select name="type" class="form-select">
+                        <option value="">Tous</option>
+                        <option value="service" {{ request('type') == 'service' ? 'selected' : '' }}>
+                            💼 Services
+                        </option>
+                        <option value="produit" {{ request('type') == 'produit' ? 'selected' : '' }}>
+                            📦 Produits
+                        </option>
+                    </select>
+                </div>
+
                 <!-- Search -->
                 <div class="col-md-4">
                     <label class="form-label fw-semibold">Recherche</label>
@@ -367,7 +381,7 @@
                 </div>
 
                 <!-- Période -->
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <label class="form-label fw-semibold">Période</label>
                     <select name="periode" class="form-select">
                         <option value="">Toutes</option>
@@ -393,18 +407,19 @@
                 </div>
 
                 <!-- Currency -->
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <label class="form-label fw-semibold">Devise</label>
                     <select name="currency" class="form-select">
                         <option value="">Toutes</option>
                         <option value="DH" {{ request('currency') == 'DH' ? 'selected' : '' }}>DH</option>
                         <option value="EUR" {{ request('currency') == 'EUR' ? 'selected' : '' }}>EUR</option>
+                        <option value="CFA" {{ request('currency') == 'CFA' ? 'selected' : '' }}>CFA</option>
                     </select>
                 </div>
 
                 <!-- Buttons -->
-                <div class="col-md-4 d-flex align-items-end gap-2">
-                    <button type="submit" class="btn btn-primary flex-grow-1">
+                <div class="col-12 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
                         <i class="fas fa-search"></i> Rechercher
                     </button>
                     <a href="{{ route('factures.index') }}" class="btn btn-outline-primary">
@@ -421,19 +436,17 @@
             <h4 class="filter-title mb-0">
                 <i class="fas fa-list"></i> Liste des Factures
             </h4>
-            <div class="d-flex gap-2">
-                
-                <a href="{{ route('factures.index', array_merge(request()->all(), ['export' => 'csv'])) }}" 
-                   class="btn btn-outline-primary btn-sm">
-                    <i class="fas fa-file-csv"></i> CSV
-                </a>
-            </div>
+            <a href="{{ route('factures.index', array_merge(request()->all(), ['export' => 'csv'])) }}" 
+               class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-file-csv"></i> Exporter CSV
+            </a>
         </div>
 
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead>
                     <tr>
+                        <th>Type</th>
                         <th>N° Facture</th>
                         <th>Date</th>
                         <th>Client</th>
@@ -449,43 +462,51 @@
                 <tbody>
                     @forelse($factures as $facture)
                     <tr>
+                        <td>
+                            <span class="badge-type badge-{{ $facture->type }}">
+                                @if($facture->type === 'service')
+                                    <i class="fas fa-briefcase"></i> Service
+                                @else
+                                    <i class="fas fa-box"></i> Produit
+                                @endif
+                            </span>
+                        </td>
                         <td><strong class="text-primary">{{ $facture->facture_num }}</strong></td>
                         <td>{{ \Carbon\Carbon::parse($facture->date)->format('d/m/Y') }}</td>
                         <td>{{ $facture->client }}</td>
                         <td>{{ Str::limit($facture->titre, 30) }}</td>
                         <td>{{ number_format($facture->total_ht, 2) }}</td>
-                        
                         <td>
                             @if($facture->tva > 0)
-                                <span class="badge badge-success">{{ number_format($facture->tva, 2) }}</span>
+                                <span class="badge bg-success">{{ number_format($facture->tva, 2) }}</span>
                             @else
-                                <span class="badge badge-warning">0.00</span>
+                                <span class="badge bg-warning">0.00</span>
                             @endif
                         </td>
                         <td><strong>{{ number_format($facture->total_ttc, 2) }}</strong></td>
                         <td><span class="badge" style="background: var(--gradient-primary)">{{ $facture->currency }}</span></td>
-                         <td>{{ $facture->user->name ?? 'Utilisateur inconnu' }}</td>
+                        <td>{{ $facture->user->name ?? 'Inconnu' }}</td>
                         <td>
                             <div class="d-flex gap-1 justify-content-center">
                                 <a href="{{ route('factures.show', $facture->id) }}" 
-                                   class="action-btn btn-view" title="Voir">
+                                   class="btn btn-sm btn-info" title="Voir">
                                     <i class="fas fa-eye"></i>
                                 </a>
                                 <a href="{{ route('factures.edit', $facture->id) }}" 
-                                   class="action-btn btn-edit" title="Modifier">
+                                   class="btn btn-sm btn-warning" title="Modifier">
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 <a href="{{ route('factures.duplicate', $facture->id) }}" 
-                                   class="action-btn btn-duplicate" title="Dupliquer">
+                                   class="btn btn-sm btn-secondary" title="Dupliquer">
                                     <i class="fas fa-copy"></i>
                                 </a>
                                 <form action="{{ route('factures.destroy', $facture->id) }}" 
                                       method="POST" class="d-inline">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="action-btn btn-delete" 
+                                    <button type="submit" class="btn btn-sm btn-danger" 
                                             title="Supprimer"
-                                            onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette facture?')">
+                                            onclick="return confirm('Supprimer cette facture?')">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
@@ -494,7 +515,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" class="text-center py-5">
+                        <td colspan="11" class="text-center py-5">
                             <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                             <p class="text-muted">Aucune facture trouvée</p>
                         </td>
@@ -505,21 +526,57 @@
         </div>
 
         <!-- Pagination -->
-        <div class="d-flex justify-content-center">
-            {{ $factures->links('pagination.custom') }}
+        <div class="d-flex justify-content-center mt-4">
+            {{ $factures->links() }}
         </div>
     </div>
 
-    <!-- Top Clients Section -->
+    <!-- Top Produits (si factures produits) -->
+    @if(isset($topProduits) && $topProduits->count() > 0)
+    <div class="top-produits-section">
+        <h3 class="filter-title">
+            <i class="fas fa-trophy"></i> Top 10 Produits Vendus
+        </h3>
+        <div class="row">
+            @foreach($topProduits as $index => $item)
+            <div class="col-md-6 mb-3">
+                <div class="produit-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1 fw-bold">
+                                {{ $index + 1 }}. {{ $item->produit->nom ?? 'Produit supprimé' }}
+                            </h6>
+                            <small class="text-muted">
+                                Quantité: {{ number_format($item->total_quantite) }} | 
+                                {{ $item->nb_factures }} facture(s)
+                            </small>
+                        </div>
+                        <div class="text-end">
+                            <div class="stat-value" style="font-size: 1.25rem">
+                                {{ number_format($item->total_ventes, 2) }} DH
+                            </div>
+                            <small class="text-success">
+                                Marge: {{ number_format($item->total_marge, 2) }} DH
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
+    <!-- Top Clients -->
     @if($topClients->count() > 0)
-    <div class="top-clients-section">
+    <div class="top-produits-section">
         <h3 class="filter-title">
             <i class="fas fa-users"></i> Top 10 Clients
         </h3>
         <div class="row">
             @foreach($topClients as $index => $client)
             <div class="col-md-6 mb-3">
-                <div class="client-item">
+                <div class="produit-item" style="border-left-color: var(--primary-pink)">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="mb-1 fw-bold">{{ $index + 1 }}. {{ $client->client }}</h6>

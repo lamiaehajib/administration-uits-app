@@ -562,7 +562,8 @@
                 title: 'Liste des Factures', 
                 links: [
                     { href: '{{ route('factures.index') }}', label: 'Factures de Projet', icon: 'fas fa-file-invoice-dollar', color: '#C2185B' },
-                    { href: '{{ route('facturefs.index') }}', label: 'Factures de Formation', icon: 'fas fa-money-check-alt', color: '#4CAF50' }
+                    { href: '{{ route('facturefs.index') }}', label: 'Factures de Formation', icon: 'fas fa-money-check-alt', color: '#4CAF50' },
+                    { href: '{{ route('factures-recues.index') }}', label: 'Factures Reçues', icon: 'fas fa-file-download', color: '#3F51B5' }
                 ]
             },
             { 

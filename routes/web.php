@@ -13,6 +13,7 @@ use App\Http\Controllers\DashboardStockController;
 use App\Http\Controllers\DevisController;
 use App\Http\Controllers\DevisfController;
 use App\Http\Controllers\FactureController;
+use App\Http\Controllers\FactureRecueController;
 use App\Http\Controllers\PaiementController;
 use App\Http\Controllers\ProductVariantController;
 use App\Http\Controllers\ProfileController;
@@ -169,7 +170,7 @@ Route::get('/factures/produits-by-category/{categoryId}', [FactureController::cl
     ->name('factures.produits-by-category');
 
 
-    
+
 Route::get('/facturef/corbeille', [FacturefController::class, 'corbeille'])
       ->name('facturef.corbeille');
 
@@ -357,6 +358,66 @@ Route::prefix('stock')->group(function () {
 Route::get('/dashboardstock', [DashboardStockController::class, 'index'])->name('dashboardstock');
     Route::get('/dashboardstock/stats', [DashboardStockController::class, 'getStats'])->name('dashboardstock.stats');
 
+
+
+// ============================================
+// 🧾 FACTURES REÇUES
+// ============================================
+Route::prefix('factures-recues')->name('factures-recues.')->group(function () {
+    
+    // 📋 Liste & Affichage
+    Route::get('/', [FactureRecueController::class, 'index'])->name('index');
+    Route::get('/trash', [FactureRecueController::class, 'trash'])->name('trash');
+    
+    // ✏️ Création - IMPORTANT: AVANT {id}
+    Route::get('/create', [FactureRecueController::class, 'create'])->name('create');
+    Route::post('/store', [FactureRecueController::class, 'store'])->name('store');
+    
+    // 🔢 Générer numéro de facture (AJAX)
+    Route::post('/generate-numero', [FactureRecueController::class, 'generateNumeroFacture'])->name('generate-numero');
+    
+    // 🔄 Édition
+    Route::get('/{id}/edit', [FactureRecueController::class, 'edit'])->name('edit');
+    Route::put('/{id}', [FactureRecueController::class, 'update'])->name('update');
+    Route::patch('/{id}', [FactureRecueController::class, 'update'])->name('patch');
+    
+    // ⚡ Édition Rapide (AJAX)
+    Route::post('/{id}/quick-edit', [FactureRecueController::class, 'quickEdit'])->name('quick-edit');
+    
+    // 📋 Duplication
+    Route::post('/{id}/duplicate', [FactureRecueController::class, 'duplicate'])->name('duplicate');
+    
+    // 🗑️ Suppression
+    Route::delete('/{id}', [FactureRecueController::class, 'destroy'])->name('destroy');
+    Route::delete('/{id}/force', [FactureRecueController::class, 'forceDestroy'])->name('force-destroy');
+    
+    // 🔄 Restauration
+    Route::post('/{id}/restore', [FactureRecueController::class, 'restore'])->name('restore');
+    
+    // 📥 Téléchargement
+    Route::get('/{id}/download', [FactureRecueController::class, 'downloadPDF'])->name('download');
+    
+    // 🔄 Actions en masse (AJAX)
+    Route::post('/bulk/update-status', [FactureRecueController::class, 'bulkUpdateStatus'])->name('bulk.update-status');
+    Route::post('/bulk/delete', [FactureRecueController::class, 'bulkDelete'])->name('bulk.delete');
+    
+    // 📄 Afficher - IMPORTANT: EN DERNIER
+    Route::get('/{id}', [FactureRecueController::class, 'show'])->name('show');
+});
+
+// ============================================
+// 👥 API AJAX - Consultants & Fournisseurs
+// ============================================
+Route::prefix('api')->name('api.')->group(function () {
+    
+    // Créer nouveau consultant/fournisseur via modal
+    Route::post('/consultants', [FactureRecueController::class, 'storeConsultant'])->name('consultants.store');
+    Route::post('/fournisseurs', [FactureRecueController::class, 'storeFournisseur'])->name('fournisseurs.store');
+    
+    // Obtenir les détails (pour auto-remplissage)
+    Route::get('/consultants/{id}', [FactureRecueController::class, 'getConsultant'])->name('consultants.get');
+    Route::get('/fournisseurs/{id}', [FactureRecueController::class, 'getFournisseur'])->name('fournisseurs.get');
+});
 
 
     

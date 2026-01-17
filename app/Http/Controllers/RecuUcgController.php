@@ -238,59 +238,137 @@ public function store(Request $request)
         return view('recus.show', compact('recu'));
     }
 
-    public function edit(RecuUcg $recu)
-    {
-        if (!in_array($recu->statut, ['en_cours', 'livre'])) {
-            return back()->with('error', 'Ce reçu ne peut pas être modifié');
-        }
-
-        $produits = Produit::where('actif', true)
-            ->orderBy('nom')
-            ->get();
-
-        $recu->load('items.produit');
-
-        return view('recus.edit', compact('recu', 'produits'));
+   public function edit(RecuUcg $recu)
+{
+    if (!in_array($recu->statut, ['en_cours', 'livre'])) {
+        return back()->with('error', 'Ce reçu ne peut pas être modifié');
     }
 
-    public function update(Request $request, RecuUcg $recu)
-    {
-        if (!in_array($recu->statut, ['en_cours', 'livre'])) {
-            return back()->with('error', 'Ce reçu ne peut pas être modifié');
+    // Charger toutes les catégories actives
+    $categories = \App\Models\Category::orderBy('nom')->get();
+
+    // Charger tous les produits avec variants
+    $produits = Produit::with(['variants' => function($query) {
+        $query->where('actif', true)
+              ->where('quantite_stock', '>', 0);
+    }])
+    ->where('actif', true)
+    ->where(function($q) {
+        $q->where('quantite_stock', '>', 0)
+          ->orWhereHas('variants', function($query) {
+              $query->where('actif', true)
+                    ->where('quantite_stock', '>', 0);
+          });
+    })
+    ->orderBy('nom')
+    ->get();
+
+    // Charger les items du reçu avec les relations nécessaires
+    $recu->load(['items.produit', 'items.variant']);
+
+    return view('recus.edit', compact('recu', 'produits', 'categories'));
+}
+
+public function update(Request $request, RecuUcg $recu)
+{
+    if (!in_array($recu->statut, ['en_cours', 'livre'])) {
+        return back()->with('error', 'Ce reçu ne peut pas être modifié');
+    }
+
+    $validated = $request->validate([
+        'client_nom' => 'required|string|max:255',
+        'client_prenom' => 'nullable|string|max:255',
+        'client_telephone' => 'nullable|string|max:20',
+        'client_email' => 'nullable|email|max:255',
+        'client_adresse' => 'nullable|string',
+        'equipement' => 'nullable|string|max:255',
+        'details' => 'nullable|string',
+        'type_garantie' => 'required|in:30_jours,90_jours,180_jours,360_jours,sans_garantie',
+        'remise' => 'nullable|numeric|min:0',
+        'tva' => 'nullable|numeric|min:0',
+        'mode_paiement' => 'required|in:especes,carte,cheque,virement,credit',
+        'notes' => 'nullable|string',
+        'items' => 'required|array|min:1',
+        'items.*.produit_id' => 'required|exists:produits,id',
+        'items.*.product_variant_id' => 'nullable|exists:product_variants,id',
+        'items.*.quantite' => 'required|integer|min:1',
+    ]);
+
+    DB::beginTransaction();
+    try {
+        // Sauvegarder les anciens items pour restaurer le stock
+        $oldItems = $recu->items()->get();
+
+        // 1️⃣ Restaurer le stock des anciens items (soft delete va le faire automatiquement)
+        foreach ($oldItems as $item) {
+            $item->delete(); // Le stock sera restauré via l'événement 'deleted' dans RecuItem
         }
 
-        $validated = $request->validate([
-            'client_nom' => 'required|string|max:255',
-            'client_prenom' => 'nullable|string|max:255',
-            'client_telephone' => 'nullable|string|max:20',
-            'client_email' => 'nullable|email|max:255',
-            'client_adresse' => 'nullable|string',
-            'equipement' => 'nullable|string|max:255',
-            'details' => 'nullable|string',
-'type_garantie' => 'required|in:30_jours,90_jours,180_jours,360_jours,sans_garantie',
-            'remise' => 'nullable|numeric|min:0',
-            'tva' => 'nullable|numeric|min:0',
-            'notes' => 'nullable|string',
+        // 2️⃣ Mettre à jour les informations du reçu
+        $recu->update([
+            'client_nom' => $validated['client_nom'],
+            'client_prenom' => $validated['client_prenom'] ?? null,
+            'client_telephone' => $validated['client_telephone'] ?? null,
+            'client_email' => $validated['client_email'] ?? null,
+            'client_adresse' => $validated['client_adresse'] ?? null,
+            'equipement' => $validated['equipement'] ?? null,
+            'details' => $validated['details'] ?? null,
+            'type_garantie' => $validated['type_garantie'],
+            'remise' => $validated['remise'] ?? 0,
+            'tva' => $validated['tva'] ?? 0,
+            'mode_paiement' => $validated['mode_paiement'],
+            'notes' => $validated['notes'] ?? null,
         ]);
 
-        DB::beginTransaction();
-        try {
-            $recu->update($validated);
-            $recu->calculerTotal();
+        // 3️⃣ Créer les nouveaux items
+        foreach ($validated['items'] as $itemData) {
+            
+            if (!empty($itemData['product_variant_id'])) {
+                // Produit avec variant
+                $variant = ProductVariant::findOrFail($itemData['product_variant_id']);
+                
+                if ($variant->quantite_stock < $itemData['quantite']) {
+                    throw new \Exception("Stock insuffisant pour {$variant->full_name}. Stock disponible: {$variant->quantite_stock}");
+                }
 
-            DB::commit();
+                $recu->items()->create([
+                    'produit_id' => $itemData['produit_id'],
+                    'product_variant_id' => $itemData['product_variant_id'],
+                    'quantite' => $itemData['quantite'],
+                ]);
 
-            return redirect()
-                ->route('recus.show', $recu)
-                ->with('success', 'Reçu mis à jour avec succès!');
+            } else {
+                // Produit simple (sans variant)
+                $produit = Produit::findOrFail($itemData['produit_id']);
+                
+                if ($produit->quantite_stock < $itemData['quantite']) {
+                    throw new \Exception("Stock insuffisant pour {$produit->nom}. Stock disponible: {$produit->quantite_stock}");
+                }
 
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()
-                ->withInput()
-                ->with('error', 'Erreur: ' . $e->getMessage());
+                $recu->items()->create([
+                    'produit_id' => $itemData['produit_id'],
+                    'quantite' => $itemData['quantite'],
+                ]);
+            }
         }
+
+        // 4️⃣ Recalculer le total
+        $recu->refresh();
+        $recu->calculerTotal();
+
+        DB::commit();
+
+        return redirect()
+            ->route('recus.show', $recu)
+            ->with('success', "Reçu {$recu->numero_recu} mis à jour avec succès!");
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return back()
+            ->withInput()
+            ->with('error', 'Erreur: ' . $e->getMessage());
     }
+}
 
     public function updateStatut(Request $request, RecuUcg $recu)
     {

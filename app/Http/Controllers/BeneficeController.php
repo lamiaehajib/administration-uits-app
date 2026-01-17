@@ -50,7 +50,7 @@ class BeneficeController extends Controller
         $benefice = [
             'marge_brute' => $statsVentes['marge_brute'],
             'total_charges' => $statsCharges['total_charges'],
-            'benefice_net' => $statsVentes['marge_brute'] - $statsCharges['total_charges'],
+            'benefice_net' => $statsVentes['marge_brute'] - $statsCharges['total_charge3s'],
             'taux_marge_nette' => $statsVentes['total_ventes'] > 0 
                 ? (($statsVentes['marge_brute'] - $statsCharges['total_charges']) / $statsVentes['total_ventes']) * 100 
                 : 0,

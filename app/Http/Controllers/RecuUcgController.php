@@ -264,7 +264,7 @@ public function store(Request $request)
     ->get();
 
     // Charger les items du reçu avec les relations nécessaires
-    $recu->load(['items.produit', 'items.variant']);
+    $recu->load(['items.produit', 'items.variant', 'paiements']);
 
     return view('recus.edit', compact('recu', 'produits', 'categories'));
 }
@@ -287,6 +287,8 @@ public function update(Request $request, RecuUcg $recu)
         'remise' => 'nullable|numeric|min:0',
         'tva' => 'nullable|numeric|min:0',
         'mode_paiement' => 'required|in:especes,carte,cheque,virement,credit',
+        'montant_paye' => 'nullable|numeric|min:0',
+        'date_paiement' => 'nullable|date',
         'notes' => 'nullable|string',
         'items' => 'required|array|min:1',
         'items.*.produit_id' => 'required|exists:produits,id',
@@ -317,6 +319,7 @@ public function update(Request $request, RecuUcg $recu)
             'remise' => $validated['remise'] ?? 0,
             'tva' => $validated['tva'] ?? 0,
             'mode_paiement' => $validated['mode_paiement'],
+            'date_paiement' => $validated['date_paiement'] ?? now(),
             'notes' => $validated['notes'] ?? null,
         ]);
 
@@ -355,6 +358,24 @@ public function update(Request $request, RecuUcg $recu)
         // 4️⃣ Recalculer le total
         $recu->refresh();
         $recu->calculerTotal();
+
+        // 5️⃣ Gérer le paiement (si montant_paye a changé)
+        $montantPaye = $validated['montant_paye'] ?? 0;
+        $montantDejaPayé = $recu->paiements->sum('montant');
+
+        if ($montantPaye != $montantDejaPayé) {
+            // Supprimer tous les anciens paiements
+            $recu->paiements()->delete();
+
+            // Ajouter le nouveau paiement si montant > 0
+            if ($montantPaye > 0) {
+                $recu->ajouterPaiement(
+                    $montantPaye,
+                    $validated['mode_paiement'],
+                    null
+                );
+            }
+        }
 
         DB::commit();
 

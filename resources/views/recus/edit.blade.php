@@ -239,6 +239,16 @@
                                 <option value="credit" {{ old('mode_paiement', $recu->mode_paiement) == 'credit' ? 'selected' : '' }}>Crédit</option>
                             </select>
                         </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Montant Payé (DH)</label>
+                            <input type="number" name="montant_paye" class="form-control" 
+                                   step="0.01" min="0" value="{{ old('montant_paye', $recu->paiements->sum('montant')) }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Date de Paiement</label>
+                            <input type="date" name="date_paiement" class="form-control" 
+                                   value="{{ old('date_paiement', $recu->date_paiement ? $recu->date_paiement->format('Y-m-d') : date('Y-m-d')) }}">
+                        </div>
                         <div class="col-12">
                             <label class="form-label">Notes</label>
                             <textarea name="notes" class="form-control" rows="2">{{ old('notes', $recu->notes) }}</textarea>
@@ -285,7 +295,6 @@
                 const categoryId = $(this).val();
                 
                 if (!categoryId) {
-                    // Réinitialiser : afficher tous les produits
                     $('.produit-select').each(function() {
                         const currentVal = $(this).val();
                         $(this).html(produitsOptions);
@@ -295,7 +304,6 @@
                     return;
                 }
 
-                // Charger les produits de cette catégorie via AJAX
                 $.ajax({
                     url: `/api/produits/category/${categoryId}`,
                     method: 'GET',
@@ -317,7 +325,6 @@
                                 `;
                             });
                             
-                            // Mettre à jour tous les selects de produits
                             $('.produit-select').each(function() {
                                 const currentVal = $(this).val();
                                 $(this).html(options);
@@ -337,12 +344,10 @@
                 });
             });
 
-            // Bouton réinitialiser
             $('#reset-filter').on('click', function() {
                 $('#category-filter').val('').trigger('change');
             });
 
-            // Gestion sélection produit
             $(document).on('change', '.produit-select', function() {
                 const row = $(this).closest('.item-row');
                 const produitId = $(this).val();
@@ -350,7 +355,6 @@
                 const prix = $(this).find(':selected').data('prix');
                 const stock = $(this).find(':selected').data('stock');
 
-                // Reset
                 row.find('.variant-container').hide();
                 row.find('.variant-select').html('<option value="">-- Produit de base (sans variant) --</option>');
                 row.find('.variant-specs').hide();
@@ -358,12 +362,10 @@
 
                 if (!produitId) return;
 
-                // Afficher le prix du produit de base
                 row.find('.prix-display').val(parseFloat(prix).toFixed(2) + ' DH');
                 row.find('.quantite-input').attr('max', stock);
 
                 if (hasVariants) {
-                    console.log('⚡ Chargement variants...');
                     $.ajax({
                         url: `/api/variants/produit/${produitId}`,
                         method: 'GET',
@@ -397,7 +399,6 @@
                 calculateTotal();
             });
 
-            // Gestion sélection variant
             $(document).on('change', '.variant-select', function() {
                 const row = $(this).closest('.item-row');
                 const variantId = $(this).val();
@@ -423,7 +424,6 @@
                 calculateTotal();
             });
 
-            // Ajouter item
             $('#add-item').click(function() {
                 const currentOptions = $('.produit-select').first().html();
                 const newItem = `
@@ -469,14 +469,12 @@
                 updateRemoveButtons();
             });
 
-            // Supprimer item
             $(document).on('click', '.remove-item', function() {
                 $(this).closest('.item-row').remove();
                 updateRemoveButtons();
                 calculateTotal();
             });
 
-            // Calcul total
             $(document).on('input', '.quantite-input, #remise, #tva', calculateTotal);
 
             function calculateTotal() {
@@ -508,7 +506,6 @@
                 $('.remove-item').prop('disabled', itemCount <= 1);
             }
 
-            // Validation
             $('#recuForm').on('submit', function(e) {
                 let valid = true;
                 let errors = [];
@@ -541,7 +538,6 @@
                 }
             });
 
-            // ✅ Initialiser le calcul au chargement
             calculateTotal();
         });
     </script>

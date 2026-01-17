@@ -5,10 +5,12 @@ use App\Http\Controllers\AttestationAllinoneController;
 use App\Http\Controllers\AttestationController;
 use App\Http\Controllers\AttestationFormationController;
 use App\Http\Controllers\BackupController;
+use App\Http\Controllers\BeneficeController;
 use App\Http\Controllers\BonCommandeRController;
 use App\Http\Controllers\BonDeCommandeController;
 use App\Http\Controllers\BonLivraisonController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ChargeController;
 use App\Http\Controllers\DashboardStockController;
 use App\Http\Controllers\DevisController;
 use App\Http\Controllers\DevisfController;
@@ -405,9 +407,6 @@ Route::prefix('factures-recues')->name('factures-recues.')->group(function () {
     Route::get('/{id}', [FactureRecueController::class, 'show'])->name('show');
 });
 
-// ============================================
-// 👥 API AJAX - Consultants & Fournisseurs
-// ============================================
 Route::prefix('api')->name('api.')->group(function () {
     
     // Créer nouveau consultant/fournisseur via modal
@@ -417,10 +416,45 @@ Route::prefix('api')->name('api.')->group(function () {
     // Obtenir les détails (pour auto-remplissage)
     Route::get('/consultants/{id}', [FactureRecueController::class, 'getConsultant'])->name('consultants.get');
     Route::get('/fournisseurs/{id}', [FactureRecueController::class, 'getFournisseur'])->name('fournisseurs.get');
+
+    // ✅ Routes pour mise à jour des consultants et fournisseurs (CORRIGÉES)
+    Route::put('/consultants/{id}', [FactureRecueController::class, 'updateConsultant'])->name('consultants.update');
+    Route::put('/fournisseurs/{id}', [FactureRecueController::class, 'updateFournisseur'])->name('fournisseurs.update');
 });
 
 
+   // 1. DASHBOARD (avant /charges/{charge})
+Route::get('/charges/dashboard', [ChargeController::class, 'dashboard'])->name('charges.dashboard');
+
+// 2. EXPORT (avant /charges/{charge})
+Route::get('/charges/export', [ChargeController::class, 'export'])->name('charges.export');
+
+// 3. STATISTIQUES API (avant /charges/{charge})
+Route::get('/charges/statistiques/api', [ChargeController::class, 'statistiques'])->name('charges.statistiques');
+
+// 4. INDEX
+Route::get('/charges', [ChargeController::class, 'index'])->name('charges.index');
+
+// 5. CATÉGORIES - Routes spécifiques AVANT les routes avec {category}
+Route::post('/charges/categories', [ChargeController::class, 'storeCategory'])->name('charges.categories.store');
+Route::get('/charges/categories/{category}/details', [ChargeController::class, 'getCategoryDetails'])->name('charges.categories.details');
+Route::put('/charges/categories/{category}', [ChargeController::class, 'updateCategory'])->name('charges.categories.update');
+Route::delete('/charges/categories/{category}', [ChargeController::class, 'destroyCategory'])->name('charges.categories.destroy');
+Route::post('/charges/categories/{category}/toggle', [ChargeController::class, 'toggleCategory'])->name('charges.categories.toggle');
+
+// 6. CHARGES - CRUD (avec paramètre {charge})
+Route::post('/charges', [ChargeController::class, 'store'])->name('charges.store');
+Route::get('/charges/{charge}', [ChargeController::class, 'show'])->name('charges.show');
+Route::put('/charges/{charge}', [ChargeController::class, 'update'])->name('charges.update');
+Route::delete('/charges/{charge}', [ChargeController::class, 'destroy'])->name('charges.destroy');
+
+// 7. ACTIONS SPÉCIFIQUES SUR UNE CHARGE
+Route::post('/charges/{charge}/marquer-payee', [ChargeController::class, 'marquerPayee'])->name('charges.marquer-payee');
+Route::post('/charges/{charge}/ajouter-paiement', [ChargeController::class, 'ajouterPaiement'])->name('charges.ajouter-paiement');
+Route::post('/charges/{charge}/generer-prochaine', [ChargeController::class, 'genererProchaine'])->name('charges.generer-prochaine');
+Route::post('/charges/{id}/restore', [ChargeController::class, 'restore'])->name('charges.restore');
     
+Route::get('/benefices/dashboard', [BeneficeController::class, 'dashboard'])->name('benefices.dashboard');
 
       });
 

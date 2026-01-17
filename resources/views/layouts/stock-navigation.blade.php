@@ -240,6 +240,14 @@
                 </a>
             </button>
             @endcan
+            @can('paiement-list')
+<button type="button">
+    <a href="{{ route('charges.index') }}">
+        <i class="fas fa-file-invoice-dollar"></i>
+        <span>Gestion des Charges</span>
+    </a>
+</button>
+@endcan
 
             {{-- ✅ Stock Movements - Gérant, Magasinier --}}
             @can('stock-movement-list')
@@ -299,7 +307,14 @@
                 </a>
             </button>
             @endcan
-
+ @can('paiement-rapport')
+            <button type="button">
+                <a href="{{ route('benefices.dashboard') }}">
+                    <i class="fas fa-hand-holding-dollar"></i>
+                    <span>Tableau de Bord Bénéfices</span>
+                </a>
+            </button>
+            @endcan
             <div class="sidebar-divider"></div>
             <div class="sidebar-section-title">🛠️ Service Client & Documents</div>
 

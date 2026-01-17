@@ -125,7 +125,7 @@ class PermissionseSeeder extends Seeder
 
         // Gérant
         $gerant = User::firstOrCreate(
-            ['email' => 'g\gerant@stock.com'],
+            ['email' => 'gerant@stock.com'],
             [
                 'name' => 'Gérant',
                 'password' => Hash::make('gerant123'),

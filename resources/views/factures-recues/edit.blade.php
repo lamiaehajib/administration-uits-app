@@ -109,6 +109,7 @@
                                     <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#addConsultantModal">
                                         <i class="fas fa-plus"></i>
                                     </button>
+                                    
                                 </div>
                                 <div id="consultantInfo" class="alert alert-info" style="display: {{ $facture->fournisseur_type === 'App\Models\Consultant' ? 'block' : 'none' }};">
                                     <small><i class="fas fa-info-circle"></i> <span id="consultantDetails"></span></small>
@@ -334,12 +335,23 @@
                                     {{ $facture->nom_fournisseur }}
                                 </div>
                             </div>
-                            <div class="summary-item mb-3 pb-3 border-bottom">
-                                <small class="text-muted d-block mb-1">Numéro Facture</small>
-                                <div class="fw-semibold text-primary" id="summaryNumero">
-                                    {{ $facture->numero_facture }}
-                                </div>
-                            </div>
+                           <div class="col-md-6">
+    <label class="form-label fw-semibold">
+        NUMÉRO DE FACTURE 
+        <span class="badge bg-secondary">
+            <i class="fas fa-lock"></i> Non modifiable
+        </span>
+    </label>
+    <input type="text" 
+           class="form-control bg-light" 
+           value="{{ $facture->numero_facture }}" 
+           readonly 
+           style="cursor: not-allowed;">
+    <small class="text-muted">
+        <i class="fas fa-info-circle"></i> 
+        Le numéro de facture ne peut pas être modifié après la création
+    </small>
+</div>
                             <div class="summary-item mb-3 pb-3 border-bottom">
                                 <small class="text-muted d-block mb-1">Montant TTC</small>
                                 <div class="fs-4 fw-bold text-success" id="summaryMontant">
@@ -655,14 +667,14 @@ $(document).ready(function() {
     // ============================================
     // 7. UPDATE NUMERO FACTURE SUMMARY
     // ============================================
-    $('input[name="numero_facture"]').on('input', function() {
-        const numero = $(this).val();
-        if (numero) {
-            $('#summaryNumero').text(numero);
-        } else {
-            $('#summaryNumero').html('<i class="fas fa-question-circle text-muted"></i> Non défini');
-        }
-    });
+    // $('input[name="numero_facture"]').on('input', function() {
+    //     const numero = $(this).val();
+    //     if (numero) {
+    //         $('#summaryNumero').text(numero);
+    //     } else {
+    //         $('#summaryNumero').html('<i class="fas fa-question-circle text-muted"></i> Non défini');
+    //     }
+    // });
 
     // ============================================
     // 8. PDF FILE PREVIEW
@@ -749,16 +761,16 @@ $(document).ready(function() {
         }
         
         // Vérifier le numéro de facture
-        const numeroFacture = $('input[name="numero_facture"]').val();
-        if (!numeroFacture || numeroFacture.trim() === '') {
-            e.preventDefault();
-            Swal.fire({
-                icon: 'warning',
-                title: 'Attention',
-                text: 'Veuillez saisir le numéro de facture'
-            });
-            return false;
-        }
+        // const numeroFacture = $('input[name="numero_facture"]').val();
+        // if (!numeroFacture || numeroFacture.trim() === '') {
+        //     e.preventDefault();
+        //     Swal.fire({
+        //         icon: 'warning',
+        //         title: 'Attention',
+        //         text: 'Veuillez saisir le numéro de facture'
+        //     });
+        //     return false;
+        // }
         
         // Vérifier le montant
         const montant = parseFloat($('input[name="montant_ttc"]').val());

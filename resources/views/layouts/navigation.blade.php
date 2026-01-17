@@ -591,6 +591,14 @@ links: [
         color: '#2196F3' 
     },
     @endcan
+@can('produit-rapport')
+    { 
+            href: '{{ route('charges.index') }}', 
+            label: 'Gestion des Charges', 
+            icon: 'fas fa-file-invoice-dollar', 
+            color: '#D32F2F' 
+        },
+        @endcan
     { 
         href: '{{ route('recus.index') }}', 
         label: 'Reçus de Paiement', 
@@ -620,8 +628,16 @@ links: [
         label: 'Totaux et Statistiques', 
         icon: 'fas fa-chart-pie', 
         color: '#F44336' 
-    }
+    },
     @endcan
+    @can('produit-rapport')
+    { 
+            href: '{{ route('benefices.dashboard') }}', 
+            label: 'Tableau de Bord Bénéfices', 
+            icon: 'fas fa-hand-holding-dollar', 
+            color: '#2E7D32' 
+        }
+          @endcan
 ]
             },
         ];

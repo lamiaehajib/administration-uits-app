@@ -524,7 +524,7 @@ class FactureRecueController extends Controller
     /**
      * 💾 Mettre à jour une facture
      */
-    public function update(Request $request, $id)
+   public function update(Request $request, $id)
 {
     $facture = FactureRecue::findOrFail($id);
 
@@ -533,11 +533,11 @@ class FactureRecueController extends Controller
         return back()->with('error', 'Une facture payée ne peut pas être modifiée.');
     }
 
-    // VALIDATION
+    // VALIDATION - SANS LE NUMÉRO DE FACTURE
     $validated = $request->validate([
         'type_fournisseur' => 'required|in:consultant,fournisseur',
         'fournisseur_id' => 'required|integer',
-        'numero_facture' => 'required|string|unique:factures_recues,numero_facture,' . $id,
+        // ❌ SUPPRIMÉ: 'numero_facture' => 'required|string|unique:factures_recues,numero_facture,' . $id,
         'date_facture' => 'required|date',
         'date_echeance' => 'nullable|date|after_or_equal:date_facture',
         'montant_ttc' => 'required|numeric|min:0',
@@ -548,12 +548,10 @@ class FactureRecueController extends Controller
 
     DB::beginTransaction();
     try {
-        // CORRECTION: Utiliser le namespace complet
         $fournisseurType = $validated['type_fournisseur'] === 'consultant' 
             ? 'App\Models\Consultant'
             : 'App\Models\Fournisseur';
 
-        // Vérifier que le fournisseur existe
         $fournisseurModel = $fournisseurType === 'App\Models\Consultant' 
             ? Consultant::class 
             : Fournisseur::class;
@@ -571,12 +569,10 @@ class FactureRecueController extends Controller
         
         if ($request->hasFile('fichier_pdf')) {
             try {
-                // Supprimer l'ancien fichier s'il existe
                 if ($fichierPath && Storage::disk('public')->exists($fichierPath)) {
                     Storage::disk('public')->delete($fichierPath);
                 }
                 
-                // Uploader le nouveau fichier
                 $fichierPath = $request->file('fichier_pdf')->store('factures-recues', 'public');
                 
             } catch (\Exception $e) {
@@ -588,9 +584,9 @@ class FactureRecueController extends Controller
             }
         }
 
-        // Mettre à jour la facture
+        // ✅ MISE À JOUR - SANS MODIFIER LE NUMÉRO
         $facture->update([
-            'numero_facture' => $validated['numero_facture'],
+            // ❌ SUPPRIMÉ: 'numero_facture' => $validated['numero_facture'],
             'date_facture' => $validated['date_facture'],
             'date_echeance' => $validated['date_echeance'],
             'fournisseur_type' => $fournisseurType,
@@ -604,7 +600,6 @@ class FactureRecueController extends Controller
 
         DB::commit();
 
-        // Log de succès
         Log::info('Facture mise à jour avec succès', [
             'id' => $facture->id,
             'numero' => $facture->numero_facture,
@@ -613,20 +608,6 @@ class FactureRecueController extends Controller
 
         return redirect()->route('factures-recues.show', $facture->id)
             ->with('success', 'Facture mise à jour avec succès!');
-
-    } catch (\Illuminate\Database\QueryException $e) {
-        DB::rollBack();
-        
-        // Erreur de contrainte d'unicité sur le numéro
-        if ($e->getCode() == 23000) {
-            Log::error('Erreur unicité numéro facture lors de la mise à jour: ' . $e->getMessage());
-            return back()->withInput()
-                ->with('error', 'Ce numéro de facture existe déjà. Veuillez en choisir un autre.');
-        }
-
-        Log::error('Erreur DB mise à jour facture: ' . $e->getMessage());
-        return back()->withInput()
-            ->with('error', 'Erreur de base de données: ' . $e->getMessage());
 
     } catch (\Exception $e) {
         DB::rollBack();
@@ -1027,4 +1008,68 @@ class FactureRecueController extends Controller
             ], 422);
         }
     }
+
+
+    public function updateConsultant(Request $request, $id)
+{
+    try {
+        $consultant = Consultant::findOrFail($id);
+        
+        $validated = $request->validate([
+            'nom' => 'required|string|max:255',
+            'prenom' => 'nullable|string|max:255',
+            'email' => 'nullable|email|unique:consultants,email,' . $id,
+            'telephone' => 'nullable|string|max:20',
+            'specialite' => 'nullable|string|max:255',
+            'cin' => 'nullable|string|max:20',
+            'tarif_heure' => 'nullable|numeric|min:0',
+        ]);
+
+        $consultant->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'consultant' => $consultant,
+            'message' => 'Consultant mis à jour avec succès!'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur: ' . $e->getMessage()
+        ], 422);
+    }
+}
+
+/**
+ * Mettre à jour un fournisseur via AJAX
+ */
+public function updateFournisseur(Request $request, $id)
+{
+    try {
+        $fournisseur = Fournisseur::findOrFail($id);
+        
+        $validated = $request->validate([
+            'nom_entreprise' => 'required|string|max:255',
+            'contact_nom' => 'nullable|string|max:255',
+            'email' => 'nullable|email|unique:fournisseurs,email,' . $id,
+            'telephone' => 'nullable|string|max:20',
+            'ice' => 'nullable|string|max:20',
+            'if' => 'nullable|string|max:20',
+            'type_materiel' => 'nullable|string|max:255',
+        ]);
+
+        $fournisseur->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'fournisseur' => $fournisseur,
+            'message' => 'Fournisseur mis à jour avec succès!'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur: ' . $e->getMessage()
+        ], 422);
+    }
+}
 }

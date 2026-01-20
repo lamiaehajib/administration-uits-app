@@ -1,3 +1,4 @@
+
 <x-app-layout>
     <style>
         /* Styles identiques à votre code original */
@@ -125,16 +126,13 @@
             font-size: 48px;
             margin-bottom: 15px;
         }
-        .stock-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 600;
+        .alert-info {
+            background: #dbeafe;
+            border: 2px solid #3b82f6;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
         }
-        .stock-ok { background: #d1fae5; color: #065f46; }
-        .stock-low { background: #fef3c7; color: #92400e; }
-        .stock-out { background: #fee2e2; color: #991b1b; }
         
         @media (max-width: 768px) {
             .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
@@ -146,14 +144,32 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h2 class="gradient-text mb-1" style="font-size: 32px; font-weight: 700;">
-                    <i class="fas fa-file-invoice"></i> Créer une Nouvelle Facture
+                    <i class="fas fa-file-invoice"></i> 
+                    @if(isset($devis))
+                        Créer Facture depuis Devis #{{ $devis->devis_num }}
+                    @else
+                        Créer une Nouvelle Facture
+                    @endif
                 </h2>
-                <p class="text-muted mb-0">Choisissez le type de facture et remplissez les informations</p>
+                <p class="text-muted mb-0">
+                    @if(isset($devis))
+                        Les informations du devis seront pré-remplies
+                    @else
+                        Choisissez le type de facture et remplissez les informations
+                    @endif
+                </p>
             </div>
             <a href="{{ route('factures.index') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left me-2"></i> Retour
             </a>
         </div>
+
+        @if(isset($devis))
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Devis source :</strong> {{ $devis->devis_num }} - {{ $devis->client }} - {{ $devis->titre }}
+        </div>
+        @endif
 
         <form action="{{ route('factures.store') }}" method="POST" id="facture-form">
             @csrf
@@ -195,7 +211,8 @@
                     </div>
                     <div>
                         <label class="form-label">Date <span class="text-danger">*</span></label>
-                        <input type="date" name="date" class="form-control" value="{{ now()->format('Y-m-d') }}" required>
+                        <input type="date" name="date" class="form-control" 
+                               value="{{ isset($devis) ? $devis->date : now()->format('Y-m-d') }}" required>
                     </div>
                     <div>
                         <label class="form-label">Afficher le cachet ?</label>
@@ -208,31 +225,40 @@
 
                 <div class="mb-3">
                     <label class="form-label">Titre <span class="text-danger">*</span></label>
-                    <input type="text" name="titre" class="form-control" placeholder="Titre de la facture" required>
+                    <input type="text" name="titre" class="form-control" 
+                           value="{{ isset($devis) ? $devis->titre : '' }}" 
+                           placeholder="Titre de la facture" required>
                 </div>
 
                 <div class="grid-3 mb-3">
                     <div>
                         <label class="form-label">Client <span class="text-danger">*</span></label>
-                        <input type="text" name="client" class="form-control" placeholder="Nom du client" required>
+                        <input type="text" name="client" class="form-control" 
+                               value="{{ isset($devis) ? $devis->client : '' }}" 
+                               placeholder="Nom du client" required>
                     </div>
                     <div>
                         <label class="form-label">ICE</label>
-                        <input type="text" name="ice" class="form-control" placeholder="Numéro ICE">
+                        <input type="text" name="ice" class="form-control" 
+                               value="{{ isset($devis) ? ($devis->ice ?? '') : '' }}" 
+                               placeholder="Numéro ICE">
                     </div>
                     <div>
                         <label class="form-label">Référence</label>
-                        <input type="text" name="ref" class="form-control" placeholder="Bon de commande">
+                        <input type="text" name="ref" class="form-control" 
+                               value="{{ isset($devis) ? ($devis->ref ?? '') : '' }}" 
+                               placeholder="Bon de commande">
                     </div>
                 </div>
                 
                 <div class="mb-3">
                     <label class="form-label">Adresse</label>
-                    <textarea name="adresse" class="form-control" rows="2" placeholder="Adresse complète"></textarea>
+                    <textarea name="adresse" class="form-control" rows="2" 
+                              placeholder="Adresse complète">{{ isset($devis) ? ($devis->adresse ?? '') : '' }}</textarea>
                 </div>
             </div>
             
-            <!-- SECTION SERVICES (visible par défaut) -->
+            <!-- SECTION SERVICES -->
             <div class="form-card" id="services-section">
                 <div class="section-header">
                     <div class="section-icon"><i class="fas fa-briefcase"></i></div>
@@ -240,32 +266,70 @@
                 </div>
 
                 <div id="services-container">
-                    <div class="product-row">
-                        <div class="product-number">1</div>
-                        <div class="mb-3">
-                            <label class="form-label">Description <span class="text-danger">*</span></label>
-                            <textarea name="libele[]" class="form-control" rows="3" required></textarea>
+                    @if(isset($devis) && $devis->items->count() > 0)
+                        @foreach($devis->items as $index => $item)
+                        <div class="product-row">
+                            <div class="product-number">{{ $index + 1 }}</div>
+                            <div class="mb-3">
+                                <label class="form-label">Description <span class="text-danger">*</span></label>
+                                <textarea name="libele[]" class="form-control" rows="3" required>{{ $item->libele }}</textarea>
+                            </div>
+                            <div class="grid-4">
+                                <div>
+                                    <label class="form-label">Quantité <span class="text-danger">*</span></label>
+                                    <input type="number" name="quantite[]" class="form-control quantity" 
+                                           value="{{ $item->quantite }}" min="0" step="0.01" 
+                                           oninput="calculateTotals()" required>
+                                </div>
+                                <div>
+                                    <label class="form-label">Prix Unitaire HT <span class="text-danger">*</span></label>
+                                    <input type="number" name="prix_ht[]" class="form-control prix_ht" 
+                                           value="{{ $item->prix_unitaire }}" min="0" step="0.01" 
+                                           oninput="calculateTotals()" required>
+                                </div>
+                                <div>
+                                    <label class="form-label">Prix Total HT</label>
+                                    <input type="number" class="form-control total-price" 
+                                           value="{{ $item->prix_total }}" readonly>
+                                </div>
+                                <div class="d-flex align-items-end">
+                                    @if($index > 0 || $devis->items->count() > 1)
+                                    <button type="button" class="btn btn-remove w-100" onclick="removeRow(this)">
+                                        <i class="fas fa-trash"></i> Supprimer
+                                    </button>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
-                        <div class="grid-4">
-                            <div>
-                                <label class="form-label">Quantité <span class="text-danger">*</span></label>
-                                <input type="number" name="quantite[]" class="form-control quantity" value="1" min="0" step="0.01" oninput="calculateTotals()" required>
+                        @endforeach
+                    @else
+                        <div class="product-row">
+                            <div class="product-number">1</div>
+                            <div class="mb-3">
+                                <label class="form-label">Description <span class="text-danger">*</span></label>
+                                <textarea name="libele[]" class="form-control" rows="3" required></textarea>
                             </div>
-                            <div>
-                                <label class="form-label">Prix Unitaire HT <span class="text-danger">*</span></label>
-                                <input type="number" name="prix_ht[]" class="form-control prix_ht" value="0" min="0" step="0.01" oninput="calculateTotals()" required>
-                            </div>
-                            <div>
-                                <label class="form-label">Prix Total HT</label>
-                                <input type="number" class="form-control total-price" readonly>
-                            </div>
-                            <div class="d-flex align-items-end">
-                                <button type="button" class="btn btn-remove w-100" onclick="removeRow(this)">
-                                    <i class="fas fa-trash"></i> Supprimer
-                                </button>
+                            <div class="grid-4">
+                                <div>
+                                    <label class="form-label">Quantité <span class="text-danger">*</span></label>
+                                    <input type="number" name="quantite[]" class="form-control quantity" value="1" min="0" step="0.01" oninput="calculateTotals()" required>
+                                </div>
+                                <div>
+                                    <label class="form-label">Prix Unitaire HT <span class="text-danger">*</span></label>
+                                    <input type="number" name="prix_ht[]" class="form-control prix_ht" value="0" min="0" step="0.01" oninput="calculateTotals()" required>
+                                </div>
+                                <div>
+                                    <label class="form-label">Prix Total HT</label>
+                                    <input type="number" class="form-control total-price" readonly>
+                                </div>
+                                <div class="d-flex align-items-end">
+                                    <button type="button" class="btn btn-remove w-100" onclick="removeRow(this)">
+                                        <i class="fas fa-trash"></i> Supprimer
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    @endif
                 </div>
 
                 <button type="button" class="btn btn-add mt-3" onclick="addService()">
@@ -348,16 +412,16 @@
                     <div>
                         <label class="form-label">Devise <span class="text-danger">*</span></label>
                         <select name="currency" class="form-select" required>
-                            <option value="DH" selected>Dirham (DH)</option>
-                            <option value="EUR">Euro (€)</option>
-                            <option value="CFA">CFA</option>
+                            <option value="DH" {{ (isset($devis) && $devis->currency == 'DH') ? 'selected' : 'selected' }}>Dirham (DH)</option>
+                            <option value="EUR" {{ (isset($devis) && $devis->currency == 'EUR') ? 'selected' : '' }}>Euro (€)</option>
+                            <option value="CFA" {{ (isset($devis) && $devis->currency == 'CFA') ? 'selected' : '' }}>CFA</option>
                         </select>
                     </div>
                     <div>
                         <label class="form-label">TVA (%) <span class="text-danger">*</span></label>
                         <select name="tva" class="form-select" onchange="calculateTotals()" required>
-                            <option value="20" selected>20%</option>
-                            <option value="0">0%</option>
+                            <option value="20" {{ (isset($devis) && $devis->tva_rate == 20) ? 'selected' : 'selected' }}>20%</option>
+                            <option value="0" {{ (isset($devis) && $devis->tva_rate == 0) ? 'selected' : '' }}>0%</option>
                         </select>
                     </div>
                 </div>
@@ -365,18 +429,36 @@
                 <div style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 2px solid #10b981; border-radius: 15px; padding: 25px;">
                     <div class="d-flex justify-content-between mb-3">
                         <strong>Total HT:</strong>
-                        <span id="display_total_ht">0.00</span>
+                        <span id="display_total_ht">{{ isset($devis) ? number_format($devis->total_ht, 2) : '0.00' }}</span>
                     </div>
                     <div class="d-flex justify-content-between mb-3">
                         <strong>Montant TVA:</strong>
-                        <span id="display_tva">0.00</span>
+                        <span id="display_tva">{{ isset($devis) ? number_format($devis->tva, 2) : '0.00' }}</span>
                     </div>
                     <div class="d-flex justify-content-between" style="background: linear-gradient(135deg, #C2185B, #D32F2F); color: white; border-radius: 10px; padding: 15px;">
                         <strong style="font-size: 20px;">Total TTC:</strong>
-                        <span id="display_total_ttc" style="font-size: 24px; font-weight: 700;">0.00</span>
+                        <span id="display_total_ttc" style="font-size: 24px; font-weight: 700;">{{ isset($devis) ? number_format($devis->total_ttc, 2) : '0.00' }}</span>
                     </div>
                 </div>
             </div>
+
+            <!-- Informations Importantes -->
+            @if(isset($devis) && $devis->importantInfos->count() > 0)
+            <div class="form-card">
+                <div class="section-header">
+                    <div class="section-icon"><i class="fas fa-exclamation-circle"></i></div>
+                    <h3 class="section-title">Informations Importantes</h3>
+                </div>
+                <div id="important-container">
+                    @foreach($devis->importantInfos as $index => $info)
+                    <div class="mb-3">
+                        <input type="text" name="important[]" class="form-control" 
+                               value="{{ $info->info }}" placeholder="Information importante">
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
 
             <div class="d-flex justify-content-end gap-3 mt-4">
                 <a href="{{ route('factures.index') }}" class="btn btn-secondary">
@@ -389,8 +471,8 @@
         </form>
     </div>
     
-   <script>
-let productCount = 1;
+    <script>
+let productCount = {{ isset($devis) && $devis->items->count() > 0 ? $devis->items->count() : 1 }};
 let produitsData = {};
 
 // Sélection du type
@@ -401,36 +483,29 @@ function selectType(type) {
     document.getElementById('type_' + type).checked = true;
     
     if (type === 'service') {
-        // Afficher Services, masquer Produits
         document.getElementById('services-section').style.display = 'block';
         document.getElementById('produits-section').style.display = 'none';
         
-        // ✅ ACTIVER les champs Services
         document.querySelectorAll('#services-section input, #services-section textarea, #services-section select').forEach(el => {
             el.disabled = false;
         });
         
-        // ✅ DÉSACTIVER les champs Produits (pour éviter l'erreur de validation)
         document.querySelectorAll('#produits-section input, #produits-section textarea, #produits-section select').forEach(el => {
             el.disabled = true;
         });
     } else {
-        // Afficher Produits, masquer Services
         document.getElementById('services-section').style.display = 'none';
         document.getElementById('produits-section').style.display = 'block';
         
-        // ✅ DÉSACTIVER les champs Services (pour éviter l'erreur de validation)
         document.querySelectorAll('#services-section input, #services-section textarea, #services-section select').forEach(el => {
             el.disabled = true;
         });
         
-        // ✅ ACTIVER les champs Produits (mais ne pas réactiver le select produit si désactivé volontairement)
         document.querySelectorAll('#produits-container .product-row').forEach(row => {
             row.querySelectorAll('input, textarea').forEach(el => {
                 el.disabled = false;
             });
             row.querySelector('.category-select').disabled = false;
-            // Le produit-select reste disabled jusqu'à ce qu'une catégorie soit sélectionnée
         });
     }
     

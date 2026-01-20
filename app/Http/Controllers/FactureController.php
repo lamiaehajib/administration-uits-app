@@ -341,10 +341,19 @@ private function exportExcel($factures)
         return redirect()->route('factures.index')->with('success', 'Facture dupliquée avec succès!');
     }
 
-    public function createFromDevis(Devis $devis)
+   public function createFromDevis(Devis $devis)
 {
+    // Charger les relations nécessaires
     $devis->load(['items', 'importantInfos']);
-    return view('factures.create', compact('devis'));
+    
+    // Charger les catégories pour le formulaire
+    $categories = Category::with('children')
+        ->whereNull('parent_id')
+        ->orderBy('nom')
+        ->get();
+    
+    // Passer le devis ET les catégories à la vue
+    return view('factures.create', compact('devis', 'categories'));
 }
 
     // عرض نموذج لإنشاء عرض جديد

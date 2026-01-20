@@ -547,7 +547,7 @@ async function loadProduits(selectElement) {
     }
 }
 
-// Sélectionner un produit
+// Sélectionner un produittes
 function selectProduit(selectElement) {
     const option = selectElement.options[selectElement.selectedIndex];
     const row = selectElement.closest('.product-row');

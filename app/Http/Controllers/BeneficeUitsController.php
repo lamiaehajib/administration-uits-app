@@ -61,12 +61,13 @@ $totalRevenus = $revenusServices + $revenusFormations + $revenusStages + $revenu
 
         // 📊 Détails par catégorie
         $details = [
-            'revenus' => [
-                'services' => $revenusServices,
-                'formations' => $revenusFormations,
-                'stages' => $revenusStages,
-                'total' => $totalRevenus,
-            ],
+    'revenus' => [
+        'services' => $revenusServices,
+        'formations' => $revenusFormations,
+        'stages' => $revenusStages,
+        'portail' => $revenusPortail, // <--- AJOUTE CETTE LIGNE
+        'total' => $totalRevenus,
+    ],
             'couts' => [
                 'produits' => $coutsProduits,
                 'total' => $totalCouts,

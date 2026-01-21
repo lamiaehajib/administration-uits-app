@@ -251,7 +251,7 @@
                     </div>
                 </div>
                 
-                <div class="mb-3">
+                <div class="mb-3"> 
                     <label class="form-label">Adresse</label>
                     <textarea name="adresse" class="form-control" rows="2" 
                               placeholder="Adresse complète">{{ isset($devis) ? ($devis->adresse ?? '') : '' }}</textarea>

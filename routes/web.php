@@ -6,6 +6,7 @@ use App\Http\Controllers\AttestationController;
 use App\Http\Controllers\AttestationFormationController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\BeneficeController;
+use App\Http\Controllers\BeneficeUitsController;
 use App\Http\Controllers\BonCommandeRController;
 use App\Http\Controllers\BonDeCommandeController;
 use App\Http\Controllers\BonLivraisonController;
@@ -456,6 +457,9 @@ Route::post('/charges/{id}/restore', [ChargeController::class, 'restore'])->name
     
 Route::get('/benefices/dashboard', [BeneficeController::class, 'dashboard'])->name('benefices.dashboard');
 
+
+Route::get('/benefice', [BeneficeUitsController::class, 'index'])->name('benefice.index');
+    Route::get('/benefice/export', [BeneficeUitsController::class, 'exportExcel'])->name('benefice.export');
       });
 
 require __DIR__.'/auth.php';

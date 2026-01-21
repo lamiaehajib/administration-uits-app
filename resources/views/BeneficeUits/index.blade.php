@@ -138,56 +138,66 @@
     </div>
 
     <!-- 💰 Détails Revenus & Coûts -->
-    <div class="row mb-4">
-        <!-- Détails Revenus -->
-        <div class="col-lg-6 mb-3">
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-money-bill-wave"></i> Détails Revenus</h5>
-                </div>
-                <div class="card-body">
-                    <table class="table table-hover mb-0">
-                        <tbody>
-                            <tr>
-                                <td>
-                                    <i class="fas fa-cogs" style="color: #C2185B;"></i> 
-                                    <strong>Factures Services</strong>
-                                </td>
-                                <td class="text-end fw-bold">
-                                    {{ number_format($details['revenus']['services'], 2) }} <small>{{ $currency }}</small>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <i class="fas fa-graduation-cap text-warning"></i> 
-                                    <strong>Factures Formations</strong>
-                                </td>
-                                <td class="text-end fw-bold">
-                                    {{ number_format($details['revenus']['formations'], 2) }} <small>{{ $currency }}</small>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <i class="fas fa-user-tie text-info"></i> 
-                                    <strong>Reçus Stages</strong>
-                                </td>
-                                <td class="text-end fw-bold">
-                                    {{ number_format($details['revenus']['stages'], 2) }} <small>{{ $currency }}</small>
-                                </td>
-                            </tr>
-                        </tbody>
-                        <tfoot>
-                            <tr class="table-success">
-                                <td class="fw-bold text-uppercase">TOTAL REVENUS</td>
-                                <td class="text-end fw-bold fs-5">
-                                    {{ number_format($details['revenus']['total'], 2) }} <small>{{ $currency }}</small>
-                                </td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
+   <div class="row mb-4">
+    <div class="col-lg-6 mb-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-money-bill-wave"></i> Détails Revenus</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-hover mb-0">
+                    <tbody>
+                        <tr>
+                            <td>
+                                <i class="fas fa-cogs" style="color: #C2185B;"></i> 
+                                <strong>Factures Services</strong>
+                            </td>
+                            <td class="text-end fw-bold">
+                                {{ number_format($details['revenus']['services'], 2) }} <small>{{ $currency }}</small>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <i class="fas fa-graduation-cap text-warning"></i> 
+                                <strong>Factures Formations</strong>
+                            </td>
+                            <td class="text-end fw-bold">
+                                {{ number_format($details['revenus']['formations'], 2) }} <small>{{ $currency }}</small>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <i class="fas fa-user-tie text-info"></i> 
+                                <strong>Reçus Stages</strong>
+                            </td>
+                            <td class="text-end fw-bold">
+                                {{ number_format($details['revenus']['stages'], 2) }} <small>{{ $currency }}</small>
+                            </td>
+                        </tr>
+                        
+                        <tr class="table-light">
+                            <td>
+                                <i class="fas fa-globe text-primary"></i> 
+                                <strong>Portail (uits-portail.ma)</strong>
+                                <span class="badge bg-secondary ms-1" style="font-size: 0.6rem;">API</span>
+                            </td>
+                            <td class="text-end fw-bold text-primary">
+                                {{ number_format($details['revenus']['portail'] ?? 0, 2) }} <small>{{ $currency }}</small>
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-success">
+                            <td class="fw-bold text-uppercase">TOTAL REVENUS</td>
+                            <td class="text-end fw-bold fs-5">
+                                {{ number_format($details['revenus']['total'], 2) }} <small>{{ $currency }}</small>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
             </div>
         </div>
+    </div>
 
         <!-- Détails Coûts & Stats -->
         <div class="col-lg-6 mb-3">

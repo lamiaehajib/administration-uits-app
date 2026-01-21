@@ -8,7 +8,7 @@ use App\Models\Reussite;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Http;
 class BeneficeUitsController extends Controller
 {
     public function index(Request $request)
@@ -26,6 +26,9 @@ class BeneficeUitsController extends Controller
             ->whereBetween('date', [$dateFrom, $dateTo])
             ->sum('total_ttc');
 
+
+
+            
         // 2. Factures Formations
         $revenusFormations = Facturef::where('currency', $currency)
             ->whereBetween('date', [$dateFrom, $dateTo])
@@ -35,8 +38,10 @@ class BeneficeUitsController extends Controller
         $revenusStages = Reussite::whereBetween('date_paiement', [$dateFrom, $dateTo])
             ->sum('montant_paye');
 
+            // ✨ 4. المداخيل الخارجية من Portail (الجديد)
+        $revenusPortail = $this->getExternalPortailRevenue($dateFrom, $dateTo);
         // Total Revenus
-        $totalRevenus = $revenusServices + $revenusFormations + $revenusStages;
+$totalRevenus = $revenusServices + $revenusFormations + $revenusStages + $revenusPortail;
 
         // 📉 COÛTS (Sorties d'argent)
         
@@ -107,6 +112,27 @@ class BeneficeUitsController extends Controller
             'dateTo',
             'currency'
         ));
+    }
+
+
+    private function getExternalPortailRevenue($from, $to)
+    {
+        try {
+            $response = Http::timeout(5)->withHeaders([
+                'X-API-KEY' => 'S3CR3T_K3Y' // نفس الساروت اللي غديري في Portail
+            ])->get('https://uits-portail.ma/api/monthly-revenue', [
+                'date_from' => $from,
+                'date_to' => $to
+            ]);
+
+            if ($response->successful()) {
+                // المجموع غايكون هو اللي راجع من الـ API
+                return (float) $response->json('total_sum'); 
+            }
+        } catch (\Exception $e) {
+            \Log::error("Error connecting to Portail API: " . $e->getMessage());
+        }
+        return 0; // إلا وقع مشكل كنعطيو 0 باش ما يوقفش السيستيم
     }
 
     // 📈 Évolution mensuelle des 6 derniers mois

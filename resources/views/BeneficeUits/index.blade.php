@@ -456,10 +456,10 @@
                     <thead>
                         <tr>
                             <th>Mois</th>
-                            <th>Formations</th>
-                            <th>Services</th>
-                            <th>Stages</th>
-                            <th>Portail</th>
+                            <th>Factures Formations</th>
+                            <th>Factures des Services</th>
+                            <th>Reçus de Stage</th>
+                            <th>Payments des Étudiants</th>
                             <th>Total</th>
                         </tr>
                     </thead>
@@ -554,7 +554,7 @@
                 labels: {!! json_encode($chartData['labels']) !!},
                 datasets: [
                     {
-                        label: 'Formations',
+                        label: 'Factures Formations',
                         data: {!! json_encode($chartData['formations']) !!},
                         borderColor: 'rgb(102, 126, 234)',
                         backgroundColor: 'rgba(102, 126, 234, 0.1)',
@@ -562,7 +562,7 @@
                         fill: true
                     },
                     {
-                        label: 'Services',
+                        label: 'Factures des Services',
                         data: {!! json_encode($chartData['services']) !!},
                         borderColor: 'rgb(245, 87, 108)',
                         backgroundColor: 'rgba(245, 87, 108, 0.1)',
@@ -570,7 +570,7 @@
                         fill: true
                     },
                     {
-                        label: 'Stages',
+                        label: 'Reçus de Stage',
                         data: {!! json_encode($chartData['stages']) !!},
                         borderColor: 'rgb(79, 172, 254)',
                         backgroundColor: 'rgba(79, 172, 254, 0.1)',
@@ -578,7 +578,7 @@
                         fill: true
                     },
                     {
-                        label: 'Portail',
+                        label: 'Payments des Étudiants',
                         data: {!! json_encode($chartData['portail']) !!},
                         borderColor: 'rgb(67, 233, 123)',
                         backgroundColor: 'rgba(67, 233, 123, 0.1)',

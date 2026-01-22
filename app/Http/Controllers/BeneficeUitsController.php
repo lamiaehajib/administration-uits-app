@@ -2,284 +2,449 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Facture;
 use App\Models\Facturef;
+use App\Models\Facture;
 use App\Models\Reussite;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+
 class BeneficeUitsController extends Controller
 {
     public function index(Request $request)
     {
-        // 📅 Récupération des filtres
-        $dateFrom = $request->input('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
-        $dateTo = $request->input('date_to', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        // 1. Paramètres de filtrage
+        $periode = $request->input('periode', 'ce_mois');
+        $dateDebut = $request->input('date_debut');
+        $dateFin = $request->input('date_fin');
         $currency = $request->input('currency', 'DH');
+        $view = $request->input('view', 'global'); // global, formations, services, stages, portail
 
-        // 💰 REVENUS (Entrées d'argent)
-        
-        // 1. Factures Services (type = 'service')
-        $revenusServices = Facture::where('type', 'service')
-            ->where('currency', $currency)
-            ->whereBetween('date', [$dateFrom, $dateTo])
-            ->sum('total_ttc');
+        // 2. Calculer les dates selon la période
+        [$from, $to] = $this->getDateRange($periode, $dateDebut, $dateFin);
 
+        // 3. Récupérer les revenus par source
+        $revenueFormations = $this->getFormationsRevenue($from, $to, $currency);
+        $revenueServices = $this->getServicesRevenue($from, $to, $currency);
+        $revenueStages = $this->getStagesRevenue($from, $to);
+        $revenuePortail = $this->getPortailRevenue($from, $to);
 
+        // 4. Calcul du total général
+        $totalRevenue = $revenueFormations['total'] + 
+                       $revenueServices['total'] + 
+                       $revenueStages['total'] + 
+                       $revenuePortail;
 
-            
-        // 2. Factures Formations
-        $revenusFormations = Facturef::where('currency', $currency)
-            ->whereBetween('date', [$dateFrom, $dateTo])
-            ->sum('total_ttc');
-
-        // 3. Reçus Stages (montant_paye)
-        $revenusStages = Reussite::whereBetween('date_paiement', [$dateFrom, $dateTo])
-            ->sum('montant_paye');
-
-            // ✨ 4. المداخيل الخارجية من Portail (الجديد)
-        $revenusPortail = $this->getExternalPortailRevenue($dateFrom, $dateTo);
-        // Total Revenus
-$totalRevenus = $revenusServices + $revenusFormations + $revenusStages + $revenusPortail;
-
-        // 📉 COÛTS (Sorties d'argent)
-        
-        // Factures Produits - on prend le coût d'achat total
-        $coutsProduits = DB::table('factures')
-            ->join('factures_items', 'factures.id', '=', 'factures_items.factures_id')
-            ->where('factures.type', 'produit')
-            ->where('factures.currency', $currency)
-            ->whereBetween('factures.date', [$dateFrom, $dateTo])
-            ->sum(DB::raw('factures_items.quantite * factures_items.prix_achat'));
-
-        // Total Coûts
-        $totalCouts = $coutsProduits;
-
-        // 🎯 BÉNÉFICE NET
-        $beneficeNet = $totalRevenus - $totalCouts;
-
-        // 📊 Détails par catégorie
-        $details = [
-    'revenus' => [
-        'services' => $revenusServices,
-        'formations' => $revenusFormations,
-        'stages' => $revenusStages,
-        'portail' => $revenusPortail, // <--- AJOUTE CETTE LIGNE
-        'total' => $totalRevenus,
-    ],
-            'couts' => [
-                'produits' => $coutsProduits,
-                'total' => $totalCouts,
-            ],
-            'benefice_net' => $beneficeNet,
-            'marge_benefice' => $totalRevenus > 0 
-                ? round(($beneficeNet / $totalRevenus) * 100, 2) 
-                : 0,
+        // 5. Statistiques détaillées
+        $stats = [
+            'total_general' => $totalRevenue,
+            'formations' => $revenueFormations,
+            'services' => $revenueServices,
+            'stages' => $revenueStages,
+            'portail' => $revenuePortail,
+            'currency' => $currency,
         ];
 
-        // 📈 Évolution mensuelle (6 derniers mois)
+        // 6. Évolution mensuelle (12 derniers mois)
         $evolutionMensuelle = $this->getEvolutionMensuelle($currency);
 
-        // 🏆 Top 5 Clients par revenu
-        $topClients = $this->getTopClients($dateFrom, $dateTo, $currency);
+        // 7. Comparaison avec période précédente
+        $comparison = $this->getComparison($from, $to, $currency);
 
-        // 📊 Statistiques supplémentaires
-        $stats = [
-            'total_factures_services' => Facture::where('type', 'service')
-                ->where('currency', $currency)
-                ->whereBetween('date', [$dateFrom, $dateTo])
-                ->count(),
-            'total_factures_formations' => Facturef::where('currency', $currency)
-                ->whereBetween('date', [$dateFrom, $dateTo])
-                ->count(),
-            'total_stages' => Reussite::whereBetween('date_paiement', [$dateFrom, $dateTo])
-                ->count(),
-            'moyenne_facture' => $totalRevenus > 0 
-                ? round($totalRevenus / (
-                    Facture::where('type', 'service')->whereBetween('date', [$dateFrom, $dateTo])->count() +
-                    Facturef::whereBetween('date', [$dateFrom, $dateTo])->count() +
-                    Reussite::whereBetween('date_paiement', [$dateFrom, $dateTo])->count()
-                ), 2)
-                : 0,
-        ];
+        // 8. Top clients/formations
+        $topFormations = $this->getTopFormations($from, $to, $currency);
+        $topClients = $this->getTopClients($from, $to, $currency);
+
+        // 9. Détails par mois (pour table détaillée)
+        $detailsParMois = $this->getDetailsParMois($from, $to, $currency);
+
+        // 10. Données pour charts
+        $chartData = $this->prepareChartData($evolutionMensuelle);
 
         return view('BeneficeUits.index', compact(
-            'details',
-            'evolutionMensuelle',
-            'topClients',
             'stats',
-            'dateFrom',
-            'dateTo',
-            'currency'
+            'evolutionMensuelle',
+            'comparison',
+            'topFormations',
+            'topClients',
+            'detailsParMois',
+            'chartData',
+            'from',
+            'to',
+            'periode',
+            'currency',
+            'view'
         ));
     }
 
+    // ================== MÉTHODES HELPER ==================
 
-    private function getExternalPortailRevenue($from, $to)
+    private function getDateRange($periode, $dateDebut, $dateFin)
+    {
+        if ($dateDebut && $dateFin) {
+            return [Carbon::parse($dateDebut), Carbon::parse($dateFin)];
+        }
+
+        switch ($periode) {
+            case 'aujourdhui':
+                return [Carbon::today(), Carbon::today()];
+            case 'cette_semaine':
+                return [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()];
+            case 'ce_mois':
+                return [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()];
+            case 'ce_trimestre':
+                return [Carbon::now()->firstOfQuarter(), Carbon::now()->lastOfQuarter()];
+            case 'cette_annee':
+                return [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()];
+            case '12_mois':
+                return [Carbon::now()->subMonths(12), Carbon::now()];
+            default:
+                return [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()];
+        }
+    }
+
+    private function getFormationsRevenue($from, $to, $currency)
+    {
+        $query = Facturef::whereBetween('date', [$from, $to])
+                         ->where('currency', $currency);
+
+        $total = $query->sum('total_ttc');
+        $totalHT = $query->sum('total_ht');
+        $totalTVA = $query->sum('tva');
+        $count = $query->count();
+
+        $clients = Facturef::whereBetween('date', [$from, $to])
+                          ->where('currency', $currency)
+                          ->distinct('client')
+                          ->count('client');
+
+        $moyenne = $count > 0 ? $total / $count : 0;
+
+        return [
+            'total' => $total,
+            'total_ht' => $totalHT,
+            'total_tva' => $totalTVA,
+            'count' => $count,
+            'clients' => $clients,
+            'moyenne' => $moyenne,
+        ];
+    }
+
+    private function getServicesRevenue($from, $to, $currency)
+    {
+        $query = Facture::whereBetween('date', [$from, $to])
+                       ->where('type', 'service')
+                       ->where('currency', $currency);
+
+        $total = $query->sum('total_ttc');
+        $totalHT = $query->sum('total_ht');
+        $totalTVA = $query->sum('tva');
+        $count = $query->count();
+
+        $clients = Facture::whereBetween('date', [$from, $to])
+                         ->where('type', 'service')
+                         ->where('currency', $currency)
+                         ->distinct('client')
+                         ->count('client');
+
+        $moyenne = $count > 0 ? $total / $count : 0;
+
+        return [
+            'total' => $total,
+            'total_ht' => $totalHT,
+            'total_tva' => $totalTVA,
+            'count' => $count,
+            'clients' => $clients,
+            'moyenne' => $moyenne,
+        ];
+    }
+
+    private function getStagesRevenue($from, $to)
+    {
+        $query = Reussite::whereBetween('date_paiement', [$from, $to]);
+
+        $total = $query->sum('montant_paye');
+        $count = $query->count();
+        $stagiaires = $query->distinct('CIN')->count('CIN');
+        $moyenne = $count > 0 ? $total / $count : 0;
+
+        return [
+            'total' => $total,
+            'count' => $count,
+            'stagiaires' => $stagiaires,
+            'moyenne' => $moyenne,
+        ];
+    }
+
+    private function getPortailRevenue($from, $to)
     {
         try {
             $response = Http::timeout(5)->withHeaders([
-                'X-API-KEY' => 'S3CR3T_K3Y' // نفس الساروت اللي غديري في Portail
+                'X-API-KEY' => 'S3CR3T_K3Y'
             ])->get('https://uits-portail.ma/api/monthly-revenue', [
-                'date_from' => $from,
-                'date_to' => $to
+                'date_from' => $from->format('Y-m-d'),
+                'date_to' => $to->format('Y-m-d')
             ]);
 
             if ($response->successful()) {
-                // المجموع غايكون هو اللي راجع من الـ API
-                return (float) $response->json('total_sum'); 
+                return (float) $response->json('total_sum', 0);
             }
         } catch (\Exception $e) {
             \Log::error("Error connecting to Portail API: " . $e->getMessage());
         }
-        return 0; // إلا وقع مشكل كنعطيو 0 باش ما يوقفش السيستيم
+        return 0;
     }
 
-    // 📈 Évolution mensuelle des 6 derniers mois
     private function getEvolutionMensuelle($currency)
     {
-        $evolution = [];
-        
-        for ($i = 5; $i >= 0; $i--) {
-            $date = Carbon::now()->subMonths($i);
-            $start = $date->copy()->startOfMonth()->format('Y-m-d');
-            $end = $date->copy()->endOfMonth()->format('Y-m-d');
+        $startDate = Carbon::now()->subMonths(11)->startOfMonth();
+        $endDate = Carbon::now()->endOfMonth();
 
-            $revenus = Facture::where('type', 'service')
-                    ->where('currency', $currency)
-                    ->whereBetween('date', [$start, $end])
-                    ->sum('total_ttc')
-                + Facturef::where('currency', $currency)
-                    ->whereBetween('date', [$start, $end])
-                    ->sum('total_ttc')
-                + Reussite::whereBetween('date_paiement', [$start, $end])
-                    ->sum('montant_paye');
+        $months = [];
+        $currentDate = $startDate->copy();
 
-            $couts = DB::table('factures')
-                ->join('factures_items', 'factures.id', '=', 'factures_items.factures_id')
-                ->where('factures.type', 'produit')
-                ->where('factures.currency', $currency)
-                ->whereBetween('factures.date', [$start, $end])
-                ->sum(DB::raw('factures_items.quantite * factures_items.prix_achat'));
+        while ($currentDate <= $endDate) {
+            $monthStart = $currentDate->copy()->startOfMonth();
+            $monthEnd = $currentDate->copy()->endOfMonth();
 
-            $evolution[] = [
-                'mois' => $date->locale('fr')->isoFormat('MMM YYYY'),
-                'revenus' => round($revenus, 2),
-                'couts' => round($couts, 2),
-                'benefice' => round($revenus - $couts, 2),
+            // Formations
+            $formations = Facturef::whereBetween('date', [$monthStart, $monthEnd])
+                                 ->where('currency', $currency)
+                                 ->sum('total_ttc');
+
+            // Services
+            $services = Facture::whereBetween('date', [$monthStart, $monthEnd])
+                              ->where('type', 'service')
+                              ->where('currency', $currency)
+                              ->sum('total_ttc');
+
+            // Stages
+            $stages = Reussite::whereBetween('date_paiement', [$monthStart, $monthEnd])
+                             ->sum('montant_paye');
+
+            // Portail (par mois)
+            $portail = $this->getPortailRevenue($monthStart, $monthEnd);
+
+            $months[] = [
+                'mois' => $currentDate->format('M Y'),
+                'mois_court' => $currentDate->format('M'),
+                'annee' => $currentDate->year,
+                'formations' => $formations,
+                'services' => $services,
+                'stages' => $stages,
+                'portail' => $portail,
+                'total' => $formations + $services + $stages + $portail,
             ];
+
+            $currentDate->addMonth();
         }
 
-        return $evolution;
+        return collect($months);
     }
 
-    // 🏆 Top 5 Clients
-    private function getTopClients($dateFrom, $dateTo, $currency)
+    private function getComparison($from, $to, $currency)
     {
-        // Clients des services
-        $clientsServices = Facture::where('type', 'service')
-            ->where('currency', $currency)
-            ->whereBetween('date', [$dateFrom, $dateTo])
-            ->select('client', DB::raw('SUM(total_ttc) as total'))
-            ->groupBy('client')
-            ->get();
+        // Période actuelle
+        $currentFormations = Facturef::whereBetween('date', [$from, $to])
+                                    ->where('currency', $currency)
+                                    ->sum('total_ttc');
+        $currentServices = Facture::whereBetween('date', [$from, $to])
+                                  ->where('type', 'service')
+                                  ->where('currency', $currency)
+                                  ->sum('total_ttc');
+        $currentStages = Reussite::whereBetween('date_paiement', [$from, $to])
+                                ->sum('montant_paye');
+        $currentPortail = $this->getPortailRevenue($from, $to);
+        $currentTotal = $currentFormations + $currentServices + $currentStages + $currentPortail;
 
-        // Clients des formations
-        $clientsFormations = Facturef::where('currency', $currency)
-            ->whereBetween('date', [$dateFrom, $dateTo])
-            ->select('client', DB::raw('SUM(total_ttc) as total'))
-            ->groupBy('client')
-            ->get();
+        // Période précédente
+        $diff = $from->diffInDays($to);
+        $prevFrom = $from->copy()->subDays($diff + 1);
+        $prevTo = $to->copy()->subDays($diff + 1);
 
-        // Fusion et tri
-        $allClients = $clientsServices->merge($clientsFormations)
-            ->groupBy('client')
-            ->map(function ($items) {
-                return [
-                    'client' => $items->first()->client,
-                    'total' => $items->sum('total'),
-                ];
-            })
-            ->sortByDesc('total')
-            ->take(5)
-            ->values();
+        $prevFormations = Facturef::whereBetween('date', [$prevFrom, $prevTo])
+                                  ->where('currency', $currency)
+                                  ->sum('total_ttc');
+        $prevServices = Facture::whereBetween('date', [$prevFrom, $prevTo])
+                              ->where('type', 'service')
+                              ->where('currency', $currency)
+                              ->sum('total_ttc');
+        $prevStages = Reussite::whereBetween('date_paiement', [$prevFrom, $prevTo])
+                             ->sum('montant_paye');
+        $prevPortail = $this->getPortailRevenue($prevFrom, $prevTo);
+        $prevTotal = $prevFormations + $prevServices + $prevStages + $prevPortail;
 
-        return $allClients;
+        // Calcul des variations
+        $variationFormations = $prevFormations > 0 ? (($currentFormations - $prevFormations) / $prevFormations) * 100 : 0;
+        $variationServices = $prevServices > 0 ? (($currentServices - $prevServices) / $prevServices) * 100 : 0;
+        $variationStages = $prevStages > 0 ? (($currentStages - $prevStages) / $prevStages) * 100 : 0;
+        $variationPortail = $prevPortail > 0 ? (($currentPortail - $prevPortail) / $prevPortail) * 100 : 0;
+        $variationTotal = $prevTotal > 0 ? (($currentTotal - $prevTotal) / $prevTotal) * 100 : 0;
+
+        return [
+            'current' => $currentTotal,
+            'previous' => $prevTotal,
+            'variation' => $variationTotal,
+            'formations_variation' => $variationFormations,
+            'services_variation' => $variationServices,
+            'stages_variation' => $variationStages,
+            'portail_variation' => $variationPortail,
+        ];
     }
 
-    // 📥 Export Excel
-    public function exportExcel(Request $request)
+    private function getTopFormations($from, $to, $currency)
     {
-        $dateFrom = $request->input('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
-        $dateTo = $request->input('date_to', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        return Facturef::whereBetween('date', [$from, $to])
+                      ->where('currency', $currency)
+                      ->select('titre', DB::raw('COUNT(*) as count'), DB::raw('SUM(total_ttc) as total'))
+                      ->groupBy('titre')
+                      ->orderBy('total', 'desc')
+                      ->limit(10)
+                      ->get();
+    }
+
+    private function getTopClients($from, $to, $currency)
+    {
+        // Combiner formations et services
+        $formationsClients = Facturef::whereBetween('date', [$from, $to])
+                                    ->where('currency', $currency)
+                                    ->select('client', DB::raw('SUM(total_ttc) as total'))
+                                    ->groupBy('client');
+
+        $servicesClients = Facture::whereBetween('date', [$from, $to])
+                                 ->where('type', 'service')
+                                 ->where('currency', $currency)
+                                 ->select('client', DB::raw('SUM(total_ttc) as total'))
+                                 ->groupBy('client');
+
+        $combined = $formationsClients->union($servicesClients)
+                                     ->get()
+                                     ->groupBy('client')
+                                     ->map(function ($items) {
+                                         return [
+                                             'client' => $items->first()->client,
+                                             'total' => $items->sum('total')
+                                         ];
+                                     })
+                                     ->sortByDesc('total')
+                                     ->take(10)
+                                     ->values();
+
+        return $combined;
+    }
+
+    private function getDetailsParMois($from, $to, $currency)
+    {
+        $startDate = Carbon::parse($from)->startOfMonth();
+        $endDate = Carbon::parse($to)->endOfMonth();
+
+        $details = [];
+        $currentDate = $startDate->copy();
+
+        while ($currentDate <= $endDate) {
+            $monthStart = $currentDate->copy()->startOfMonth();
+            $monthEnd = $currentDate->copy()->endOfMonth();
+
+            $formations = Facturef::whereBetween('date', [$monthStart, $monthEnd])
+                                 ->where('currency', $currency)
+                                 ->sum('total_ttc');
+            $formationsCount = Facturef::whereBetween('date', [$monthStart, $monthEnd])
+                                      ->where('currency', $currency)
+                                      ->count();
+
+            $services = Facture::whereBetween('date', [$monthStart, $monthEnd])
+                              ->where('type', 'service')
+                              ->where('currency', $currency)
+                              ->sum('total_ttc');
+            $servicesCount = Facture::whereBetween('date', [$monthStart, $monthEnd])
+                                   ->where('type', 'service')
+                                   ->where('currency', $currency)
+                                   ->count();
+
+            $stages = Reussite::whereBetween('date_paiement', [$monthStart, $monthEnd])
+                             ->sum('montant_paye');
+            $stagesCount = Reussite::whereBetween('date_paiement', [$monthStart, $monthEnd])
+                                  ->count();
+
+            $portail = $this->getPortailRevenue($monthStart, $monthEnd);
+
+            $details[] = [
+                'mois' => $currentDate->format('F Y'),
+                'formations' => $formations,
+                'formations_count' => $formationsCount,
+                'services' => $services,
+                'services_count' => $servicesCount,
+                'stages' => $stages,
+                'stages_count' => $stagesCount,
+                'portail' => $portail,
+                'total' => $formations + $services + $stages + $portail,
+            ];
+
+            $currentDate->addMonth();
+        }
+
+        return collect($details);
+    }
+
+    private function prepareChartData($evolutionMensuelle)
+    {
+        return [
+            'labels' => $evolutionMensuelle->pluck('mois_court')->toArray(),
+            'formations' => $evolutionMensuelle->pluck('formations')->toArray(),
+            'services' => $evolutionMensuelle->pluck('services')->toArray(),
+            'stages' => $evolutionMensuelle->pluck('stages')->toArray(),
+            'portail' => $evolutionMensuelle->pluck('portail')->toArray(),
+            'total' => $evolutionMensuelle->pluck('total')->toArray(),
+        ];
+    }
+
+    // Export CSV
+    public function exportCSV(Request $request)
+    {
+        $periode = $request->input('periode', 'ce_mois');
+        $dateDebut = $request->input('date_debut');
+        $dateFin = $request->input('date_fin');
         $currency = $request->input('currency', 'DH');
 
-        // Récupérer toutes les données
-        $services = Facture::where('type', 'service')
-            ->where('currency', $currency)
-            ->whereBetween('date', [$dateFrom, $dateTo])
-            ->get();
+        [$from, $to] = $this->getDateRange($periode, $dateDebut, $dateFin);
+        $details = $this->getDetailsParMois($from, $to, $currency);
 
-        $formations = Facturef::where('currency', $currency)
-            ->whereBetween('date', [$dateFrom, $dateTo])
-            ->get();
-
-        $stages = Reussite::whereBetween('date_paiement', [$dateFrom, $dateTo])
-            ->get();
-
-        $filename = 'benefice_' . $dateFrom . '_to_' . $dateTo . '.csv';
-        
+        $filename = 'beneficier_' . now()->format('Y-m-d_H-i-s') . '.csv';
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"$filename\"",
         ];
 
-        $callback = function() use ($services, $formations, $stages, $currency) {
+        $callback = function() use ($details, $currency) {
             $file = fopen('php://output', 'w');
-            
-            // BOM UTF-8
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
             
-            // En-têtes
-            fputcsv($file, ['Type', 'Date', 'Client', 'Référence', 'Montant', 'Devise']);
-            
-            // Services
-            foreach ($services as $item) {
+            fputcsv($file, [
+                'Mois', 
+                'Formations (' . $currency . ')', 
+                'Nb Formations',
+                'Services (' . $currency . ')', 
+                'Nb Services',
+                'Stages (DH)', 
+                'Nb Stages',
+                'Portail (DH)',
+                'Total (' . $currency . ')'
+            ], ';');
+
+            foreach ($details as $detail) {
                 fputcsv($file, [
-                    'Service',
-                    $item->date,
-                    $item->client,
-                    $item->facture_num,
-                    $item->total_ttc,
-                    $currency,
-                ]);
+                    $detail['mois'],
+                    number_format($detail['formations'], 2, ',', ' '),
+                    $detail['formations_count'],
+                    number_format($detail['services'], 2, ',', ' '),
+                    $detail['services_count'],
+                    number_format($detail['stages'], 2, ',', ' '),
+                    $detail['stages_count'],
+                    number_format($detail['portail'], 2, ',', ' '),
+                    number_format($detail['total'], 2, ',', ' '),
+                ], ';');
             }
-            
-            // Formations
-            foreach ($formations as $item) {
-                fputcsv($file, [
-                    'Formation',
-                    $item->date,
-                    $item->client,
-                    $item->facturef_num,
-                    $item->total_ttc,
-                    $currency,
-                ]);
-            }
-            
-            // Stages
-            foreach ($stages as $item) {
-                fputcsv($file, [
-                    'Stage',
-                    $item->date_paiement,
-                    $item->nom . ' ' . $item->prenom,
-                    'Stage',
-                    $item->montant_paye,
-                    'DH',
-                ]);
-            }
-            
             fclose($file);
         };
 

@@ -458,8 +458,8 @@ Route::post('/charges/{id}/restore', [ChargeController::class, 'restore'])->name
 Route::get('/benefices/dashboard', [BeneficeController::class, 'dashboard'])->name('benefices.dashboard');
 
 
-Route::get('/benefice', [BeneficeUitsController::class, 'index'])->name('benefice.index');
-    Route::get('/benefice/export', [BeneficeUitsController::class, 'exportExcel'])->name('benefice.export');
+Route::get('/benefice', [BeneficeUitsController::class, 'index'])->name('beneficier.index');
+    Route::get('/benefice/export', [BeneficeUitsController::class, 'exportCSV'])->name('beneficier.export.csv');
       });
 
 require __DIR__.'/auth.php';

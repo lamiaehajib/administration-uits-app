@@ -1,454 +1,660 @@
 <x-app-layout>
-<div class="container-fluid py-4">
-    <!-- 🎯 En-tête -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h3 class="mb-2 hight">
-                        <i class="fas fa-chart-line"></i>
-                        Tableau de Bénéfice
-                    </h3>
-                    <p class="text-muted mb-0">Analyse complète des revenus et bénéfices</p>
+    <style>
+        /* ============= STYLES GÉNÉRAUX ============= */
+        .benefice-container {
+            background: #f8f9fa;
+            padding: 0;
+        }
+
+        /* Header avec gradient */
+        .page-header {
+            background: linear-gradient(135deg, #C2185B 0%, #D32F2F 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 20px rgba(211, 47, 47, 0.3);
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .page-header p {
+            margin: 10px 0 0 0;
+            opacity: 0.95;
+            font-size: 1.1rem;
+        }
+
+        /* ============= CARDS STATISTIQUES ============= */
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(135deg, #C2185B, #D32F2F);
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        .stats-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .stats-card-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+        }
+
+        .icon-formations {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .icon-services {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .icon-stages {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .icon-portail {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .icon-total {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .stats-card-title {
+            font-size: 0.9rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .stats-card-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2d3748;
+            margin: 10px 0;
+        }
+
+        .stats-card-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .variation-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .variation-positive {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .variation-negative {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* ============= CHART SECTION ============= */
+        .chart-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f1f3f5;
+        }
+
+        .chart-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        /* ============= TABLE DETAILS ============= */
+        .table-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .custom-table {
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .custom-table thead {
+            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            color: white;
+        }
+
+        .custom-table thead th {
+            padding: 15px;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            border: none;
+        }
+
+        .custom-table tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        .custom-table tbody tr:hover {
+            background: #f8f9fa;
+            transform: scale(1.01);
+        }
+
+        .custom-table tbody td {
+            padding: 15px;
+            vertical-align: middle;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        /* ============= BUTTONS ============= */
+        .btn-gradient {
+            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(211, 47, 47, 0.3);
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(211, 47, 47, 0.4);
+            color: white;
+        }
+
+        .btn-outline-gradient {
+            background: white;
+            color: #D32F2F;
+            border: 2px solid #D32F2F;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-gradient:hover {
+            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            color: white;
+            border-color: transparent;
+        }
+
+        /* ============= MODAL STYLES ============= */
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            padding: 20px 30px;
+            border: none;
+        }
+
+        .modal-header h5 {
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #D32F2F;
+            box-shadow: 0 0 0 0.2rem rgba(211, 47, 47, 0.15);
+        }
+
+        /* ============= RESPONSIVE ============= */
+        @media (max-width: 768px) {
+            .page-header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .stats-card-value {
+                font-size: 1.5rem;
+            }
+            
+            .chart-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+
+    <div class="benefice-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1><i class="fas fa-chart-line me-3"></i>Tableau de Bord des Bénéfices</h1>
+                    <p class="mb-0">Période : {{ $from->format('d/m/Y') }} - {{ $to->format('d/m/Y') }}</p>
+                </div>
+                <div>
+                    <button class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#filterModal">
+                        <i class="fas fa-filter me-2"></i>Filtrer
+                    </button>
+                    <a href="{{ route('beneficier.export.csv', request()->all()) }}" class="btn btn-light btn-lg ms-2">
+                        <i class="fas fa-file-export me-2"></i>Exporter CSV
+                    </a>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- 🔍 Filtres -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <form method="GET" action="{{ route('benefice.index') }}" class="row g-3">
-                        <div class="col-md-3">
-                            <label class="form-label fw-bold">Date Début</label>
-                            <input type="date" name="date_from" class="form-control" 
-                                   value="{{ $dateFrom }}" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-bold">Date Fin</label>
-                            <input type="date" name="date_to" class="form-control" 
-                                   value="{{ $dateTo }}" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-bold">Devise</label>
-                            <select name="currency" class="form-select">
-                                <option value="DH" {{ $currency == 'DH' ? 'selected' : '' }}>DH</option>
-                                <option value="EUR" {{ $currency == 'EUR' ? 'selected' : '' }}>EUR</option>
-                                <option value="CFA" {{ $currency == 'CFA' ? 'selected' : '' }}>CFA</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3 d-flex align-items-end gap-2">
-                            <button type="submit" class="btn btn-primary text-white">
-                                <i class="fas fa-search"></i> Filtrer
-                            </button>
-                            <a href="{{ route('benefice.export', request()->all()) }}" 
-                               class="btn btn-success text-white">
-                                <i class="fas fa-file-excel"></i> Export
-                            </a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 📊 Statistiques Principales -->
-    <div class="row mb-4">
-        <!-- Total Revenus -->
-        <div class="col-md-3 mb-3">
-            <div class="card shadow-sm border-start border-success border-4 h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
+        <!-- Statistics Cards -->
+        <div class="row">
+            <!-- Card Total -->
+            <div class="col-xl-4 col-lg-6 col-md-6">
+                <div class="stats-card">
+                    <div class="stats-card-header">
                         <div>
-                            <h6 class="text-muted mb-1">Total Revenus</h6>
-                            <h3 class="mb-0 text-success fw-bold">
-                                {{ number_format($details['revenus']['total'], 2) }}
-                            </h3>
-                            <small class="text-muted">{{ $currency }}</small>
+                            <div class="stats-card-title">Revenu Total</div>
+                            <div class="stats-card-value">{{ number_format($stats['total_general'], 2) }} {{ $currency }}</div>
                         </div>
-                        <div class="icon-box bg-success bg-opacity-10 p-3 rounded-circle">
-                            <i class="fas fa-arrow-up fa-2x text-success"></i>
+                        <div class="stats-card-icon icon-total">
+                            <i class="fas fa-coins"></i>
                         </div>
+                    </div>
+                    <div class="stats-card-info">
+                        <span>Période sélectionnée</span>
+                        <span class="variation-badge {{ $comparison['variation'] >= 0 ? 'variation-positive' : 'variation-negative' }}">
+                            <i class="fas fa-{{ $comparison['variation'] >= 0 ? 'arrow-up' : 'arrow-down' }}"></i>
+                            {{ number_format(abs($comparison['variation']), 1) }}%
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Formations -->
+            <div class="col-xl-4 col-lg-6 col-md-6">
+                <div class="stats-card">
+                    <div class="stats-card-header">
+                        <div>
+                            <div class="stats-card-title">Factures Formations</div>
+                            <div class="stats-card-value">{{ number_format($stats['formations']['total'], 2) }} {{ $currency }}</div>
+                        </div>
+                        <div class="stats-card-icon icon-formations">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                    </div>
+                    <div class="stats-card-info">
+                        <span>{{ $stats['formations']['count'] }} factures • {{ $stats['formations']['clients'] }} clients</span>
+                        <span class="variation-badge {{ $comparison['formations_variation'] >= 0 ? 'variation-positive' : 'variation-negative' }}">
+                            <i class="fas fa-{{ $comparison['formations_variation'] >= 0 ? 'arrow-up' : 'arrow-down' }}"></i>
+                            {{ number_format(abs($comparison['formations_variation']), 1) }}%
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Services -->
+            <div class="col-xl-4 col-lg-6 col-md-6">
+                <div class="stats-card">
+                    <div class="stats-card-header">
+                        <div>
+                            <div class="stats-card-title">Factures des Services</div>
+                            <div class="stats-card-value">{{ number_format($stats['services']['total'], 2) }} {{ $currency }}</div>
+                        </div>
+                        <div class="stats-card-icon icon-services">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                    </div>
+                    <div class="stats-card-info">
+                        <span>{{ $stats['services']['count'] }} factures • {{ $stats['services']['clients'] }} clients</span>
+                        <span class="variation-badge {{ $comparison['services_variation'] >= 0 ? 'variation-positive' : 'variation-negative' }}">
+                            <i class="fas fa-{{ $comparison['services_variation'] >= 0 ? 'arrow-up' : 'arrow-down' }}"></i>
+                            {{ number_format(abs($comparison['services_variation']), 1) }}%
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Stages -->
+            <div class="col-xl-6 col-lg-6 col-md-6">
+                <div class="stats-card">
+                    <div class="stats-card-header">
+                        <div>
+                            <div class="stats-card-title">Reçus de Stage</div>
+                            <div class="stats-card-value">{{ number_format($stats['stages']['total'], 2) }} DH</div>
+                        </div>
+                        <div class="stats-card-icon icon-stages">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                    <div class="stats-card-info">
+                        <span>{{ $stats['stages']['count'] }} paiements • {{ $stats['stages']['stagiaires'] }} stagiaires</span>
+                        <span class="variation-badge {{ $comparison['stages_variation'] >= 0 ? 'variation-positive' : 'variation-negative' }}">
+                            <i class="fas fa-{{ $comparison['stages_variation'] >= 0 ? 'arrow-up' : 'arrow-down' }}"></i>
+                            {{ number_format(abs($comparison['stages_variation']), 1) }}%
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Portail -->
+            <div class="col-xl-6 col-lg-6 col-md-6">
+                <div class="stats-card">
+                    <div class="stats-card-header">
+                        <div>
+                            <div class="stats-card-title">Payments des Étudiants (Portail)</div>
+                            <div class="stats-card-value">{{ number_format($stats['portail'], 2) }} DH</div>
+                        </div>
+                        <div class="stats-card-icon icon-portail">
+                            <i class="fas fa-globe"></i>
+                        </div>
+                    </div>
+                    <div class="stats-card-info">
+                        <span>Via portail UITS</span>
+                        <span class="variation-badge {{ $comparison['portail_variation'] >= 0 ? 'variation-positive' : 'variation-negative' }}">
+                            <i class="fas fa-{{ $comparison['portail_variation'] >= 0 ? 'arrow-up' : 'arrow-down' }}"></i>
+                            {{ number_format(abs($comparison['portail_variation']), 1) }}%
+                        </span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Total Coûts -->
-        <div class="col-md-3 mb-3">
-            <div class="card shadow-sm border-start border-danger border-4 h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-muted mb-1">Total Coûts</h6>
-                            <h3 class="mb-0 text-danger fw-bold">
-                                {{ number_format($details['couts']['total'], 2) }}
-                            </h3>
-                            <small class="text-muted">{{ $currency }}</small>
-                        </div>
-                        <div class="icon-box bg-danger bg-opacity-10 p-3 rounded-circle">
-                            <i class="fas fa-arrow-down fa-2x text-danger"></i>
-                        </div>
-                    </div>
-                </div>
+        <!-- Chart Section -->
+        <div class="chart-section">
+            <div class="chart-header">
+                <h3 class="chart-title"><i class="fas fa-chart-area me-2"></i>Évolution Mensuelle (12 derniers mois)</h3>
             </div>
+            <canvas id="revenueChart" height="80"></canvas>
         </div>
 
-        <!-- Bénéfice Net -->
-        <div class="col-md-3 mb-3">
-            <div class="card shadow-sm border-start border-4 h-100" style="border-color: #C2185B !important;">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-muted mb-1">Bénéfice Net</h6>
-                            <h3 class="mb-0 fw-bold hight">
-                                {{ number_format($details['benefice_net'], 2) }}
-                            </h3>
-                            <small class="text-muted">{{ $currency }}</small>
-                        </div>
-                        <div class="icon-box p-3 rounded-circle" style="background: linear-gradient(135deg, #C2185B15, #D32F2F15);">
-                            <i class="fas fa-coins fa-2x" style="color: #C2185B;"></i>
-                        </div>
-                    </div>
-                </div>
+        <!-- Detailed Table -->
+        <div class="table-section">
+            <div class="chart-header">
+                <h3 class="chart-title"><i class="fas fa-table me-2"></i>Détails par Mois</h3>
             </div>
-        </div>
-
-        <!-- Marge Bénéficiaire -->
-        <div class="col-md-3 mb-3">
-            <div class="card shadow-sm border-start border-info border-4 h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-muted mb-1">Marge Bénéfice</h6>
-                            <h3 class="mb-0 text-info fw-bold">
-                                {{ $details['marge_benefice'] }}%
-                            </h3>
-                            <small class="text-muted">Taux de rentabilité</small>
-                        </div>
-                        <div class="icon-box bg-info bg-opacity-10 p-3 rounded-circle">
-                            <i class="fas fa-percent fa-2x text-info"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 💰 Détails Revenus & Coûts -->
-   <div class="row mb-4">
-    <div class="col-lg-6 mb-3">
-        <div class="card shadow-sm h-100">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="fas fa-money-bill-wave"></i> Détails Revenus</h5>
-            </div>
-            <div class="card-body">
-                <table class="table table-hover mb-0">
+            <div class="table-responsive">
+                <table class="custom-table table">
+                    <thead>
+                        <tr>
+                            <th>Mois</th>
+                            <th>Formations</th>
+                            <th>Services</th>
+                            <th>Stages</th>
+                            <th>Portail</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
                     <tbody>
+                        @foreach($detailsParMois as $detail)
                         <tr>
-                            <td>
-                                <i class="fas fa-cogs" style="color: #C2185B;"></i> 
-                                <strong>Factures Services</strong>
+                            <td><strong>{{ $detail['mois'] }}</strong></td>
+                            <td>{{ number_format($detail['formations'], 2) }} {{ $currency }}<br>
+                                <small class="text-muted">({{ $detail['formations_count'] }} factures)</small>
                             </td>
-                            <td class="text-end fw-bold">
-                                {{ number_format($details['revenus']['services'], 2) }} <small>{{ $currency }}</small>
+                            <td>{{ number_format($detail['services'], 2) }} {{ $currency }}<br>
+                                <small class="text-muted">({{ $detail['services_count'] }} factures)</small>
                             </td>
+                            <td>{{ number_format($detail['stages'], 2) }} DH<br>
+                                <small class="text-muted">({{ $detail['stages_count'] }} reçus)</small>
+                            </td>
+                            <td>{{ number_format($detail['portail'], 2) }} DH</td>
+                            <td><strong>{{ number_format($detail['total'], 2) }} {{ $currency }}</strong></td>
                         </tr>
-                        <tr>
-                            <td>
-                                <i class="fas fa-graduation-cap text-warning"></i> 
-                                <strong>Factures Formations</strong>
-                            </td>
-                            <td class="text-end fw-bold">
-                                {{ number_format($details['revenus']['formations'], 2) }} <small>{{ $currency }}</small>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <i class="fas fa-user-tie text-info"></i> 
-                                <strong>Reçus Stages</strong>
-                            </td>
-                            <td class="text-end fw-bold">
-                                {{ number_format($details['revenus']['stages'], 2) }} <small>{{ $currency }}</small>
-                            </td>
-                        </tr>
-                        
-                        <tr class="table-light">
-                            <td>
-                                <i class="fas fa-globe text-primary"></i> 
-                                <strong>Portail (uits-portail.ma)</strong>
-                                <span class="badge bg-secondary ms-1" style="font-size: 0.6rem;">API</span>
-                            </td>
-                            <td class="text-end fw-bold text-primary">
-                                {{ number_format($details['revenus']['portail'] ?? 0, 2) }} <small>{{ $currency }}</small>
-                            </td>
-                        </tr>
+                        @endforeach
                     </tbody>
-                    <tfoot>
-                        <tr class="table-success">
-                            <td class="fw-bold text-uppercase">TOTAL REVENUS</td>
-                            <td class="text-end fw-bold fs-5">
-                                {{ number_format($details['revenus']['total'], 2) }} <small>{{ $currency }}</small>
-                            </td>
-                        </tr>
-                    </tfoot>
                 </table>
             </div>
         </div>
     </div>
 
-        <!-- Détails Coûts & Stats -->
-        <div class="col-lg-6 mb-3">
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-shopping-cart"></i> Détails Coûts & Statistiques</h5>
+    <!-- Filter Modal -->
+    <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterModalLabel">
+                        <i class="fas fa-filter me-2"></i>Filtrer les Données
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="card-body">
-                    <table class="table table-hover mb-3">
-                        <tbody>
-                            <tr>
-                                <td>
-                                    <i class="fas fa-box text-secondary"></i> 
-                                    <strong>Coût Produits</strong>
-                                </td>
-                                <td class="text-end fw-bold">
-                                    {{ number_format($details['couts']['produits'], 2) }} <small>{{ $currency }}</small>
-                                </td>
-                            </tr>
-                        </tbody>
-                        <tfoot>
-                            <tr class="table-danger">
-                                <td class="fw-bold text-uppercase">TOTAL COÛTS</td>
-                                <td class="text-end fw-bold fs-5">
-                                    {{ number_format($details['couts']['total'], 2) }} <small>{{ $currency }}</small>
-                                </td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                <form method="GET" action="{{ route('beneficier.index') }}">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Période</label>
+                                <select name="periode" id="periodeSelect" class="form-select">
+                                    <option value="aujourdhui" {{ $periode == 'aujourdhui' ? 'selected' : '' }}>Aujourd'hui</option>
+                                    <option value="cette_semaine" {{ $periode == 'cette_semaine' ? 'selected' : '' }}>Cette semaine</option>
+                                    <option value="ce_mois" {{ $periode == 'ce_mois' ? 'selected' : '' }}>Ce mois</option>
+                                    <option value="ce_trimestre" {{ $periode == 'ce_trimestre' ? 'selected' : '' }}>Ce trimestre</option>
+                                    <option value="cette_annee" {{ $periode == 'cette_annee' ? 'selected' : '' }}>Cette année</option>
+                                    <option value="12_mois" {{ $periode == '12_mois' ? 'selected' : '' }}>12 derniers mois</option>
+                                    <option value="personnalise" {{ $periode == 'personnalise' ? 'selected' : '' }}>Période personnalisée</option>
+                                </select>
+                            </div>
 
-                    <!-- Statistiques -->
-                    <hr>
-                    <h6 class="text-muted mb-3"><i class="fas fa-chart-bar"></i> Statistiques Période</h6>
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <div class="stat-box p-2 rounded bg-light">
-                                <small class="text-muted d-block">Factures Services</small>
-                                <span class="badge bg-primary">{{ $stats['total_factures_services'] }}</span>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Devise</label>
+                                <select name="currency" class="form-select">
+                                    <option value="DH" {{ $currency == 'DH' ? 'selected' : '' }}>DH (Dirham)</option>
+                                    <option value="EUR" {{ $currency == 'EUR' ? 'selected' : '' }}>EUR (Euro)</option>
+                                    <option value="USD" {{ $currency == 'USD' ? 'selected' : '' }}>USD (Dollar)</option>
+                                </select>
                             </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="stat-box p-2 rounded bg-light">
-                                <small class="text-muted d-block">Factures Formations</small>
-                                <span class="badge bg-warning">{{ $stats['total_factures_formations'] }}</span>
+
+                            <div class="col-md-6 mb-3" id="dateDebutGroup" style="display: none;">
+                                <label class="form-label">Date de début</label>
+                                <input type="date" name="date_debut" class="form-control" value="{{ request('date_debut') }}">
                             </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="stat-box p-2 rounded bg-light">
-                                <small class="text-muted d-block">Stages</small>
-                                <span class="badge bg-info">{{ $stats['total_stages'] }}</span>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="stat-box p-2 rounded bg-light">
-                                <small class="text-muted d-block">Moyenne Facture</small>
-                                <span class="badge bg-secondary">{{ number_format($stats['moyenne_facture'], 2) }} {{ $currency }}</span>
+
+                            <div class="col-md-6 mb-3" id="dateFinGroup" style="display: none;">
+                                <label class="form-label">Date de fin</label>
+                                <input type="date" name="date_fin" class="form-control" value="{{ request('date_fin') }}">
                             </div>
                         </div>
                     </div>
-                </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-gradient" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-gradient">
+                            <i class="fas fa-check me-2"></i>Appliquer les filtres
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
-    <!-- 📈 Évolution Mensuelle -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-chart-area"></i> Évolution sur 6 Derniers Mois</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Mois</th>
-                                    <th class="text-end">Revenus</th>
-                                    <th class="text-end">Coûts</th>
-                                    <th class="text-end">Bénéfice</th>
-                                    <th class="text-center">Tendance</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($evolutionMensuelle as $mois)
-                                <tr>
-                                    <td class="fw-bold">{{ $mois['mois'] }}</td>
-                                    <td class="text-end text-success">
-                                        {{ number_format($mois['revenus'], 2) }} <small>{{ $currency }}</small>
-                                    </td>
-                                    <td class="text-end text-danger">
-                                        {{ number_format($mois['couts'], 2) }} <small>{{ $currency }}</small>
-                                    </td>
-                                    <td class="text-end fw-bold {{ $mois['benefice'] >= 0 ? 'text-success' : 'text-danger' }}">
-                                        {{ number_format($mois['benefice'], 2) }} <small>{{ $currency }}</small>
-                                    </td>
-                                    <td class="text-center">
-                                        @if($mois['benefice'] >= 0)
-                                            <i class="fas fa-arrow-up text-success fa-lg"></i>
-                                        @else
-                                            <i class="fas fa-arrow-down text-danger fa-lg"></i>
-                                        @endif
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Chart Configuration
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        const revenueChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {!! json_encode($chartData['labels']) !!},
+                datasets: [
+                    {
+                        label: 'Formations',
+                        data: {!! json_encode($chartData['formations']) !!},
+                        borderColor: 'rgb(102, 126, 234)',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Services',
+                        data: {!! json_encode($chartData['services']) !!},
+                        borderColor: 'rgb(245, 87, 108)',
+                        backgroundColor: 'rgba(245, 87, 108, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Stages',
+                        data: {!! json_encode($chartData['stages']) !!},
+                        borderColor: 'rgb(79, 172, 254)',
+                        backgroundColor: 'rgba(79, 172, 254, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Portail',
+                        data: {!! json_encode($chartData['portail']) !!},
+                        borderColor: 'rgb(67, 233, 123)',
+                        backgroundColor: 'rgba(67, 233, 123, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            font: {
+                                size: 13,
+                                weight: '600'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            size: 13
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString() + ' {{ $currency }}';
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                }
+            }
+        });
 
-    <!-- 🏆 Top Clients -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-header text-white" style="background: linear-gradient(135deg, #C2185B, #D32F2F);">
-                    <h5 class="mb-0"><i class="fas fa-trophy"></i> Top 5 Meilleurs Clients</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="text-center" style="width: 80px;">Rang</th>
-                                    <th>Client</th>
-                                    <th class="text-end">Total Dépensé</th>
-                                    <th class="text-center" style="width: 120px;">Badge</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($topClients as $index => $client)
-                                <tr>
-                                    <td class="text-center fw-bold fs-4">
-                                        @if($index == 0)
-                                            <span style="color: #FFD700;">{{ $index + 1 }}</span>
-                                        @elseif($index == 1)
-                                            <span style="color: #C0C0C0;">{{ $index + 1 }}</span>
-                                        @elseif($index == 2)
-                                            <span style="color: #CD7F32;">{{ $index + 1 }}</span>
-                                        @else
-                                            {{ $index + 1 }}
-                                        @endif
-                                    </td>
-                                    <td class="fw-bold">{{ $client['client'] }}</td>
-                                    <td class="text-end fw-bold">
-                                        {{ number_format($client['total'], 2) }} <small>{{ $currency }}</small>
-                                    </td>
-                                    <td class="text-center">
-                                        @if($index == 0)
-                                            <span class="badge" style="background: linear-gradient(135deg, #FFD700, #FFA500);">
-                                                🥇 Champion
-                                            </span>
-                                        @elseif($index == 1)
-                                            <span class="badge" style="background: linear-gradient(135deg, #C0C0C0, #808080);">
-                                                🥈 2ème Place
-                                            </span>
-                                        @elseif($index == 2)
-                                            <span class="badge" style="background: linear-gradient(135deg, #CD7F32, #8B4513);">
-                                                🥉 3ème Place
-                                            </span>
-                                        @else
-                                            <span class="badge bg-info">Top {{ $index + 1 }}</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="4" class="text-center text-muted py-4">
-                                        <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
-                                        Aucun client trouvé pour cette période
-                                    </td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+        // Toggle custom date inputs
+        document.getElementById('periodeSelect').addEventListener('change', function() {
+            const isCustom = this.value === 'personnalise';
+            document.getElementById('dateDebutGroup').style.display = isCustom ? 'block' : 'none';
+            document.getElementById('dateFinGroup').style.display = isCustom ? 'block' : 'none';
+        });
 
-<style>
-.card {
-    border-radius: 10px;
-    transition: transform 0.2s, box-shadow 0.2s;
-    border: none;
-}
-.card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-}
-.icon-box {
-    width: 60px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.bg-opacity-10 {
-    background-color: rgba(var(--bs-success-rgb), 0.1) !important;
-}
-.stat-box {
-    border: 1px solid #dee2e6;
-    transition: all 0.3s;
-}
-.stat-box:hover {
-    border-color: #C2185B;
-    box-shadow: 0 2px 8px rgba(194, 24, 91, 0.1);
-}
-.table thead th {
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 0.5px;
-}
-.btn-primary {
-    background: linear-gradient(135deg, #C2185B, #D32F2F) !important;
-    border: none;
-}
-.btn-primary:hover {
-    background: linear-gradient(135deg, #D32F2F, #C2185B) !important;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(194, 24, 91, 0.3);
-}
-.btn-success:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
-}
-</style>
-
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Animation des cartes au chargement
-    const cards = document.querySelectorAll('.card');
-    cards.forEach((card, index) => {
-        setTimeout(() => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
-            card.style.transition = 'all 0.5s ease';
-            
-            setTimeout(() => {
-                card.style.opacity = '1';
-                card.style.transform = 'translateY(0)';
-            }, 50);
-        }, index * 50);
-    });
-});
-</script>
-@endpush
+        // Initialize on page load
+        if (document.getElementById('periodeSelect').value === 'personnalise') {
+            document.getElementById('dateDebutGroup').style.display = 'block';
+            document.getElementById('dateFinGroup').style.display = 'block';
+        }
+    </script>
+    @endpush
 </x-app-layout>

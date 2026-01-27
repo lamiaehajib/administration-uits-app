@@ -31,4 +31,8 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'uits_mgmt' => [
+        'api_url' => env('UITS_MGMT_API_URL', 'https://uits-mgmt.ma/api'),
+        'timeout' => env('UITS_MGMT_API_TIMEOUT', 30),
+    ],
 ];

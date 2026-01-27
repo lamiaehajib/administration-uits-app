@@ -13,6 +13,7 @@ use App\Http\Controllers\BonLivraisonController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ChargeController;
 use App\Http\Controllers\DashboardStockController;
+use App\Http\Controllers\DepenseController;
 use App\Http\Controllers\DevisController;
 use App\Http\Controllers\DevisfController;
 use App\Http\Controllers\FactureController;
@@ -460,6 +461,63 @@ Route::get('/benefices/dashboard', [BeneficeController::class, 'dashboard'])->na
 
 Route::get('/benefice', [BeneficeUitsController::class, 'index'])->name('beneficier.index');
     Route::get('/benefice/export', [BeneficeUitsController::class, 'exportCSV'])->name('beneficier.export.csv');
+
+
+
+
+    Route::prefix('depenses')->name('depenses.')->group(function () {
+    
+    // Dashboard
+    Route::get('/dashboard', [DepenseController::class, 'dashboard'])->name('dashboard');
+    
+    // Dépenses Fixes
+    Route::prefix('fixes')->name('fixes.')->group(function () {
+        Route::get('/', [DepenseController::class, 'indexFixes'])->name('index');
+        Route::get('/create', [DepenseController::class, 'createFixe'])->name('create');
+        Route::post('/', [DepenseController::class, 'storeFixe'])->name('store');
+        Route::get('/{id}', [DepenseController::class, 'showFixe'])->name('show');
+        Route::get('/{id}/edit', [DepenseController::class, 'editFixe'])->name('edit');
+        Route::put('/{id}', [DepenseController::class, 'updateFixe'])->name('update');
+        Route::delete('/{id}', [DepenseController::class, 'destroyFixe'])->name('destroy');
+    });
+    
+    // Dépenses Variables
+    Route::prefix('variables')->name('variables.')->group(function () {
+        Route::get('/', [DepenseController::class, 'indexVariables'])->name('index');
+        Route::get('/create', action: [DepenseController::class, 'createVariable'])->name('create');
+        Route::post('/', [DepenseController::class, 'storeVariable'])->name('store');
+        Route::get('/{id}', [DepenseController::class, 'showVariable'])->name('show');
+        Route::get('/{id}/edit', [DepenseController::class, 'editVariable'])->name('edit');
+        Route::put('/{id}', [DepenseController::class, 'updateVariable'])->name('update');
+        Route::delete('/{id}', [DepenseController::class, 'destroyVariable'])->name('destroy');
+        Route::post('/{id}/valider', [DepenseController::class, 'validerVariable'])->name('valider');
+    });
+    
+    // Budgets
+    Route::prefix('budgets')->name('budgets.')->group(function () {
+        Route::get('/', [DepenseController::class, 'indexBudgets'])->name('index');
+        Route::get('/create', [DepenseController::class, 'createBudget'])->name('create');
+        Route::post('/', [DepenseController::class, 'storeBudget'])->name('store');
+        Route::get('/{id}', [DepenseController::class, 'showBudget'])->name('show');
+        Route::get('/{id}/edit', [DepenseController::class, 'editBudget'])->name('edit');
+        Route::put('/{id}', [DepenseController::class, 'updateBudget'])->name('update');
+        Route::post('/{id}/cloturer', [DepenseController::class, 'cloturerBudget'])->name('cloturer');
+    });
+    
+    // Import Salaires
+    Route::post('/importer-salaires', [DepenseController::class, 'importerSalaires'])->name('importer-salaires');
+    Route::get('/salaires/historique', [DepenseController::class, 'historiqueSalaires'])->name('salaires.historique');
+    Route::get('/salaires/{id}', [DepenseController::class, 'showHistoriqueSalaire'])->name('salaires.show');
+    
+    // API / AJAX
+    Route::get('/api/test-connection', [DepenseController::class, 'testApiConnection']);
+    Route::get('/api/employees', [DepenseController::class, 'getEmployees']);
+    Route::get('/api/employees/{id}', [DepenseController::class, 'getEmployee']);
+    Route::get('/api/stats', [DepenseController::class, 'getStats']);
+    
+    // Export
+    Route::get('/export', [DepenseController::class, 'export'])->name('export');
+});
       });
 
 require __DIR__.'/auth.php';

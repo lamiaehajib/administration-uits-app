@@ -217,7 +217,7 @@ class BonCommandeRController extends Controller
         $items = [];
         foreach ($request->libelle as $key => $libelle) {
             $items[] = [
-                'libelle' => Str::limit($libelle, 255),
+                  'libelle' => mb_substr($libelle, 0, 255),
                 'quantite' => $request->quantite[$key],
                 'prix_ht' => $request->prix_ht[$key],
                 'prix_total' => $request->quantite[$key] * $request->prix_ht[$key],
@@ -300,8 +300,8 @@ class BonCommandeRController extends Controller
         $items = [];
         foreach ($request->libelle as $key => $libelle) {
             $items[] = [
-                'libelle' => Str::limit($libelle, 255),
-                'quantite' => $request->quantite[$key],
+  'libelle' => mb_substr($libelle, 0, 255),
+                  'quantite' => $request->quantite[$key],
                 'prix_ht' => $request->prix_ht[$key],
                 'prix_total' => $request->quantite[$key] * $request->prix_ht[$key],
                 'bon_commande_r_id' => $bonCommandeR->id,

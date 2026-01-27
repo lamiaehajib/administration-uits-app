@@ -1073,3 +1073,5 @@ public function updateFournisseur(Request $request, $id)
     }
 }
 }
+
+

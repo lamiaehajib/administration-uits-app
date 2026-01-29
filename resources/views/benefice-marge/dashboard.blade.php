@@ -1,6 +1,6 @@
 <x-app-layout>
     <style>
-        /* ===== VARIABLES COULEURS (exactement bhal ton app) ===== */
+        /* ===== VARIABLES COULEURS ===== */
         :root {
             --primary-gradient: linear-gradient(135deg, #C2185B, #D32F2F);
             --primary-color: #D32F2F;
@@ -32,6 +32,255 @@
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        /* ===== MODAL BACKDROP - VERSION CORRIGÉE ===== */
+.modal-backdrop-custom {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 1050;
+    display: none; /* Caché par défaut */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal-backdrop-custom.show {
+    display: block; /* Afficher quand show */
+    opacity: 1;
+}
+
+/* ===== MODAL CONTAINER - VERSION CORRIGÉE ===== */
+.modal-custom {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1055;
+    display: none; /* Caché par défaut */
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal-custom.show {
+    display: flex !important; /* Force display */
+    opacity: 1;
+}
+
+        .modal-dialog-custom {
+            background: white;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 650px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            overflow: hidden;
+        }
+
+        /* ===== MODAL HEADER ===== */
+        .modal-header-custom {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 28px 32px;
+            border-bottom: none;
+            position: relative;
+        }
+
+        .modal-header-custom h4 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 20px;
+        }
+
+        .modal-close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        /* ===== MODAL BODY ===== */
+        .modal-body-custom {
+            padding: 32px;
+        }
+
+        .filter-group {
+            margin-bottom: 28px;
+        }
+
+        .filter-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .filter-label {
+            font-weight: 700;
+            color: #374151;
+            font-size: 0.9375rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-label i {
+            color: var(--primary-color);
+            font-size: 1.125rem;
+        }
+
+        .filter-select,
+        .filter-input {
+            width: 100%;
+            border: 2.5px solid #e5e7eb;
+            border-radius: 14px;
+            padding: 14px 18px;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            color: #1f2937;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .filter-select:focus,
+        .filter-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 5px rgba(211, 47, 47, 0.1);
+            outline: none;
+        }
+
+        .filter-select:hover,
+        .filter-input:hover {
+            border-color: #cbd5e1;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        /* ===== MODAL FOOTER ===== */
+        .modal-footer-custom {
+            padding: 24px 32px;
+            background: #f9fafb;
+            border-top: 2px solid #f3f4f6;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .btn-modal-primary {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.9375rem;
+            transition: all 0.3s;
+            box-shadow: 0 4px 14px rgba(211, 47, 47, 0.35);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .btn-modal-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(211, 47, 47, 0.45);
+        }
+
+        .btn-modal-secondary {
+            background: white;
+            color: #6b7280;
+            border: 2.5px solid #e5e7eb;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.9375rem;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .btn-modal-secondary:hover {
+            background: #f9fafb;
+            border-color: #cbd5e1;
+        }
+
+        /* ===== ACTIVE FILTERS BADGE ===== */
+        .active-filters-info {
+            background: linear-gradient(135deg, rgba(194, 24, 91, 0.08), rgba(211, 47, 47, 0.08));
+            border: 2px solid rgba(211, 47, 47, 0.2);
+            border-radius: 16px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            animation: slideInUp 0.5s ease-out;
+        }
+
+        .filter-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            padding: 10px 18px;
+            border-radius: 25px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin: 6px;
+            border: 2px solid rgba(211, 47, 47, 0.2);
+            transition: all 0.3s;
+        }
+
+        .filter-badge:hover {
+            background: var(--primary-gradient);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);
+        }
+
+        .filter-badge i {
+            font-size: 0.75rem;
         }
 
         /* ===== PAGE HEADER ===== */
@@ -111,47 +360,6 @@
             border-color: transparent;
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(211, 47, 47, 0.3);
-        }
-
-        /* ===== FILTER SECTION ===== */
-        .filter-section {
-            background: white;
-            border-radius: 20px;
-            padding: 28px;
-            margin-bottom: 32px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-            border: 2px solid rgba(211, 47, 47, 0.08);
-            animation: slideInUp 0.6s ease-out;
-        }
-
-        .filter-section .form-label {
-            font-weight: 700;
-            color: #374151;
-            font-size: 0.875rem;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .filter-section .form-label i {
-            color: var(--primary-color);
-        }
-
-        .filter-section .form-select,
-        .filter-section input[type="date"] {
-            border: 2px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 12px 18px;
-            transition: all 0.3s;
-            font-weight: 500;
-        }
-
-        .filter-section .form-select:focus,
-        .filter-section input[type="date"]:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 4px rgba(211, 47, 47, 0.12);
-            outline: none;
         }
 
         /* ===== STAT CARDS (KPIs) ===== */
@@ -247,7 +455,6 @@
             color: #dc2626;
         }
 
-        /* Animation stagger pour cards */
         .stat-card:nth-child(1) { animation: slideInUp 0.5s ease-out 0.1s both; }
         .stat-card:nth-child(2) { animation: slideInUp 0.5s ease-out 0.2s both; }
         .stat-card:nth-child(3) { animation: slideInUp 0.5s ease-out 0.3s both; }
@@ -467,10 +674,20 @@
                 height: 60px;
                 font-size: 26px;
             }
+
+            .modal-dialog-custom {
+                margin: 10px;
+                max-width: calc(100% - 20px);
+            }
+
+            .filter-row {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media print {
-            .filter-section,
+            .modal-custom,
+            .modal-backdrop-custom,
             .btn-gradient,
             .btn-outline-gradient {
                 display: none !important;
@@ -511,58 +728,84 @@
                 </p>
             </div>
             <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-gradient" onclick="openFilterModal()">
+                    <i class="fas fa-filter"></i> Filtres
+                </button>
                 <a href="{{ route('benefice-marge.export.csv', request()->all()) }}" class="btn btn-outline-gradient">
-                    <i class="fas fa-download"></i> Exporter CSV
+                    <i class="fas fa-download"></i> CSV
                 </a>
-                <button class="btn btn-gradient" onclick="window.print()">
+                <button class="btn btn-outline-gradient" onclick="window.print()">
                     <i class="fas fa-print"></i> Imprimer
                 </button>
             </div>
         </div>
 
-        {{-- Filtres --}}
-        <div class="filter-section">
-            <form method="GET" action="{{ route('benefice-marge.dashboard') }}" class="row g-3">
-                <div class="col-md-3 col-sm-6">
-                    <label class="form-label">
-                        <i class="fas fa-clock"></i> Période
-                    </label>
-                    <select name="periode" class="form-select" onchange="this.form.submit()">
-                        <option value="ce_mois" {{ $periode == 'ce_mois' ? 'selected' : '' }}>Ce mois</option>
-                        <option value="cette_semaine" {{ $periode == 'cette_semaine' ? 'selected' : '' }}>Cette semaine</option>
-                        <option value="ce_trimestre" {{ $periode == 'ce_trimestre' ? 'selected' : '' }}>Ce trimestre</option>
-                        <option value="cette_annee" {{ $periode == 'cette_annee' ? 'selected' : '' }}>Cette année</option>
-                        <option value="12_mois" {{ $periode == '12_mois' ? 'selected' : '' }}>12 derniers mois</option>
-                        <option value="personnalise" {{ $periode == 'personnalise' ? 'selected' : '' }}>Personnalisée</option>
-                    </select>
+        {{-- Active Filters Info --}}
+        @php
+            $hasActiveFilters = request('periode') != 'ce_mois' || request('date_debut') || request('date_fin') || request('comparaison') != 'mois_precedent';
+            
+            $filterLabels = [
+                'periode' => [
+                    'aujourdhui' => "Aujourd'hui",
+                    'cette_semaine' => 'Cette semaine',
+                    'ce_mois' => 'Ce mois',
+                    'ce_trimestre' => 'Ce trimestre',
+                    'cette_annee' => 'Cette année',
+                    '12_mois' => '12 derniers mois',
+                    'personnalise' => 'Période personnalisée'
+                ],
+                'comparaison' => [
+                    'mois_precedent' => 'Mois précédent',
+                    'annee_precedente' => 'Année précédente',
+                    'aucune' => 'Aucune comparaison'
+                ]
+            ];
+        @endphp
+
+        @if($hasActiveFilters)
+        <div class="active-filters-info">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <strong style="color: var(--primary-color);">
+                        <i class="fas fa-filter me-2"></i>Filtres actifs:
+                    </strong>
+                    
+                    @if(request('periode') && request('periode') != 'ce_mois')
+                        <span class="filter-badge">
+                            <i class="fas fa-clock"></i>
+                            {{ $filterLabels['periode'][request('periode')] ?? request('periode') }}
+                        </span>
+                    @endif
+
+                    @if(request('date_debut'))
+                        <span class="filter-badge">
+                            <i class="fas fa-calendar-day"></i>
+                            Du {{ \Carbon\Carbon::parse(request('date_debut'))->format('d/m/Y') }}
+                        </span>
+                    @endif
+
+                    @if(request('date_fin'))
+                        <span class="filter-badge">
+                            <i class="fas fa-calendar-day"></i>
+                            Au {{ \Carbon\Carbon::parse(request('date_fin'))->format('d/m/Y') }}
+                        </span>
+                    @endif
+
+                    @if(request('comparaison') && request('comparaison') != 'mois_precedent')
+                        <span class="filter-badge">
+                            <i class="fas fa-exchange-alt"></i>
+                            {{ $filterLabels['comparaison'][request('comparaison')] ?? request('comparaison') }}
+                        </span>
+                    @endif
                 </div>
-                
-                <div class="col-md-3 col-sm-6">
-                    <label class="form-label">
-                        <i class="fas fa-calendar-day"></i> Date début
-                    </label>
-                    <input type="date" name="date_debut" class="form-select" value="{{ request('date_debut') }}">
-                </div>
-                
-                <div class="col-md-3 col-sm-6">
-                    <label class="form-label">
-                        <i class="fas fa-calendar-day"></i> Date fin
-                    </label>
-                    <input type="date" name="date_fin" class="form-select" value="{{ request('date_fin') }}">
-                </div>
-                
-                <div class="col-md-3 col-sm-6">
-                    <label class="form-label">
-                        <i class="fas fa-exchange-alt"></i> Comparaison
-                    </label>
-                    <select name="comparaison" class="form-select" onchange="this.form.submit()">
-                        <option value="mois_precedent" {{ $comparaison == 'mois_precedent' ? 'selected' : '' }}>Mois précédent</option>
-                        <option value="annee_precedente" {{ $comparaison == 'annee_precedente' ? 'selected' : '' }}>Année précédente</option>
-                        <option value="aucune" {{ $comparaison == 'aucune' ? 'selected' : '' }}>Aucune</option>
-                    </select>
-                </div>
-            </form>
+
+                <a href="{{ route('benefice-marge.dashboard') }}" class="btn-outline-gradient" style="padding: 8px 20px; font-size: 0.875rem;">
+                    <i class="fas fa-times-circle"></i>
+                    Réinitialiser
+                </a>
+            </div>
         </div>
+        @endif
 
         {{-- KPIs Principaux --}}
         <div class="row g-4 mb-5">
@@ -916,15 +1159,164 @@
 
     </div>
 
-    @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script>
-        // Config globale
-        Chart.defaults.font.family = 'Ubuntu, system-ui, sans-serif';
-        Chart.defaults.color = '#6b7280';
+    {{-- MODAL FILTRES - VERSION CORRIGÉE --}}
+<div id="filterBackdrop" class="modal-backdrop-custom"></div>
+<div id="filterModal" class="modal-custom">
+    <div class="modal-dialog-custom">
+        <form method="GET" action="{{ route('benefice-marge.dashboard') }}" id="filterForm">
+            {{-- Header --}}
+            <div class="modal-header-custom">
+                <h4>
+                    <i class="fas fa-sliders-h"></i>
+                    Filtres de Recherche
+                </h4>
+                <button type="button" class="modal-close-btn" onclick="closeFilterModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
 
-        const primaryColor = '#D32F2F';
-        const secondaryColor = '#C2185B';
+            {{-- Body --}}
+            <div class="modal-body-custom">
+                {{-- Période --}}
+                <div class="filter-group">
+                    <label class="filter-label">
+                        <i class="fas fa-clock"></i>
+                        Période
+                    </label>
+                    <select name="periode" id="periodeSelect" class="filter-select">
+                        <option value="aujourdhui" {{ request('periode') == 'aujourdhui' ? 'selected' : '' }}>Aujourd'hui</option>
+                        <option value="cette_semaine" {{ request('periode') == 'cette_semaine' ? 'selected' : '' }}>Cette semaine</option>
+                        <option value="ce_mois" {{ request('periode', 'ce_mois') == 'ce_mois' ? 'selected' : '' }}>Ce mois</option>
+                        <option value="ce_trimestre" {{ request('periode') == 'ce_trimestre' ? 'selected' : '' }}>Ce trimestre</option>
+                        <option value="cette_annee" {{ request('periode') == 'cette_annee' ? 'selected' : '' }}>Cette année</option>
+                        <option value="12_mois" {{ request('periode') == '12_mois' ? 'selected' : '' }}>12 derniers mois</option>
+                        <option value="personnalise" {{ request('periode') == 'personnalise' ? 'selected' : '' }}>Période personnalisée</option>
+                    </select>
+                </div>
+
+                {{-- Dates personnalisées --}}
+                <div id="customDatesGroup" style="display: {{ request('periode') == 'personnalise' ? 'block' : 'none' }};">
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="fas fa-calendar-day"></i>
+                                Date début
+                            </label>
+                            <input type="date" name="date_debut" class="filter-input" value="{{ request('date_debut') }}">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="fas fa-calendar-day"></i>
+                                Date fin
+                            </label>
+                            <input type="date" name="date_fin" class="filter-input" value="{{ request('date_fin') }}">
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Comparaison --}}
+                <div class="filter-group">
+                    <label class="filter-label">
+                        <i class="fas fa-exchange-alt"></i>
+                        Comparaison
+                    </label>
+                    <select name="comparaison" class="filter-select">
+                        <option value="mois_precedent" {{ request('comparaison', 'mois_precedent') == 'mois_precedent' ? 'selected' : '' }}>Mois précédent</option>
+                        <option value="annee_precedente" {{ request('comparaison') == 'annee_precedente' ? 'selected' : '' }}>Année précédente</option>
+                        <option value="aucune" {{ request('comparaison') == 'aucune' ? 'selected' : '' }}>Aucune comparaison</option>
+                    </select>
+                </div>
+            </div>
+
+            {{-- Footer --}}
+            <div class="modal-footer-custom">
+                <button type="button" class="btn-modal-secondary" onclick="resetFilters()">
+                    <i class="fas fa-redo"></i>
+                    Réinitialiser
+                </button>
+                <button type="submit" class="btn-modal-primary">
+                    <i class="fas fa-check"></i>
+                    Appliquer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+   @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // ===== MODAL FUNCTIONS - VERSION CORRIGÉE =====
+    function openFilterModal() {
+        console.log('Opening modal...');
+        const backdrop = document.getElementById('filterBackdrop');
+        const modal = document.getElementById('filterModal');
+        
+        if (backdrop && modal) {
+            backdrop.classList.add('show');
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+            console.log('Modal opened successfully');
+        } else {
+            console.error('Modal elements not found!');
+        }
+    }
+
+    function closeFilterModal() {
+        console.log('Closing modal...');
+        const backdrop = document.getElementById('filterBackdrop');
+        const modal = document.getElementById('filterModal');
+        
+        if (backdrop && modal) {
+            backdrop.classList.remove('show');
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+            console.log('Modal closed successfully');
+        }
+    }
+
+    function toggleCustomDates() {
+        const periode = document.getElementById('periodeSelect').value;
+        const customDatesGroup = document.getElementById('customDatesGroup');
+        if (customDatesGroup) {
+            customDatesGroup.style.display = periode === 'personnalise' ? 'block' : 'none';
+        }
+    }
+
+    function resetFilters() {
+        window.location.href = '{{ route("benefice-marge.dashboard") }}';
+    }
+
+    // Event listener pour le changement de période
+    document.addEventListener('DOMContentLoaded', function() {
+        const periodeSelect = document.getElementById('periodeSelect');
+        if (periodeSelect) {
+            periodeSelect.addEventListener('change', toggleCustomDates);
+        }
+
+        // Fermer modal avec ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeFilterModal();
+            }
+        });
+
+        // Fermer modal en cliquant sur le backdrop
+        const backdrop = document.getElementById('filterBackdrop');
+        if (backdrop) {
+            backdrop.addEventListener('click', closeFilterModal);
+        }
+
+        console.log('Modal scripts loaded successfully');
+    });
+
+    // ===== CHARTS CONFIG =====
+    Chart.defaults.font.family = 'Ubuntu, system-ui, sans-serif';
+    Chart.defaults.color = '#6b7280';
+
+    const primaryColor = '#D32F2F';
+    const secondaryColor = '#C2185B';
 
         // Evolution Chart
         const evolutionCtx = document.getElementById('evolutionChart');

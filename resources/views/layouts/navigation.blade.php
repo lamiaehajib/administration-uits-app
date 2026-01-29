@@ -438,7 +438,7 @@
 
         <div class="sidebar-menu">
             <button type="button" class="active">
-                <a href="{{ route('dashboard') }}">
+                <a >
                     <i class='bx bx-home'></i>
                     <span>Accueil</span>
                 </a>
@@ -496,43 +496,7 @@
             </button>
             @endcan
 
-            {{-- <div class="sidebar-divider"></div>
-            <div class="sidebar-section-title">Gestion Financière</div>
-
-            <button type="button">
-                <a href="{{ route('depenses.dashboard') }}">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Tableau de Bord</span>
-                </a>
-            </button>
-
-            <button type="button">
-                <a href="{{ route('depenses.fixes.index') }}">
-                    <i class="fas fa-money-bill-wave"></i>
-                    <span>Dépenses Fixes</span>
-                </a>
-            </button>
-
-            <button type="button">
-                <a href="{{ route('depenses.variables.index') }}">
-                    <i class="fas fa-hand-holding-usd"></i>
-                    <span>Dépenses Variables</span>
-                </a>
-            </button>
-
-            <button type="button">
-                <a href="{{ route('depenses.budgets.index') }}">
-                    <i class="fas fa-wallet"></i>
-                    <span>Budgets</span>
-                </a>
-            </button>
-
-            <button type="button">
-                <a href="{{ route('depenses.salaires.historique') }}">
-                    <i class="fas fa-users-cog"></i>
-                    <span>Historique Salaires</span>
-                </a>
-            </button> --}}
+          
 
             @can('role-list')
             <div class="sidebar-divider"></div>
@@ -729,6 +693,57 @@
             document.getElementById('sidebar').classList.remove('active');
             document.getElementById('sidebarOverlay').classList.remove('active');
         });
+
+        const accueilButton = document.querySelector('.sidebar-menu button.active');
+if (accueilButton) {
+    accueilButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        
+        Swal.fire({
+            title: `<strong style="background: linear-gradient(135deg, #C2185B, #D32F2F); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Choisir le Tableau de Bord</strong>`,
+            html: `
+                <a href="{{ route('benefice-marge.dashboard') }}" 
+                   style="display:flex; align-items:center; gap:15px; margin-bottom: 12px; color: #2196F3; 
+                          font-size: 16px; text-decoration: none; background: linear-gradient(135deg, #2196F315, #2196F325); 
+                          padding: 14px 18px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); 
+                          transition: all 0.3s ease; border-left: 4px solid #2196F3;"
+                   onmouseover="this.style.transform='translateX(8px)'; this.style.boxShadow='0 4px 15px rgba(0, 0, 0, 0.2)';"
+                   onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='0 2px 8px rgba(0, 0, 0, 0.1)';">
+                    <i class="fas fa-chart-line" style="color: #2196F3; font-size: 20px; width: 24px;"></i> 
+                    <span style="flex:1; text-align:left; font-weight:600;">UITS - Union IT Services</span>
+                    <i class="fas fa-chevron-right" style="font-size: 14px; opacity: 0.6;"></i>
+                </a>
+                
+                <a href="{{ route('benefices.dashboard') }}" 
+                   style="display:flex; align-items:center; gap:15px; margin-bottom: 12px; color: #4CAF50; 
+                          font-size: 16px; text-decoration: none; background: linear-gradient(135deg, #4CAF5015, #4CAF5025); 
+                          padding: 14px 18px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); 
+                          transition: all 0.3s ease; border-left: 4px solid #4CAF50;"
+                   onmouseover="this.style.transform='translateX(8px)'; this.style.boxShadow='0 4px 15px rgba(0, 0, 0, 0.2)';"
+                   onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='0 2px 8px rgba(0, 0, 0, 0.1)';">
+                    <i class="fas fa-gamepad" style="color: #4CAF50; font-size: 20px; width: 24px;"></i> 
+                    <span style="flex:1; text-align:left; font-weight:600;">UCGS - Union Computers Gaming Services</span>
+                    <i class="fas fa-chevron-right" style="font-size: 14px; opacity: 0.6;"></i>
+                </a>
+            `,
+            showCloseButton: true,
+            showConfirmButton: false,
+            background: '#ffffff',
+            width: '500px',
+            padding: '30px',
+            customClass: {
+                popup: 'animated-popup',
+                closeButton: 'custom-close-btn'
+            },
+            didOpen: () => {
+                const popup = document.querySelector('.swal2-popup');
+                popup.style.borderRadius = '20px';
+                popup.style.boxShadow = '0 10px 40px rgba(0, 0, 0, 0.15)';
+                popup.style.border = '2px solid #C2185B';
+            }
+        });
+    });
+}
     </script>
 </body>
 </html>

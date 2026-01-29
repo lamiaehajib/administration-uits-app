@@ -226,7 +226,6 @@
                                 <label class="form-label">Type <span class="text-danger">*</span></label>
                                 <select name="type" id="create_type" class="form-select" required>
                                     <option value="">Sélectionner...</option>
-                                    <option value="salaire">Salaires</option>
                                     <option value="loyer">Loyer</option>
                                     <option value="internet">Internet</option>
                                     <option value="mobile">Mobile</option>

@@ -6,6 +6,7 @@ use App\Http\Controllers\AttestationController;
 use App\Http\Controllers\AttestationFormationController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\BeneficeController;
+use App\Http\Controllers\BeneficeMargeController;
 use App\Http\Controllers\BeneficeUitsController;
 use App\Http\Controllers\BonCommandeRController;
 use App\Http\Controllers\BonDeCommandeController;
@@ -493,16 +494,16 @@ Route::get('/benefice', [BeneficeUitsController::class, 'index'])->name('benefic
         Route::post('/{id}/valider', [DepenseController::class, 'validerVariable'])->name('valider');
     });
     
-    // Budgets
-    Route::prefix('budgets')->name('budgets.')->group(function () {
-        Route::get('/', [DepenseController::class, 'indexBudgets'])->name('index');
-        Route::get('/create', [DepenseController::class, 'createBudget'])->name('create');
-        Route::post('/', [DepenseController::class, 'storeBudget'])->name('store');
-        Route::get('/{id}', [DepenseController::class, 'showBudget'])->name('show');
-        Route::get('/{id}/edit', [DepenseController::class, 'editBudget'])->name('edit');
-        Route::put('/{id}', [DepenseController::class, 'updateBudget'])->name('update');
-        Route::post('/{id}/cloturer', [DepenseController::class, 'cloturerBudget'])->name('cloturer');
-    });
+   Route::prefix('budgets')->name('budgets.')->group(function () {
+    Route::get('/', [DepenseController::class, 'indexBudgets'])->name('index');
+    Route::get('/create', [DepenseController::class, 'createBudget'])->name('create');
+    Route::post('/', [DepenseController::class, 'storeBudget'])->name('store');
+    Route::get('/{id}', [DepenseController::class, 'showBudget'])->name('show');
+    Route::get('/{id}/edit', [DepenseController::class, 'editBudget'])->name('edit');
+    Route::put('/{id}', [DepenseController::class, 'updateBudget'])->name('update');
+    Route::post('/{id}/cloturer', [DepenseController::class, 'cloturerBudget'])->name('cloturer');
+    Route::post('/{id}/recalculer', [DepenseController::class, 'recalculerBudget'])->name('recalculer'); // 🔥 NOUVEAU
+});
     
     // Import Salaires
     Route::post('/importer-salaires', [DepenseController::class, 'importerSalaires'])->name('importer-salaires');
@@ -517,6 +518,13 @@ Route::get('/benefice', [BeneficeUitsController::class, 'index'])->name('benefic
     
     // Export
     Route::get('/export', [DepenseController::class, 'export'])->name('export');
+});
+
+
+Route::prefix('benefice-marge')->name('benefice-marge.')->group(function () {
+    Route::get('/dashboard', [BeneficeMargeController::class, 'dashboard'])->name('dashboard');
+    Route::get('/export-csv', [BeneficeMargeController::class, 'exportCSV'])->name('export.csv');
+    Route::get('/export-excel', [BeneficeMargeController::class, 'exportExcel'])->name('export.excel');
 });
       });
 

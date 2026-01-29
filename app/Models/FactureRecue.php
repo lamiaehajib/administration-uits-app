@@ -9,14 +9,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class FactureRecue extends Model
 {
     use HasFactory, SoftDeletes;
-protected $table = 'factures_recues';
+
+    protected $table = 'factures_recues';
+    
     protected $fillable = [
         'numero_facture',
         'date_facture',
         'date_echeance',
         'fournisseur_type',
         'fournisseur_id',
-       
         'montant_ttc',
         'description',
         'statut',
@@ -28,10 +29,37 @@ protected $table = 'factures_recues';
     protected $casts = [
         'date_facture' => 'date',
         'date_echeance' => 'date',
-       
         'montant_ttc' => 'decimal:2',
     ];
 
+    // ========================================
+    // 🔥 Boot - Auto-create DepenseVariable
+    // ========================================
+    
+    protected static function booted()
+    {
+        // Quand une facture est créée, créer automatiquement une dépense variable
+        static::created(function ($facture) {
+            // Créer dépense variable automatiquement
+            DepenseVariable::create([
+                'type' => 'facture_recue',
+                'libelle' => 'Facture ' . $facture->numero_facture . ' - ' . $facture->nom_fournisseur,
+                'description' => $facture->description ?? 'Dépense générée automatiquement depuis facture reçue',
+                'montant' => $facture->montant_ttc,
+                'date_depense' => $facture->date_facture,
+                'annee' => $facture->date_facture->year,
+                'mois' => $facture->date_facture->month,
+                'facture_recue_id' => $facture->id,
+                'statut' => 'en_attente', // Par défaut en attente de validation
+                'created_by' => $facture->created_by,
+            ]);
+        });
+    }
+
+    // ========================================
+    // Relations
+    // ========================================
+    
     /**
      * Relation polymorphique vers Consultant ou Fournisseur
      */
@@ -57,10 +85,17 @@ protected $table = 'factures_recues';
     }
 
     /**
-     * Boot method pour calculer automatiquement le montant TTC
+     * Dépense variable associée à cette facture
      */
-   
+    public function depenseVariable()
+    {
+        return $this->hasOne(DepenseVariable::class, 'facture_recue_id');
+    }
 
+    // ========================================
+    // Scopes
+    // ========================================
+    
     /**
      * Scope pour filtrer par statut
      */
@@ -85,15 +120,37 @@ protected $table = 'factures_recues';
         return $query->where('statut', 'payee');
     }
 
+    // ========================================
+    // Accessors
+    // ========================================
+    
     /**
      * Obtenir le nom du fournisseur (Consultant ou Fournisseur)
      */
     public function getNomFournisseurAttribute()
     {
+        if (!$this->fournisseur) {
+            return 'N/A';
+        }
+
         if ($this->fournisseur_type === 'App\Models\Consultant') {
             return $this->fournisseur->nom_complet ?? 'N/A';
         }
         
         return $this->fournisseur->nom_entreprise ?? 'N/A';
+    }
+
+    /**
+     * Badge de statut HTML
+     */
+    public function getStatutBadgeAttribute()
+    {
+        $badges = [
+            'en_attente' => '<span class="badge bg-warning">En attente</span>',
+            'payee' => '<span class="badge bg-success">Payée</span>',
+            'annulee' => '<span class="badge bg-danger">Annulée</span>',
+        ];
+
+        return $badges[$this->statut] ?? '';
     }
 }

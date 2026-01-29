@@ -485,6 +485,7 @@
                     <span>Bon de Livraisons</span>
                 </a>
             </button>
+
             @can('produit-list')
             <div class="sidebar-divider"></div>
             <div class="sidebar-section-title">Produits & Stocks</div>
@@ -493,12 +494,50 @@
                 <i class="fas fa-box"></i>
                 <span>Produit UCGS <i id="i-fetch" class="fa fa-chevron-down"></i></span>
             </button>
-@endcan
-  @can('role-list')
+            @endcan
+
+            {{-- <div class="sidebar-divider"></div>
+            <div class="sidebar-section-title">Gestion Financière</div>
+
+            <button type="button">
+                <a href="{{ route('depenses.dashboard') }}">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Tableau de Bord</span>
+                </a>
+            </button>
+
+            <button type="button">
+                <a href="{{ route('depenses.fixes.index') }}">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Dépenses Fixes</span>
+                </a>
+            </button>
+
+            <button type="button">
+                <a href="{{ route('depenses.variables.index') }}">
+                    <i class="fas fa-hand-holding-usd"></i>
+                    <span>Dépenses Variables</span>
+                </a>
+            </button>
+
+            <button type="button">
+                <a href="{{ route('depenses.budgets.index') }}">
+                    <i class="fas fa-wallet"></i>
+                    <span>Budgets</span>
+                </a>
+            </button>
+
+            <button type="button">
+                <a href="{{ route('depenses.salaires.historique') }}">
+                    <i class="fas fa-users-cog"></i>
+                    <span>Historique Salaires</span>
+                </a>
+            </button> --}}
+
+            @can('role-list')
             <div class="sidebar-divider"></div>
             <div class="sidebar-section-title">Administration</div>
 
-          
             <button>
                 <a href="{{ route('roles.index') }}">
                     <i class="fas fa-user-shield"></i>
@@ -537,8 +576,6 @@
                 links: [
                     { href: '{{ route('reussites.index') }}', label: 'Reçu de Stage', icon: 'fas fa-receipt', color: '#C2185B' },
                     { href: '{{ route('reussitesf.index') }}', label: 'Reçu de Formation', icon: 'fas fa-graduation-cap', color: '#4CAF50' }
-                    // { href: '{{ route('ucgs.index') }}', label: 'Reçu de UCGS', icon: 'fas fa-shield-alt', color: '#ef4444' },
-                    
                 ]
             },
             { 
@@ -569,76 +606,73 @@
             { 
                 id: 'produitButto', 
                 title: 'Liste des Produits', 
-links: [
-     { href: '{{ route('repair-tickets.index') }}', label: 'SERVICE DE RÉPARATION', icon: 'fas fa-shield-alt', color: '#4455efff' },
-    { 
-        href: '{{ route('categories.index') }}', 
-        label: 'Catégories de Produits', 
-        icon: 'fas fa-boxes-stacked', 
-        color: '#C2185B' 
-    },
-    { 
-        href: '{{ route('produits.index') }}', 
-        label: 'Gestion des Produits', 
-        icon: 'fas fa-box', 
-        color: '#FF9800' 
-    },
-       @can('achat-list')
-    { 
-        href: '{{ route('achats.index') }}', 
-        label: 'Historique des Achats', 
-        icon: 'fas fa-cart-shopping', 
-        color: '#2196F3' 
-    },
-    @endcan
-@can('produit-rapport')
-    { 
-            href: '{{ route('charges.index') }}', 
-            label: 'Gestion des Charges', 
-            icon: 'fas fa-file-invoice-dollar', 
-            color: '#D32F2F' 
-        },
-        @endcan
-    { 
-        href: '{{ route('recus.index') }}', 
-        label: 'Reçus de Paiement', 
-        icon: 'fas fa-receipt', 
-        color: '#4CAF50' 
-    },
-     @can('paiement-list')
-    { 
-          
-        href: '{{ route('paiements.index') }}', 
-        label: 'Gestion des Paiements', 
-        icon: 'fas fa-credit-card', 
-        color: '#9C27B0' 
-    },
-    @endcan
-
-    { 
-        href: '{{ route('stock.movements.index') }}', 
-        label: 'Mouvements de Stock', 
-        icon: 'fas fa-truck-ramp-box', 
-        color: '#00BCD4' 
-    },
-
-       @can('produit-rapport')
-    { 
-        href: '{{ route('produits.totals') }}', 
-        label: 'Totaux et Statistiques', 
-        icon: 'fas fa-chart-pie', 
-        color: '#F44336' 
-    },
-    @endcan
-    @can('produit-rapport')
-    { 
-            href: '{{ route('benefices.dashboard') }}', 
-            label: 'Tableau de Bord Bénéfices', 
-            icon: 'fas fa-hand-holding-dollar', 
-            color: '#2E7D32' 
-        }
-          @endcan
-]
+                links: [
+                    { href: '{{ route('repair-tickets.index') }}', label: 'SERVICE DE RÉPARATION', icon: 'fas fa-shield-alt', color: '#4455efff' },
+                    { 
+                        href: '{{ route('categories.index') }}', 
+                        label: 'Catégories de Produits', 
+                        icon: 'fas fa-boxes-stacked', 
+                        color: '#C2185B' 
+                    },
+                    { 
+                        href: '{{ route('produits.index') }}', 
+                        label: 'Gestion des Produits', 
+                        icon: 'fas fa-box', 
+                        color: '#FF9800' 
+                    },
+                    @can('achat-list')
+                    { 
+                        href: '{{ route('achats.index') }}', 
+                        label: 'Historique des Achats', 
+                        icon: 'fas fa-cart-shopping', 
+                        color: '#2196F3' 
+                    },
+                    @endcan
+                    @can('produit-rapport')
+                    { 
+                        href: '{{ route('charges.index') }}', 
+                        label: 'Gestion des Charges', 
+                        icon: 'fas fa-file-invoice-dollar', 
+                        color: '#D32F2F' 
+                    },
+                    @endcan
+                    { 
+                        href: '{{ route('recus.index') }}', 
+                        label: 'Reçus de Paiement', 
+                        icon: 'fas fa-receipt', 
+                        color: '#4CAF50' 
+                    },
+                    @can('paiement-list')
+                    { 
+                        href: '{{ route('paiements.index') }}', 
+                        label: 'Gestion des Paiements', 
+                        icon: 'fas fa-credit-card', 
+                        color: '#9C27B0' 
+                    },
+                    @endcan
+                    { 
+                        href: '{{ route('stock.movements.index') }}', 
+                        label: 'Mouvements de Stock', 
+                        icon: 'fas fa-truck-ramp-box', 
+                        color: '#00BCD4' 
+                    },
+                    @can('produit-rapport')
+                    { 
+                        href: '{{ route('produits.totals') }}', 
+                        label: 'Totaux et Statistiques', 
+                        icon: 'fas fa-chart-pie', 
+                        color: '#F44336' 
+                    },
+                    @endcan
+                    @can('produit-rapport')
+                    { 
+                        href: '{{ route('benefices.dashboard') }}', 
+                        label: 'Tableau de Bord Bénéfices', 
+                        icon: 'fas fa-hand-holding-dollar', 
+                        color: '#2E7D32' 
+                    }
+                    @endcan
+                ]
             },
         ];
 
@@ -695,14 +729,6 @@ links: [
             document.getElementById('sidebar').classList.remove('active');
             document.getElementById('sidebarOverlay').classList.remove('active');
         });
-        
-        // Exemple d'un bouton pour ouvrir la sidebar (à ajouter dans votre header HTML)
-        /*
-        document.getElementById('menuToggleBtn').addEventListener('click', () => {
-            document.getElementById('sidebar').classList.add('active');
-            document.getElementById('sidebarOverlay').classList.add('active');
-        });
-        */
     </script>
 </body>
 </html>

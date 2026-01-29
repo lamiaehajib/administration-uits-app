@@ -18,7 +18,6 @@
                             <label class="form-label">Type <span class="text-danger">*</span></label>
                             <select name="type" id="typeFixe" class="form-select" required>
                                 <option value="">Sélectionner un type</option>
-                                <option value="salaire">💼 Salaire</option>
                                 <option value="loyer">🏠 Loyer</option>
                                 <option value="internet">🌐 Internet</option>
                                 <option value="mobile">📱 Mobile</option>

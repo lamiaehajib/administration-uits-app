@@ -320,15 +320,18 @@
                                             <i class="fas fa-file-invoice me-2"></i>Informations Facture
                                         </h6>
                                         <select name="facture_recue_id" class="form-select">
-    <option value="">Sélectionner une facture...</option>
-    @if(isset($facturess) && $facturess->count() > 0)
-        @foreach($facturess as $facture)
-            <option value="{{ $facture->id }}">
-                {{ $facture->numero_facture }} - {{ $facture->nom_fournisseur }} ({{ number_format($facture->montant_ttc, 2) }} DH)
-            </option>
-        @endforeach
-    @endif
-</select>
+                                            <option value="">Sélectionner une facture...</option>
+                                            {{-- 🔥 FIX: Utiliser $factures au lieu de $facturess --}}
+                                            @if(isset($factures) && $factures->count() > 0)
+                                                @foreach($factures as $facture)
+                                                    <option value="{{ $facture->id }}">
+                                                        {{ $facture->numero_facture }} - {{ $facture->nom_fournisseur }} ({{ number_format($facture->montant_ttc, 2) }} DH)
+                                                    </option>
+                                                @endforeach
+                                            @else
+                                                <option value="" disabled>Aucune facture disponible</option>
+                                            @endif
+                                        </select>
                                     </div>
                                 </div>
                             </div>

@@ -31,76 +31,157 @@ class DepenseController extends Controller
     // ========================================
     
     public function dashboard(Request $request)
-    {
-        $annee = $request->get('annee', now()->year);
-        $mois = $request->get('mois', now()->month);
+{
+    $annee = $request->get('annee', now()->year);
+    $mois = $request->get('mois', now()->month);
+    $periode = $request->get('periode', '12'); // 6, 12, 24 mois
 
-        // 📊 Totaux du mois
-        $totaux = $this->depenseService->calculerTotauxMois($annee, $mois);
+    // 📊 Totaux du mois courant
+    $totaux = $this->depenseService->calculerTotauxMois($annee, $mois);
 
-        // 📅 Budget mensuel
-        $budget = BudgetMensuel::pourMois($annee, $mois)->first();
+    // 📅 Budget mensuel
+    $budget = BudgetMensuel::pourMois($annee, $mois)->first();
 
-        // 📈 Évolution 12 derniers mois
-        $evolution = collect(range(11, 0))->map(function($i) {
-            $date = now()->subMonths($i);
-            $totaux = $this->depenseService->calculerTotauxMois($date->year, $date->month);
-            
+    // 📈 Évolution selon période sélectionnée
+    $evolution = collect(range($periode - 1, 0))->map(function($i) {
+        $date = now()->subMonths($i);
+        $totaux = $this->depenseService->calculerTotauxMois($date->year, $date->month);
+        $budget = BudgetMensuel::pourMois($date->year, $date->month)->first();
+        
+        return [
+            'mois' => $date->format('M Y'),
+            'mois_short' => $date->format('M'),
+            'mois_num' => $date->month,
+            'annee' => $date->year,
+            'fixes' => $totaux['fixes'],
+            'variables' => $totaux['variables'],
+            'total' => $totaux['total'],
+            'budget_total' => $budget ? $budget->budget_total : 0,
+            'taux_realisation' => $budget && $budget->budget_total > 0 
+                ? round(($totaux['total'] / $budget->budget_total) * 100, 1) 
+                : 0,
+        ];
+    });
+
+    // 🔝 Top 10 dépenses fixes actives
+    $topFixes = DepenseFixe::actif()
+        ->orderBy('montant_mensuel', 'desc')
+        ->limit(10)
+        ->get();
+
+    // 🔝 Top 10 dépenses variables du mois
+    $topVariables = DepenseVariable::pourMois($annee, $mois)
+        ->validee()
+        ->orderBy('montant', 'desc')
+        ->limit(10)
+        ->get();
+
+    // ⚠️ Alertes et notifications
+    $alertes = [
+        'budget_depasse' => $budget && $budget->is_depasse,
+        'factures_en_attente' => DepenseVariable::enAttente()->count(),
+        'rappels_du_jour' => $this->getRappelsDuJour(),
+        'depenses_non_validees' => DepenseVariable::where('statut', 'en_attente')
+            ->where('created_at', '>=', now()->subDays(7))
+            ->count(),
+    ];
+
+    // 📊 Répartition par type (variables) - Mois courant
+    $repartitionTypes = DepenseVariable::pourMois($annee, $mois)
+        ->validee()
+        ->select('type', DB::raw('SUM(montant) as total'))
+        ->groupBy('type')
+        ->get()
+        ->map(function($item) use ($annee, $mois) {
             return [
-                'mois' => $date->format('M Y'),
-                'mois_num' => $date->month,
-                'annee' => $date->year,
-                'fixes' => $totaux['fixes'],
-                'variables' => $totaux['variables'],
-                'total' => $totaux['total'],
+                'type' => $item->type_libelle,
+                'montant' => $item->total,
+                'count' => DepenseVariable::pourMois($annee, $mois)
+                    ->validee()
+                    ->where('type', $item->type)
+                    ->count(),
             ];
         });
 
-        // 🔝 Top 5 dépenses fixes
-        $topFixes = DepenseFixe::actif()
-            ->orderBy('montant_mensuel', 'desc')
-            ->limit(5)
-            ->get();
+    // 📊 Répartition par type (fixes)
+    $repartitionTypesFixes = DepenseFixe::actif()
+        ->select('type', DB::raw('SUM(montant_mensuel) as total'))
+        ->groupBy('type')
+        ->get()
+        ->map(function($item) {
+            return [
+                'type' => $item->type_libelle,
+                'montant' => $item->total,
+                'count' => DepenseFixe::actif()->where('type', $item->type)->count(),
+            ];
+        });
 
-        // 🔝 Top 5 dépenses variables du mois
-        $topVariables = DepenseVariable::pourMois($annee, $mois)
+    // 📊 Statistiques annuelles
+    $statsAnnuelles = [
+        'total_depenses' => BudgetMensuel::where('annee', $annee)->sum('depense_totale_realisee'),
+        'total_budget' => BudgetMensuel::where('annee', $annee)->sum('budget_total'),
+        'nombre_budgets' => BudgetMensuel::where('annee', $annee)->count(),
+        'budgets_depasses' => BudgetMensuel::where('annee', $annee)
+            ->whereRaw('depense_totale_realisee > budget_total')
+            ->count(),
+    ];
+
+    // 📊 Comparaison mois précédent
+    $moisPrecedent = Carbon::create($annee, $mois, 1)->subMonth();
+    $totauxPrecedent = $this->depenseService->calculerTotauxMois(
+        $moisPrecedent->year, 
+        $moisPrecedent->month
+    );
+
+    $comparaison = [
+        'fixes_variation' => $totaux['fixes'] - $totauxPrecedent['fixes'],
+        'fixes_variation_pct' => $totauxPrecedent['fixes'] > 0 
+            ? round((($totaux['fixes'] - $totauxPrecedent['fixes']) / $totauxPrecedent['fixes']) * 100, 1)
+            : 0,
+        'variables_variation' => $totaux['variables'] - $totauxPrecedent['variables'],
+        'variables_variation_pct' => $totauxPrecedent['variables'] > 0 
+            ? round((($totaux['variables'] - $totauxPrecedent['variables']) / $totauxPrecedent['variables']) * 100, 1)
+            : 0,
+        'total_variation' => $totaux['total'] - $totauxPrecedent['total'],
+        'total_variation_pct' => $totauxPrecedent['total'] > 0 
+            ? round((($totaux['total'] - $totauxPrecedent['total']) / $totauxPrecedent['total']) * 100, 1)
+            : 0,
+    ];
+
+    // 📊 Activité récente (7 derniers jours)
+    $activiteRecente = [
+        'nouvelles_depenses' => DepenseVariable::where('created_at', '>=', now()->subDays(7))->count(),
+        'validations' => DepenseVariable::where('validee_le', '>=', now()->subDays(7))->count(),
+        'montant_ajoute' => DepenseVariable::where('created_at', '>=', now()->subDays(7))
             ->validee()
-            ->orderBy('montant', 'desc')
-            ->limit(5)
-            ->get();
+            ->sum('montant'),
+    ];
 
-        // ⚠️ Alertes
-        $alertes = [
-            'budget_depasse' => $budget && $budget->is_depasse,
-            'factures_en_attente' => DepenseVariable::enAttente()->count(),
-            'rappels_du_jour' => $this->getRappelsDuJour(),
-        ];
+    // 📊 Moyennes
+    $moyennes = [
+        'depense_quotidienne' => $totaux['total'] / now()->day,
+        'depense_fixe_moyenne' => DepenseFixe::actif()->avg('montant_mensuel') ?? 0,
+        'depense_variable_moyenne' => DepenseVariable::pourMois($annee, $mois)->validee()->avg('montant') ?? 0,
+    ];
 
-        // 📊 Répartition par type (variables)
-        $repartitionTypes = DepenseVariable::pourMois($annee, $mois)
-            ->validee()
-            ->select('type', DB::raw('SUM(montant) as total'))
-            ->groupBy('type')
-            ->get()
-            ->map(function($item) {
-                return [
-                    'type' => $item->type_libelle,
-                    'montant' => $item->total,
-                ];
-            });
-
-        return view('depenses.dashboard', compact(
-            'annee',
-            'mois',
-            'totaux',
-            'budget',
-            'evolution',
-            'topFixes',
-            'topVariables',
-            'alertes',
-            'repartitionTypes'
-        ));
-    }
+    return view('depenses.dashboard', compact(
+        'annee',
+        'mois',
+        'periode',
+        'totaux',
+        'budget',
+        'evolution',
+        'topFixes',
+        'topVariables',
+        'alertes',
+        'repartitionTypes',
+        'repartitionTypesFixes',
+        'statsAnnuelles',
+        'comparaison',
+        'activiteRecente',
+        'moyennes'
+    ));
+}
 
     // ========================================
     // 💰 DÉPENSES FIXES
@@ -373,19 +454,25 @@ class DepenseController extends Controller
             'en_attente' => (clone $statsQuery)->where('statut', 'en_attente')->count(),
             'validee' => (clone $statsQuery)->where('statut', 'validee')->count(),
             'payee' => (clone $statsQuery)->where('statut', 'payee')->count(),
-'par_type' => (clone $statsQuery)
-    ->reorder() // <--- Supprime le "ORDER BY date_depense" hérité de la requête principale
-    ->select('type', DB::raw('COUNT(*) as count, SUM(montant) as total'))
-    ->groupBy('type')
-    ->get(),
+            'par_type' => (clone $statsQuery)
+                ->reorder()
+                ->select('type', DB::raw('COUNT(*) as count, SUM(montant) as total'))
+                ->groupBy('type')
+                ->get(),
         ];
 
         $depenses = $query->paginate(15);
 
         // Liste employés pour filtres
         $employees = $this->apiService->getEmployees();
+        
+        // 🔥 FIX: Récupérer les factures reçues disponibles (nom variable correct)
+        $factures = FactureRecue::whereDoesntHave('depenseVariable')
+            ->where('statut', '!=', 'annulee')
+            ->orderBy('date_facture', 'desc')
+            ->get();
 
-        return view('depenses.variables.index', compact('depenses', 'stats', 'employees'));
+        return view('depenses.variables.index', compact('depenses', 'stats', 'employees', 'factures'));
     }
 
     /**
@@ -812,196 +899,197 @@ class DepenseController extends Controller
             'budget_variables' => 'required|numeric|min:0',
             'statut' => 'required|in:previsionnel,en_cours,cloture',
             'notes' => 'nullable|string',
-]);
-try {
-        $validated['updated_by'] = auth()->id();
-        $budget->update($validated);
-
-        // Recalculer dépenses
-        $budget->recalculerDepenses();
-
-        return redirect()->route('depenses.budgets.show', $budget->id)
-            ->with('success', 'Budget mis à jour avec succès!');
-
-    } catch (\Exception $e) {
-        return back()->withInput()
-            ->with('error', 'Erreur: ' . $e->getMessage());
-    }
-}
-
-/**
- * Clôturer budget
- */
-public function cloturerBudget($id)
-{
-    try {
-        $budget = BudgetMensuel::findOrFail($id);
-        
-        $budget->update([
-            'statut' => 'cloture',
-            'updated_by' => auth()->id(),
         ]);
 
-        // Recalcul final
-        $budget->recalculerDepenses();
+        try {
+            $validated['updated_by'] = auth()->id();
+            $budget->update($validated);
 
-        return redirect()->route('depenses.budgets.show', $id)
-            ->with('success', 'Budget clôturé avec succès!');
+            // Recalculer dépenses
+            $budget->recalculerDepenses();
 
-    } catch (\Exception $e) {
-        return back()->with('error', 'Erreur: ' . $e->getMessage());
-    }
-}
+            return redirect()->route('depenses.budgets.show', $budget->id)
+                ->with('success', 'Budget mis à jour avec succès!');
 
-// ========================================
-// 📥 IMPORT SALAIRES
-// ========================================
-
-/**
- * Importer salaires depuis API
- */
-public function importerSalaires(Request $request)
-{
-    $validated = $request->validate([
-        'annee' => 'required|integer|min:2020|max:2099',
-        'mois' => 'required|integer|min:1|max:12',
-    ]);
-
-    $result = $this->depenseService->importerSalairesMensuel(
-        $validated['annee'],
-        $validated['mois']
-    );
-
-    if ($result['success']) {
-        return redirect()->route('depenses.fixes.index')
-            ->with('success', $result['message'] . ' | Total: ' . number_format($result['data']['total_salaires'], 2) . ' DH + CNSS: ' . number_format($result['data']['montant_cnss'], 2) . ' DH');
+        } catch (\Exception $e) {
+            return back()->withInput()
+                ->with('error', 'Erreur: ' . $e->getMessage());
+        }
     }
 
-    return back()->with('error', $result['message']);
-}
+    /**
+     * Clôturer budget
+     */
+    public function cloturerBudget($id)
+    {
+        try {
+            $budget = BudgetMensuel::findOrFail($id);
+            
+            $budget->update([
+                'statut' => 'cloture',
+                'updated_by' => auth()->id(),
+            ]);
 
-/**
- * Historique imports salaires
- */
-public function historiqueSalaires()
-{
-    $historiques = HistoriqueSalaireApi::with('importePar')
-        ->orderBy('annee', 'desc')
-        ->orderBy('mois', 'desc')
-        ->paginate(12);
+            // Recalcul final
+            $budget->recalculerDepenses();
 
-    return view('depenses.salaires.historique', compact('historiques'));
-}
+            return redirect()->route('depenses.budgets.show', $id)
+                ->with('success', 'Budget clôturé avec succès!');
 
-/**
- * Détails import salaire
- */
-public function showHistoriqueSalaire($id)
-{
-    $historique = HistoriqueSalaireApi::with('importePar')->findOrFail($id);
-    
-    return view('depenses.salaires.show', compact('historique'));
-}
+        } catch (\Exception $e) {
+            return back()->with('error', 'Erreur: ' . $e->getMessage());
+        }
+    }
 
-// ========================================
-// 🔧 UTILITAIRES
-// ========================================
+    // ========================================
+    // 📥 IMPORT SALAIRES
+    // ========================================
 
-/**
- * Test connexion API
- */
-public function testApiConnection()
-{
-    $isConnected = $this->apiService->testConnection();
+    /**
+     * Importer salaires depuis API
+     */
+    public function importerSalaires(Request $request)
+    {
+        $validated = $request->validate([
+            'annee' => 'required|integer|min:2020|max:2099',
+            'mois' => 'required|integer|min:1|max:12',
+        ]);
 
-    return response()->json([
-        'success' => $isConnected,
-        'message' => $isConnected 
-            ? 'Connexion réussie avec uits-mgmt.ma' 
-            : 'Impossible de se connecter à uits-mgmt.ma',
-        'url' => config('services.uits_mgmt.api_url'),
-    ]);
-}
+        $result = $this->depenseService->importerSalairesMensuel(
+            $validated['annee'],
+            $validated['mois']
+        );
 
-/**
- * Récupérer employés (AJAX)
- */
-public function getEmployees()
-{
-    $employees = $this->apiService->getEmployees();
+        if ($result['success']) {
+            return redirect()->route('depenses.fixes.index')
+                ->with('success', $result['message'] . ' | Total: ' . number_format($result['data']['total_salaires'], 2) . ' DH + CNSS: ' . number_format($result['data']['montant_cnss'], 2) . ' DH');
+        }
 
-    return response()->json([
-        'success' => true,
-        'employees' => $employees
-    ]);
-}
+        return back()->with('error', $result['message']);
+    }
 
-/**
- * Récupérer détails employé (AJAX)
- */
-public function getEmployee($id)
-{
-    $employee = $this->apiService->getEmployee($id);
+    /**
+     * Historique imports salaires
+     */
+    public function historiqueSalaires()
+    {
+        $historiques = HistoriqueSalaireApi::with('importePar')
+            ->orderBy('annee', 'desc')
+            ->orderBy('mois', 'desc')
+            ->paginate(12);
 
-    if ($employee) {
+        return view('depenses.salaires.historique', compact('historiques'));
+    }
+
+    /**
+     * Détails import salaire
+     */
+    public function showHistoriqueSalaire($id)
+    {
+        $historique = HistoriqueSalaireApi::with('importePar')->findOrFail($id);
+        
+        return view('depenses.salaires.show', compact('historique'));
+    }
+
+    // ========================================
+    // 🔧 UTILITAIRES
+    // ========================================
+
+    /**
+     * Test connexion API
+     */
+    public function testApiConnection()
+    {
+        $isConnected = $this->apiService->testConnection();
+
+        return response()->json([
+            'success' => $isConnected,
+            'message' => $isConnected 
+                ? 'Connexion réussie avec uits-mgmt.ma' 
+                : 'Impossible de se connecter à uits-mgmt.ma',
+            'url' => config('services.uits_mgmt.api_url'),
+        ]);
+    }
+
+    /**
+     * Récupérer employés (AJAX)
+     */
+    public function getEmployees()
+    {
+        $employees = $this->apiService->getEmployees();
+
         return response()->json([
             'success' => true,
-            'employee' => $employee
+            'employees' => $employees
         ]);
     }
 
-    return response()->json([
-        'success' => false,
-        'message' => 'Employé introuvable'
-    ], 404);
-}
+    /**
+     * Récupérer détails employé (AJAX)
+     */
+    public function getEmployee($id)
+    {
+        $employee = $this->apiService->getEmployee($id);
 
-/**
- * Statistiques globales (AJAX)
- */
-public function getStats(Request $request)
-{
-    $annee = $request->get('annee', now()->year);
-    $mois = $request->get('mois', now()->month);
+        if ($employee) {
+            return response()->json([
+                'success' => true,
+                'employee' => $employee
+            ]);
+        }
 
-    $totaux = $this->depenseService->calculerTotauxMois($annee, $mois);
-    $budget = BudgetMensuel::pourMois($annee, $mois)->first();
+        return response()->json([
+            'success' => false,
+            'message' => 'Employé introuvable'
+        ], 404);
+    }
 
-    return response()->json([
-        'success' => true,
-        'totaux' => $totaux,
-        'budget' => $budget,
-    ]);
-}
+    /**
+     * Statistiques globales (AJAX)
+     */
+    public function getStats(Request $request)
+    {
+        $annee = $request->get('annee', now()->year);
+        $mois = $request->get('mois', now()->month);
 
-/**
- * Export Excel/CSV
- */
-public function export(Request $request)
-{
-    $type = $request->get('type', 'fixes'); // fixes, variables, budgets
-    $format = $request->get('format', 'csv'); // csv, excel, pdf
+        $totaux = $this->depenseService->calculerTotauxMois($annee, $mois);
+        $budget = BudgetMensuel::pourMois($annee, $mois)->first();
 
-    // TODO: Implémenter export
-    return back()->with('info', 'Export en cours de développement...');
-}
+        return response()->json([
+            'success' => true,
+            'totaux' => $totaux,
+            'budget' => $budget,
+        ]);
+    }
 
-// ========================================
-// 🔔 RAPPELS
-// ========================================
+    /**
+     * Export Excel/CSV
+     */
+    public function export(Request $request)
+    {
+        $type = $request->get('type', 'fixes'); // fixes, variables, budgets
+        $format = $request->get('format', 'csv'); // csv, excel, pdf
 
-/**
- * Rappels du jour
- */
-private function getRappelsDuJour()
-{
-    $today = now()->format('Y-m-d');
-    
-    $rappelsFixes = DepenseFixe::actif()
-        ->where('rappel_actif', true)
-        ->whereDay('date_debut', now()->day)
-        ->get();
+        // TODO: Implémenter export
+        return back()->with('info', 'Export en cours de développement...');
+    }
 
-    return $rappelsFixes->count();
-}
+    // ========================================
+    // 🔔 RAPPELS
+    // ========================================
+
+    /**
+     * Rappels du jour
+     */
+    private function getRappelsDuJour()
+    {
+        $today = now()->format('Y-m-d');
+        
+        $rappelsFixes = DepenseFixe::actif()
+            ->where('rappel_actif', true)
+            ->whereDay('date_debut', now()->day)
+            ->get();
+
+        return $rappelsFixes->count();
+    }
 }

@@ -521,7 +521,7 @@ Route::get('/benefice', [BeneficeUitsController::class, 'index'])->name('benefic
 });
 
 
-Route::prefix('benefice-marge')->name('benefice-marge.')->group(function () {
+Route::prefix('benefice-marge')->name('benefice-marge.')->middleware(['auth', 'verified', 'role:Admin'])->group(function () {
     Route::get('/dashboard', [BeneficeMargeController::class, 'dashboard'])->name('dashboard');
     Route::get('/export-csv', [BeneficeMargeController::class, 'exportCSV'])->name('export.csv');
     Route::get('/export-excel', [BeneficeMargeController::class, 'exportExcel'])->name('export.excel');

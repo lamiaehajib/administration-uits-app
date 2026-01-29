@@ -15,12 +15,26 @@ use Carbon\Carbon;
 
 class BeneficeMargeController extends Controller
 {
-    // Taux de conversion (tu peux les mettre en config ou base de données)
+    /**
+     * Taux de conversion vers DH
+     * 💡 IMPORTANT: Ajuste ces taux selon les taux réels du marché
+     */
     private $tauxConversion = [
         'DH' => 1,
-        'EUR' => 11.0,  // 1 EUR = 11 DH (ajuste selon taux réel)
-        'USD' => 10.0,  // 1 USD = 10 DH
-        'GBP' => 13.0,  // 1 GBP = 13 DH
+        'MAD' => 1,      // Dirham marocain (alias)
+        'EUR' => 11.0,   // 1 EUR = 11 DH
+        'USD' => 10.0,   // 1 USD = 10 DH
+        'GBP' => 13.0,   // 1 GBP = 13 DH
+        'CHF' => 11.5,   // 1 CHF = 11.5 DH
+        'CAD' => 7.5,    // 1 CAD = 7.5 DH
+        
+        // Franc CFA (XOF - Afrique de l'Ouest)
+        'CFA' => 0.018,   // 1 CFA = 0.018 DH (environ 100 CFA = 1.8 DH)
+        'FCFA' => 0.018,  // Alias Franc CFA
+        'XOF' => 0.018,   // Code ISO Franc CFA
+        
+        // Franc CFA (XAF - Afrique Centrale) - même valeur
+        'XAF' => 0.018,   // 1 XAF = 0.018 DH
     ];
 
     /**
@@ -32,7 +46,7 @@ class BeneficeMargeController extends Controller
         $periode = $request->input('periode', 'ce_mois');
         $dateDebut = $request->input('date_debut');
         $dateFin = $request->input('date_fin');
-        $comparaison = $request->input('comparaison', 'mois_precedent'); // mois_precedent, annee_precedente, aucune
+        $comparaison = $request->input('comparaison', 'mois_precedent');
 
         // 2. Calculer les dates
         [$from, $to] = $this->getDateRange($periode, $dateDebut, $dateFin);
@@ -129,13 +143,18 @@ class BeneficeMargeController extends Controller
             ->get();
 
         foreach ($formations as $f) {
-            $montantDH = $f->total * $this->getTauxConversion($f->currency);
+            // Normaliser la devise (uppercase + trim)
+            $currency = strtoupper(trim($f->currency));
+            $montantDH = $f->total * $this->getTauxConversion($currency);
+            
             $total += $montantDH;
             $nbTransactions += $f->nb;
-            $details['formations'][$f->currency] = [
+            
+            $details['formations'][$currency] = [
                 'montant_origine' => $f->total,
                 'montant_dh' => $montantDH,
                 'nb' => $f->nb,
+                'taux' => $this->getTauxConversion($currency),
             ];
         }
 
@@ -147,13 +166,17 @@ class BeneficeMargeController extends Controller
             ->get();
 
         foreach ($services as $s) {
-            $montantDH = $s->total * $this->getTauxConversion($s->currency);
+            $currency = strtoupper(trim($s->currency));
+            $montantDH = $s->total * $this->getTauxConversion($currency);
+            
             $total += $montantDH;
             $nbTransactions += $s->nb;
-            $details['services'][$s->currency] = [
+            
+            $details['services'][$currency] = [
                 'montant_origine' => $s->total,
                 'montant_dh' => $montantDH,
                 'nb' => $s->nb,
+                'taux' => $this->getTauxConversion($currency),
             ];
         }
 
@@ -509,12 +532,14 @@ class BeneficeMargeController extends Controller
             ->get();
 
         foreach ($topFormations as $f) {
-            $montantDH = $f->total * $this->getTauxConversion($f->currency);
+            $currency = strtoupper(trim($f->currency));
+            $montantDH = $f->total * $this->getTauxConversion($currency);
+            
             $top[] = [
                 'libelle' => $f->titre,
                 'type' => 'Formation',
                 'montant_origine' => $f->total,
-                'currency' => $f->currency,
+                'currency' => $currency,
                 'montant_dh' => $montantDH,
                 'nb' => $f->nb,
             ];
@@ -838,8 +863,19 @@ class BeneficeMargeController extends Controller
         }
     }
 
+    /**
+     * Obtenir taux de conversion vers DH
+     * Normalise la devise (uppercase + trim) et retourne le taux
+     */
     private function getTauxConversion($currency)
     {
+        $currency = strtoupper(trim($currency));
+        
+        // Log si devise inconnue
+        if (!isset($this->tauxConversion[$currency])) {
+            \Log::warning("Devise inconnue: {$currency} - utilisation taux 1:1");
+        }
+        
         return $this->tauxConversion[$currency] ?? 1;
     }
 
@@ -866,15 +902,6 @@ class BeneficeMargeController extends Controller
     }
 
     // ================== EXPORT ==================
-
-    /**
-     * Export complet en Excel
-     */
-    public function exportExcel(Request $request)
-    {
-        // À implémenter avec Laravel Excel
-        // Exporter toutes les données: KPIs, évolution, détails, etc.
-    }
 
     /**
      * Export CSV simplifié

@@ -751,13 +751,15 @@ if (accueilButton) {
         Swal.fire({
             title: `<strong style="background: linear-gradient(135deg, #C2185B, #D32F2F); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Choisir le Tableau de Bord</strong>`,
             html: `
-                <a href="{{ route('benefice-marge.dashboard') }}" 
-                   style="display:flex; align-items:center; gap:15px; margin-bottom: 12px; color: #2196F3; 
-                          font-size: 16px; text-decoration: none; background: linear-gradient(135deg, #2196F315, #2196F325); 
-                          padding: 14px 18px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); 
-                          transition: all 0.3s ease; border-left: 4px solid #2196F3;"
-                   onmouseover="this.style.transform='translateX(8px)'; this.style.boxShadow='0 4px 15px rgba(0, 0, 0, 0.2)';"
-                   onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='0 2px 8px rgba(0, 0, 0, 0.1)';">
+                <a  
+   id="uitsDashboardBtn"
+   style="display:flex; align-items:center; gap:15px; margin-bottom: 12px; color: #2196F3; 
+          font-size: 16px; text-decoration: none; background: linear-gradient(135deg, #2196F315, #2196F325); 
+          padding: 14px 18px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); 
+          transition: all 0.3s ease; border-left: 4px solid #2196F3; cursor:pointer;"
+   onmouseover="this.style.transform='translateX(8px)'; this.style.boxShadow='0 4px 15px rgba(0, 0, 0, 0.2)';"
+   onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='0 2px 8px rgba(0, 0, 0, 0.1)';">
+
                     <i class="fas fa-chart-line" style="color: #2196F3; font-size: 20px; width: 24px;"></i> 
                     <span style="flex:1; text-align:left; font-weight:600;">UITS - Union IT Services</span>
                     <i class="fas fa-chevron-right" style="font-size: 14px; opacity: 0.6;"></i>
@@ -785,6 +787,50 @@ if (accueilButton) {
                 closeButton: 'custom-close-btn'
             },
             didOpen: () => {
+                const uitsBtn = document.getElementById('uitsDashboardBtn');
+
+if (uitsBtn) {
+    uitsBtn.addEventListener('click', () => {
+        Swal.fire({
+            title: `<strong style="background: linear-gradient(135deg, #2196F3, #1976D2);
+                    -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                    Tableau de Bord UITS
+                    </strong>`,
+            html: `
+                <a href="{{ route('beneficier.index') }}"
+                   style="display:flex; align-items:center; gap:15px; margin-bottom: 12px; color: #4CAF50;
+                          font-size:16px; text-decoration:none;
+                          background:linear-gradient(135deg,#4CAF5015,#4CAF5025);
+                          padding:14px 18px; border-radius:12px;
+                          border-left:4px solid #4CAF50;">
+                    <i class="fas fa-coins" style="font-size:20px;"></i>
+                    <span style="flex:1;font-weight:600;">Revenu total (Bénéfice global)</span>
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+
+                <a href="{{ route('benefice-marge.dashboard') }}"
+                   style="display:flex; align-items:center; gap:15px; color:#FF9800;
+                          font-size:16px; text-decoration:none;
+                          background:linear-gradient(135deg,#FF980015,#FF980025);
+                          padding:14px 18px; border-radius:12px;
+                          border-left:4px solid #FF9800;">
+                    <i class="fas fa-chart-pie" style="font-size:20px;"></i>
+                    <span style="flex:1;font-weight:600;">Bénéfice & Marge nette</span>
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            `,
+            showCloseButton: true,
+            showConfirmButton: false,
+            width: 480,
+            didOpen: () => {
+                const popup = document.querySelector('.swal2-popup');
+                popup.style.borderRadius = '20px';
+                popup.style.border = '2px solid #2196F3';
+            }
+        });
+    });
+}
+
                 const popup = document.querySelector('.swal2-popup');
                 popup.style.borderRadius = '20px';
                 popup.style.boxShadow = '0 10px 40px rgba(0, 0, 0, 0.15)';

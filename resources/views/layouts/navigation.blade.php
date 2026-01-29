@@ -485,7 +485,14 @@
                     <span>Bon de Livraisons</span>
                 </a>
             </button>
-
+             @can('role-list')
+             <div class="sidebar-divider"></div>
+            <div class="sidebar-section-title">Gestion Financière</div>
+            <button type="button" id="depensesButton">
+    <i class="fas fa-wallet"></i>
+    <span>Dépenses UITS <i id="i-fetch" class="fa fa-chevron-down"></i></span>
+</button>
+@endcan
             @can('produit-list')
             <div class="sidebar-divider"></div>
             <div class="sidebar-section-title">Produits & Stocks</div>
@@ -636,8 +643,50 @@
                         color: '#2E7D32' 
                     }
                     @endcan
+
+
+
+                    
                 ]
             },
+
+            {
+    id: 'depensesButton',
+    title: 'Dépenses UITS',
+    links: [
+        { 
+            href: '{{ route('depenses.dashboard') }}',
+            label: 'Tableau de Bord UITS',
+            icon: 'fas fa-chart-line',
+            color: '#2196F3'
+        },
+        { 
+            href: '{{ route('depenses.fixes.index') }}', 
+            label: 'Dépenses Fixes', 
+            icon: 'fas fa-building', 
+            color: '#C2185B' 
+        },
+        { 
+            href: '{{ route('depenses.variables.index') }}', 
+            label: 'Dépenses Variables', 
+            icon: 'fas fa-random', 
+            color: '#FF9800' 
+        },
+        { 
+            href: '{{ route('depenses.budgets.index') }}', 
+            label: 'Budgets Mensuels', 
+            icon: 'fas fa-chart-pie', 
+            color: '#4CAF50' 
+        },
+        { 
+            href: '{{ route('depenses.salaires.historique') }}', 
+            label: 'Historique des Salaires', 
+            icon: 'fas fa-money-check-alt', 
+            color: '#3F51B5' 
+        }
+    ]
+},
+
         ];
 
         // Ajouter les événements click sur les boutons

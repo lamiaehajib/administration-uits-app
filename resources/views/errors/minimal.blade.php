@@ -41,7 +41,7 @@
     <p>@yield('message')</p>
     
     @auth
-        @if (auth()->user()->hasRole('Admin'))
+        @if (auth()->user()->hasRole('Admin')|| auth()->user()->hasRole(roles: 'Admin2'))
             <a href="{{ route('benefice-marge.dashboard') }}">Retourner à l'accueil</a>
         @elseif (auth()->user()->hasRole('Gérant_de_stock') || auth()->user()->hasRole('Vendeur'))
             <a href="{{ route('dashboardstock') }}">Retourner à l'accueil</a>

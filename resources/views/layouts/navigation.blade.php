@@ -437,17 +437,24 @@
         </div>
 
         <div class="sidebar-menu">
+             @if(auth()->user()->hasRole(['Admin', 'Admin2']))
+             @can('role-list')
            <button type="button" class="active">
-    @if(auth()->user()->hasRole(['Admin', 'Admin2']))
+   
+    
         <a>
             <i class='bx bx-home'></i>
             <span>Accueil</span>
         </a>
+        </button>
+        @endcan
     @else
+    <button type="button" >
         <a href="{{ route('dashboard') }}">
             <i class='bx bx-home'></i>
             <span>Accueil</span>
         </a>
+        </button>
     @endif
 </button>
 

@@ -74,6 +74,16 @@ class PermissionseSeeder extends Seeder
             'rapport-ventes',
             'rapport-achats',
             'rapport-global',
+            //dashboard
+            'benefice-ucgs-view',
+            'benefice-brut-uits-view',
+
+            //depense uits
+            'depense-dashboard-uits',
+            'depense-fix',
+            'depense-variable',
+            'budget-view',    // <--- Bach ichouf l-budgets
+    'salaire-view',
         ];
 
         // Créer toutes les permissions

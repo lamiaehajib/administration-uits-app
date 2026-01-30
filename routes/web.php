@@ -476,10 +476,11 @@ Route::post('/charges/{charge}/ajouter-paiement', [ChargeController::class, 'ajo
 Route::post('/charges/{charge}/generer-prochaine', [ChargeController::class, 'genererProchaine'])->name('charges.generer-prochaine');
 Route::post('/charges/{id}/restore', [ChargeController::class, 'restore'])->name('charges.restore');
     
-Route::get('/benefices/dashboard', [BeneficeController::class, 'dashboard'])->name('benefices.dashboard');
+Route::get('/benefices/dashboard', [BeneficeController::class, 'dashboard'])
+    ->name('benefices.dashboard')
+    ->middleware('can:benefice-ucgs-view'); // <--- Bach t-protegiha
 
-
-Route::get('/benefice', [BeneficeUitsController::class, 'index'])->name('beneficier.index');
+Route::get('/benefice', [BeneficeUitsController::class, 'index'])->name('beneficier.index')->middleware('can:benefice-brut-uits-view');
     Route::get('/benefice/export', [BeneficeUitsController::class, 'exportCSV'])->name('beneficier.export.csv');
 
 
@@ -488,11 +489,11 @@ Route::get('/benefice', [BeneficeUitsController::class, 'index'])->name('benefic
     Route::prefix('depenses')->name('depenses.')->group(function () {
     
     // Dashboard
-    Route::get('/dashboard', [DepenseController::class, 'dashboard'])->name('dashboard');
+    Route::get('/dashboard', [DepenseController::class, 'dashboard'])->name('dashboard')->middleware('can:depense-dashboard-uits');
     
     // Dépenses Fixes
     Route::prefix('fixes')->name('fixes.')->group(function () {
-        Route::get('/', [DepenseController::class, 'indexFixes'])->name('index');
+        Route::get('/', [DepenseController::class, 'indexFixes'])->name('index')->middleware('can:depense-fix');
         Route::get('/create', [DepenseController::class, 'createFixe'])->name('create');
         Route::post('/', [DepenseController::class, 'storeFixe'])->name('store');
         Route::get('/{id}', [DepenseController::class, 'showFixe'])->name('show');
@@ -503,7 +504,7 @@ Route::get('/benefice', [BeneficeUitsController::class, 'index'])->name('benefic
     
     // Dépenses Variables
     Route::prefix('variables')->name('variables.')->group(function () {
-        Route::get('/', [DepenseController::class, 'indexVariables'])->name('index');
+        Route::get('/', [DepenseController::class, 'indexVariables'])->name('index')->middleware('can:depense-variable');
         Route::get('/create', action: [DepenseController::class, 'createVariable'])->name('create');
         Route::post('/', [DepenseController::class, 'storeVariable'])->name('store');
         Route::get('/{id}', [DepenseController::class, 'showVariable'])->name('show');
@@ -514,7 +515,7 @@ Route::get('/benefice', [BeneficeUitsController::class, 'index'])->name('benefic
     });
     
    Route::prefix('budgets')->name('budgets.')->group(function () {
-    Route::get('/', [DepenseController::class, 'indexBudgets'])->name('index');
+    Route::get('/', [DepenseController::class, 'indexBudgets'])->name('index')->middleware('can:budget-view');
     Route::get('/create', [DepenseController::class, 'createBudget'])->name('create');
     Route::post('/', [DepenseController::class, 'storeBudget'])->name('store');
     Route::get('/{id}', [DepenseController::class, 'showBudget'])->name('show');
@@ -526,7 +527,7 @@ Route::get('/benefice', [BeneficeUitsController::class, 'index'])->name('benefic
     
     // Import Salaires
     Route::post('/importer-salaires', [DepenseController::class, 'importerSalaires'])->name('importer-salaires');
-    Route::get('/salaires/historique', [DepenseController::class, 'historiqueSalaires'])->name('salaires.historique');
+    Route::get('/salaires/historique', [DepenseController::class, 'historiqueSalaires'])->name('salaires.historique')->middleware('can:salaire-view');
     Route::get('/salaires/{id}', [DepenseController::class, 'showHistoriqueSalaire'])->name('salaires.show');
     
     // API / AJAX
@@ -540,7 +541,7 @@ Route::get('/benefice', [BeneficeUitsController::class, 'index'])->name('benefic
 });
 
 
-Route::prefix('benefice-marge')->name('benefice-marge.')->middleware(['verified', 'role:Admin'])->group(function () {
+Route::prefix('benefice-marge')->name('benefice-marge.')->middleware(['verified', 'role:Admin|Admin2'])->group(function () {
     Route::get('/dashboard', [BeneficeMargeController::class, 'dashboard'])->name('dashboard');
     Route::get('/export-csv', [BeneficeMargeController::class, 'exportCSV'])->name('export.csv');
     Route::get('/export-excel', [BeneficeMargeController::class, 'exportExcel'])->name('export.excel');

@@ -806,8 +806,7 @@ if (accueilButton) {
 if (uitsBtn) {
     uitsBtn.addEventListener('click', () => {
         Swal.fire({
-            title: `<strong style="background: linear-gradient(135deg, #2196F3, #1976D2);
-                    -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            title: `<strong >
                     Tableau de Bord UITS
                     </strong>`,
             html: `

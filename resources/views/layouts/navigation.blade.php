@@ -437,12 +437,14 @@
         </div>
 
         <div class="sidebar-menu">
-            <button type="button" class="active">
-                <a >
-                    <i class='bx bx-home'></i>
-                    <span>Accueil</span>
-                </a>
-            </button>
+           @if(auth()->user()->role !== 'Admin' && auth()->user()->role !== 'Admin2')
+    <button type="button" class="active">
+        <a href="{{ route('dashboard') }}">
+            <i class='bx bx-home'></i>
+            <span>Accueil</span>
+        </a>
+    </button>
+@endif
 
             <button type="button">
                 <a href="{{ route('users.index') }}">

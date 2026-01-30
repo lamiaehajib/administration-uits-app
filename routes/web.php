@@ -54,12 +54,31 @@ Route::get('/', function () {
 
 
 
-Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
+
+
+Route::middleware(['auth', 'verified'])->group(function () {
+          set_time_limit(300); 
+
+    // ✅ Dashboard Route مع Auto-Redirect
+    Route::get('/dashboard', function () {
+        $user = auth()->user();
+        
+        // Admin و Admin2 → Benefice Marge Dashboard
+        if ($user->hasRole('Admin') || $user->hasRole('Admin2')) {
+            return redirect()->route('benefice-marge.dashboard');
+        }
+        
+        // Gérant_de_stock و Vendeur → Dashboard Stock
+        if ($user->hasRole('Gérant_de_stock') || $user->hasRole('Vendeur')) {
+            return redirect()->route('dashboardstock');
+        }
+        
+        // باقي الـ Roles → Dashboard العادي (Assistant, Opérateur...)
+        return app(DashboardController::class)->index();
+    })
+    ->middleware(['verified'])
     ->name('dashboard');
 
-Route::middleware('auth')->group(function () {
-    set_time_limit(300); 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

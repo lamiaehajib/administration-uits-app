@@ -68,9 +68,9 @@
         .devis-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px;
+            font-size: 9px;
             border: 2px dashed rgb(179, 25, 25);
-            margin-top: 10px;
+            margin-top: 8px;
         }
 
         .devis-table th,
@@ -85,7 +85,7 @@
             color: rgb(255, 255, 255);
             font-weight: bold;
             text-transform: uppercase;
-            padding: 13px;
+            padding: 6px;
         }
 
         .devis-table tbody td {
@@ -162,7 +162,7 @@
 
         .footer-container {
             text-align: center;
-            margin-top: 230px;
+            margin-top: 200px;
         }
 
         .footer-line {

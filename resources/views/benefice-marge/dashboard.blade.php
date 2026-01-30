@@ -1479,22 +1479,22 @@
                 labels: @json($chartData['evolution_sources']['labels']),
                 datasets: [
                     {
-                        label: 'Formations',
+                        label: 'Factures Formations',
                         data: @json($chartData['evolution_sources']['formations']),
                         backgroundColor: primaryColor,
                     },
                     {
-                        label: 'Services',
+                        label: 'Factures des Services',
                         data: @json($chartData['evolution_sources']['services']),
                         backgroundColor: secondaryColor,
                     },
                     {
-                        label: 'Stages',
+                        label: 'Reçus de Stage',
                         data: @json($chartData['evolution_sources']['stages']),
                         backgroundColor: '#f59e0b',
                     },
                     {
-                        label: 'Portail',
+                        label: 'Payments des Étudiants (Portail)',
                         data: @json($chartData['evolution_sources']['portail']),
                         backgroundColor: '#8b5cf6',
                     }

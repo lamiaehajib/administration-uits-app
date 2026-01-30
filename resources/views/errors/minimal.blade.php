@@ -19,30 +19,18 @@
         p {
             font-size: 24px;
         }
+        
     </style>
 </head>
 <body>
     <h1>@yield('code')</h1>
     <p>@yield('message')</p>
-    
-    @auth
-        @if (auth()->user()->hasRole('Gérant_de_stock') || auth()->user()->hasRole('Vendeur')) 
-            <a href="{{ route('dashboardstock') }}" style="text-decoration: none; color: #ff0000;">
-                Retourner à l'accueil
-            </a>
-        @elseif (auth()->user()->hasRole('Admin') || auth()->user()->hasRole('Admin2'))
-            <a href="{{ route('benefice-marge.dashboard') }}" style="text-decoration: none; color: #ff0000;">
-                Retourner à l'accueil
-            </a>
-        @else
-            <a href="{{ route('dashboard') }}" style="text-decoration: none; color: #ff0000;">
-                Retourner à l'accueil
-            </a>
-        @endif
+    @if (auth()->user()->hasRole('Gérant_de_stock') || auth()->user()->hasRole('Vendeur')) 
+        <a href="{{ route('dashboardstock') }}" style="text-decoration: none; color: #ff0000;">Retourner à l'accueil</a>
     @else
-        <a href="{{ url('/') }}" style="text-decoration: none; color: #ff0000;">
-            Retourner à l'accueil
-        </a>
-    @endauth
+        <a href="{{ url('/dashboard') }}" style="text-decoration: none; color: #ff0000;">Retourner à l'accueil</a>
+    @endif
+    
+   
 </body>
 </html>

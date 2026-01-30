@@ -54,12 +54,30 @@ Route::get('/', function () {
 
 
 
-Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+
 
 Route::middleware('auth')->group(function () {
     set_time_limit(300); 
+
+   Route::get('/dashboard', function () {
+        $user = auth()->user();
+        
+        // Admin و Admin2 → Benefice Marge Dashboard
+        if ($user->hasRole('Admin') || $user->hasRole('Admin2')) {
+            return redirect()->route('benefice-marge.dashboard');
+        }
+        
+        // Gérant de Stock و Vendeur → Dashboard Stock
+        if ($user->hasRole('Gérant_de_stock') || $user->hasRole('Vendeur')) {
+            return redirect()->route('dashboardstock');
+        }
+        
+        // باقي الـ Roles → Dashboard العادي
+        return app(DashboardController::class)->index();
+    })
+    ->middleware(['verified'])
+    ->name('dashboard');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -521,7 +539,7 @@ Route::get('/benefice', [BeneficeUitsController::class, 'index'])->name('benefic
 });
 
 
-Route::prefix('benefice-marge')->name('benefice-marge.')->middleware(['auth', 'verified', 'role:Admin'])->group(function () {
+Route::prefix('benefice-marge')->name('benefice-marge.')->middleware(['auth', 'verified', 'role:Admin|Admin2'])->group(function () {
     Route::get('/dashboard', [BeneficeMargeController::class, 'dashboard'])->name('dashboard');
     Route::get('/export-csv', [BeneficeMargeController::class, 'exportCSV'])->name('export.csv');
     Route::get('/export-excel', [BeneficeMargeController::class, 'exportExcel'])->name('export.excel');

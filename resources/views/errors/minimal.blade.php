@@ -19,37 +19,18 @@
         p {
             font-size: 24px;
         }
-        a {
-            text-decoration: none;
-            color: #3498db;
-            font-size: 18px;
-            padding: 10px 20px;
-            background-color: #fff;
-            border: 2px solid #3498db;
-            border-radius: 5px;
-            display: inline-block;
-            margin-top: 20px;
-        }
-        a:hover {
-            background-color: #3498db;
-            color: #fff;
-        }
+        
     </style>
 </head>
 <body>
     <h1>@yield('code')</h1>
     <p>@yield('message')</p>
-    
-    
-        @if (auth()->user()->hasRole('Admin')|| auth()->user()->hasRole(roles: 'Admin'))
-            <a href="{{ route('benefice-marge.dashboard') }}">Retourner à l'accueil</a>
-        @elseif (auth()->user()->hasRole('Gérant_de_stock') || auth()->user()->hasRole('Vendeur'))
-            <a href="{{ route('dashboardstock') }}">Retourner à l'accueil</a>
-        @else
-            <a href="{{ route('dashboard') }}">Retourner à l'accueil</a>
-        @endif
+    @if (auth()->user()->hasRole('Gérant_de_stock') || auth()->user()->hasRole('Vendeur')) 
+        <a href="{{ route('dashboardstock') }}" style="text-decoration: none; color: #ff0000;">Retourner à l'accueil</a>
     @else
-        <a href="{{ url('/') }}">Retourner à l'accueil</a>
+        <a href="{{ url('/dashboard') }}" style="text-decoration: none; color: #ff0000;">Retourner à l'accueil</a>
+    @endif
+    
    
 </body>
 </html>

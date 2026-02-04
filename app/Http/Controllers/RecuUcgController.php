@@ -240,31 +240,19 @@ public function store(Request $request)
 
    public function edit(RecuUcg $recu)
 {
-    if (!in_array($recu->statut, ['en_cours', 'livre'])) {
-        return back()->with('error', 'Ce reçu ne peut pas être modifié');
-    }
-
-    // Charger toutes les catégories actives
+    // ✅ Charger TOUTES les catégories
     $categories = \App\Models\Category::orderBy('nom')->get();
 
-    // Charger tous les produits avec variants
-    $produits = Produit::with(['variants' => function($query) {
-        $query->where('actif', true)
-              ->where('quantite_stock', '>', 0);
+    // ✅ Charger TOUS les produits actifs (sans filtre de stock)
+    $produits = Produit::with(['category', 'variants' => function($query) {
+        $query->where('actif', true); // Pas de filtre sur quantite_stock
     }])
     ->where('actif', true)
-    ->where(function($q) {
-        $q->where('quantite_stock', '>', 0)
-          ->orWhereHas('variants', function($query) {
-              $query->where('actif', true)
-                    ->where('quantite_stock', '>', 0);
-          });
-    })
     ->orderBy('nom')
     ->get();
 
-    // Charger les items du reçu avec les relations nécessaires
-    $recu->load(['items.produit', 'items.variant', 'paiements']);
+    // ✅ Charger les relations complètes
+    $recu->load(['items.produit.category', 'items.variant', 'paiements']);
 
     return view('recus.edit', compact('recu', 'produits', 'categories'));
 }

@@ -581,110 +581,135 @@
                             <th>N° Bon</th>
                             <th>Date</th>
                             <th>Quantité</th>
+                             <th>Stock Restant</th> <!-- ✅ NOUVEAU -->
+        <th>Utilisation</th> <!-- ✅ NOUVEAU -->
                             <th>Prix Unitaire</th>
                             <th>Total</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($achats as $achat)
-                        <tr>
-                            <td>
-                                <div class="product-table-info">
-                                    <div class="product-table-avatar">
-                                        {{ strtoupper(substr($achat->produit->nom, 0, 2)) }}
-                                    </div>
-                                    <div class="product-table-details">
-                                        <h6>{{ $achat->produit->nom }}</h6>
-                                        <small>{{ $achat->produit->reference }}</small>
-                                    </div>
-                                </div>
-                            </td>
-                            
-                            <td>
-                                @if($achat->fournisseur)
-                                    <span class="fournisseur-badge">
-                                        <i class="fas fa-truck"></i>
-                                        {{ $achat->fournisseur }}
-                                    </span>
-                                @else
-                                    <span class="text-muted">
-                                        <i class="fas fa-minus"></i> Non spécifié
-                                    </span>
-                                @endif
-                            </td>
-                            
-                            <td>
-                                @if($achat->numero_bon)
-                                    <span class="badge-achat badge-achat-info">
-                                        <i class="fas fa-hashtag"></i> {{ $achat->numero_bon }}
-                                    </span>
-                                @else
-                                    <span class="text-muted">-</span>
-                                @endif
-                            </td>
-                            
-                            <td>
-                                <span class="date-badge">
-                                    <i class="fas fa-calendar"></i>
-                                    {{ \Carbon\Carbon::parse($achat->date_achat)->format('d/m/Y') }}
-                                </span>
-                            </td>
-                            
-                            <td>
-                                <span class="quantite-box">
-                                    <i class="fas fa-cube"></i>
-                                    {{ number_format($achat->quantite) }}
-                                </span>
-                            </td>
-                            
-                            <td>
-                                <span class="prix-display prix-unitaire">
-                                    {{ number_format($achat->prix_achat, 2) }} DH
-                                </span>
-                            </td>
-                            
-                            <td>
-                                <span class="prix-display prix-total">
-                                    {{ number_format($achat->total_achat, 2) }} DH
-                                </span>
-                            </td>
-                            
-                            <td>
-                                <div class="action-btns-achats">
-                                    <a 
-                                        href="{{ route('achats.edit', $achat->id) }}" 
-                                        class="btn-icon-achat btn-edit-achat"
-                                        data-tooltip="Modifier"
-                                    >
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    
-                                    <button 
-                                        onclick="confirmDeleteAchat({{ $achat->id }})" 
-                                        class="btn-icon-achat btn-delete-achat"
-                                        data-tooltip="Supprimer"
-                                    >
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="8">
-                                <div class="empty-achats">
-                                    <i class="fas fa-shopping-cart"></i>
-                                    <h4>Aucun achat trouvé</h4>
-                                    <p>Commencez par enregistrer votre premier achat</p>
-                                    <a href="{{ route('achats.create') }}" class="btn-achat btn-achat-primary" style="margin-top: 15px;">
-                                        <i class="fas fa-plus"></i> Créer un Achat
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        @endforelse
-                    </tbody>
+    @forelse($achats as $achat)
+    <tr>
+        <td>
+            <div class="product-table-info">
+                <div class="product-table-avatar">
+                    {{ strtoupper(substr($achat->produit->nom, 0, 2)) }}
+                </div>
+                <div class="product-table-details">
+                    <h6>{{ $achat->produit->nom }}</h6>
+                    <small>{{ $achat->produit->reference }}</small>
+                </div>
+            </div>
+        </td>
+        
+        <td>
+            @if($achat->fournisseur)
+                <span class="fournisseur-badge">
+                    <i class="fas fa-truck"></i>
+                    {{ $achat->fournisseur }}
+                </span>
+            @else
+                <span class="text-muted">
+                    <i class="fas fa-minus"></i> Non spécifié
+                </span>
+            @endif
+        </td>
+        
+        <td>
+            @if($achat->numero_bon)
+                <span class="badge-achat badge-achat-info">
+                    <i class="fas fa-hashtag"></i> {{ $achat->numero_bon }}
+                </span>
+            @else
+                <span class="text-muted">-</span>
+            @endif
+        </td>
+        
+        <td>
+            <span class="date-badge">
+                <i class="fas fa-calendar"></i>
+                {{ \Carbon\Carbon::parse($achat->date_achat)->format('d/m/Y') }}
+            </span>
+        </td>
+        
+        <td>
+            <span class="quantite-box">
+                <i class="fas fa-cube"></i>
+                {{ number_format($achat->quantite) }}
+            </span>
+        </td>
+        
+        <!-- ✅ NOUVEAU: Quantité Restante -->
+        <td>
+            @if($achat->quantite_restante > 0)
+                <span class="quantite-box" style="background: linear-gradient(135deg, #E8F5E9, #C8E6C9);">
+                    <i class="fas fa-boxes"></i>
+                    {{ number_format($achat->quantite_restante) }}
+                </span>
+            @else
+                <span class="badge-achat" style="background: #FFEBEE; color: #C62828;">
+                    <i class="fas fa-times-circle"></i> Épuisé
+                </span>
+            @endif
+        </td>
+        
+        <!-- ✅ NOUVEAU: Taux d'utilisation -->
+        <td>
+            <div style="text-align: center;">
+                <div style="font-weight: 700; color: {{ $achat->taux_utilisation >= 80 ? '#C62828' : '#2E7D32' }};">
+                    {{ $achat->taux_utilisation }}%
+                </div>
+                <div class="progress" style="height: 6px; margin-top: 5px;">
+                    <div class="progress-bar bg-{{ $achat->taux_utilisation >= 80 ? 'danger' : 'success' }}" 
+                         style="width: {{ $achat->taux_utilisation }}%;"></div>
+                </div>
+            </div>
+        </td>
+        
+        <td>
+            <span class="prix-display prix-unitaire">
+                {{ number_format($achat->prix_achat, 2) }} DH
+            </span>
+        </td>
+        
+        <td>
+            <span class="prix-display prix-total">
+                {{ number_format($achat->total_achat, 2) }} DH
+            </span>
+        </td>
+        
+        <td>
+            <div class="action-btns-achats">
+                <a href="{{ route('achats.edit', $achat->id) }}" 
+                   class="btn-icon-achat btn-edit-achat"
+                   data-tooltip="Modifier">
+                    <i class="fas fa-edit"></i>
+                </a>
+                
+                <button onclick="confirmDeleteAchat({{ $achat->id }})" 
+                        class="btn-icon-achat btn-delete-achat"
+                        data-tooltip="Supprimer">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </td>
+    </tr>
+    @empty
+    <tr>
+        <td colspan="10">
+            <div class="empty-achats">
+                <i class="fas fa-shopping-cart"></i>
+                <h4>Aucun achat trouvé</h4>
+                <p>Commencez par enregistrer votre premier achat</p>
+                <a href="{{ route('achats.create') }}" class="btn-achat btn-achat-primary" style="margin-top: 15px;">
+                    <i class="fas fa-plus"></i> Créer un Achat
+                </a>
+            </div>
+        </td>
+    </tr>
+    @endforelse
+</tbody>
                 </table>
             </div>
 

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Log;
 
 class RecuItem extends Model
 {
@@ -23,7 +24,7 @@ class RecuItem extends Model
         'sous_total', 
         'marge_unitaire', 
         'marge_totale',
-        'remise_appliquee', // ✅ NOUVEAU CHAMP
+        'remise_appliquee',
         'notes'
     ];
 
@@ -34,10 +35,11 @@ class RecuItem extends Model
         'sous_total' => 'decimal:2',
         'marge_unitaire' => 'decimal:2',
         'marge_totale' => 'decimal:2',
-        'remise_appliquee' => 'boolean', // ✅ CAST BOOLEAN
+        'remise_appliquee' => 'boolean',
     ];
 
-    // Relations (inchangées)
+    // ================================= RELATIONS ==============================
+    
     public function recuUcg()
     {
         return $this->belongsTo(RecuUcg::class);
@@ -54,6 +56,7 @@ class RecuItem extends Model
     }
 
     // ================================= BOOT EVENTS ==============================
+    
     protected static function boot()
     {
         parent::boot();
@@ -71,18 +74,35 @@ class RecuItem extends Model
                     if (empty($item->prix_unitaire)) {
                         $item->prix_unitaire = $variant->prix_vente_final;
                     }
+                    
+                    // ✅ FIFO - Khud prix_achat mn awwal achat disponible
                     if (empty($item->prix_achat)) {
-                        $item->prix_achat = $variant->prix_achat;
+                        $achatActif = Achat::where('produit_id', $variant->produit_id)
+                            ->where('quantite_restante', '>', 0)
+                            ->orderBy('date_achat', 'asc')
+                            ->first();
+                        
+                        $item->prix_achat = $achatActif ? $achatActif->prix_achat : ($variant->prix_achat ?? 0);
                     }
                 }
             } else {
+                // ✅ FIFO - Produit Simple
                 $produit = $item->produit;
                 if ($produit) {
                     if (empty($item->prix_unitaire)) {
                         $item->prix_unitaire = $produit->prix_vente ?? 0;
                     }
+                    
+                    // ✅ Khud prix_achat mn awwal achat li 3ando stock
                     if (empty($item->prix_achat)) {
-                        $item->prix_achat = $produit->prix_achat ?? 0;
+                        $achatActif = Achat::where('produit_id', $produit->id)
+                            ->where('quantite_restante', '>', 0)
+                            ->orderBy('date_achat', 'asc')
+                            ->first();
+                        
+                        $item->prix_achat = $achatActif ? $achatActif->prix_achat : ($produit->prix_achat ?? 0);
+                        
+                        Log::info("🔍 FIFO Prix Achat: " . ($achatActif ? "Achat #{$achatActif->id} @ {$achatActif->prix_achat} DH" : "Prix par défaut: {$produit->prix_achat} DH"));
                     }
 
                     $item->produit_nom = $produit->nom;
@@ -98,6 +118,7 @@ class RecuItem extends Model
 
         static::created(function ($item) {
             if ($item->product_variant_id) {
+                // Kod dial variant kaybqa nfso (ma3andokch FIFO f variants)
                 $variant = $item->variant;
                 
                 if ($variant) {
@@ -121,11 +142,16 @@ class RecuItem extends Model
                     ]);
                 }
             } else {
+                // ✅ FIFO - Produit Simple
                 $produit = $item->produit;
 
                 if ($produit) {
                     $stockAvant = $produit->quantite_stock;
                     
+                    // ✅ Décrémenter stock FIFO (mn les achats kadim)
+                    self::decrementerStockFIFO($item->produit_id, $item->quantite, $item->recu_ucg_id);
+                    
+                    // Décrémenter stock global
                     $produit->decrement('quantite_stock', $item->quantite);
                     $produit->increment('total_vendu', $item->quantite);
 
@@ -137,7 +163,7 @@ class RecuItem extends Model
                         'quantite' => $item->quantite,
                         'stock_avant' => $stockAvant,
                         'stock_apres' => $produit->fresh()->quantite_stock,
-                        'motif' => "Vente - Reçu #{$item->recuUcg->numero_recu}"
+                        'motif' => "Vente FIFO - Reçu #{$item->recuUcg->numero_recu}"
                     ]);
                 }
             }
@@ -151,6 +177,7 @@ class RecuItem extends Model
 
         static::deleting(function ($item) {
             if ($item->product_variant_id) {
+                // Kod dial variant kaybqa nfso
                 $variant = $item->variant;
                 
                 if ($variant) {
@@ -173,10 +200,16 @@ class RecuItem extends Model
                     ]);
                 }
             } else {
+                // ✅ FIFO - Restaurer stock (f awwal achat)
                 $produit = $item->produit;
 
                 if ($produit) {
                     $stockAvant = $produit->quantite_stock;
+                    
+                    // ✅ Restaurer quantite_restante f l'achat l9dam
+                    self::restaurerStockFIFO($item->produit_id, $item->quantite);
+                    
+                    // Incrémenter stock global
                     $produit->increment('quantite_stock', $item->quantite);
 
                     StockMovement::create([
@@ -187,7 +220,7 @@ class RecuItem extends Model
                         'quantite' => $item->quantite,
                         'stock_avant' => $stockAvant,
                         'stock_apres' => $produit->fresh()->quantite_stock,
-                        'motif' => "Suppression item"
+                        'motif' => "Suppression item FIFO"
                     ]);
                 }
             }
@@ -200,7 +233,67 @@ class RecuItem extends Model
         });
     }
 
-    // ================================= MÉTHODES ==============================
+    // ================================= MÉTHODES FIFO ==============================
+    
+    /**
+     * ✅ MÉTHODE FIFO - Décrémenter stock mn les achats kadim
+     */
+    private static function decrementerStockFIFO($produitId, $quantiteVendue, $recuId)
+    {
+        // Khud les achats li 3andhom stock, triés mn l9dam
+        $achats = Achat::where('produit_id', $produitId)
+            ->where('quantite_restante', '>', 0)
+            ->orderBy('date_achat', 'asc')
+            ->get();
+
+        $quantiteRestante = $quantiteVendue;
+
+        foreach ($achats as $achat) {
+            if ($quantiteRestante <= 0) {
+                break; // Kamal kolchi
+            }
+
+            if ($achat->quantite_restante >= $quantiteRestante) {
+                // Had l'achat 3ando bzaf, khud li bghitina
+                $achat->decrement('quantite_restante', $quantiteRestante);
+                
+                Log::info("✅ FIFO: Décrémenter {$quantiteRestante} unités de l'achat #{$achat->id} (Prix: {$achat->prix_achat} DH) - Reçu #{$recuId}");
+                
+                $quantiteRestante = 0;
+            } else {
+                // Had l'achat ma3andoch bzaf, khud kolchi o kmal
+                Log::info("⚠️ FIFO: Épuiser achat #{$achat->id} ({$achat->quantite_restante} unités, Prix: {$achat->prix_achat} DH) - Reçu #{$recuId}");
+                
+                $quantiteRestante -= $achat->quantite_restante;
+                $achat->update(['quantite_restante' => 0]);
+            }
+        }
+
+        // ✅ Safety check
+        if ($quantiteRestante > 0) {
+            Log::warning("⚠️ FIFO: Manque {$quantiteRestante} unités dans les achats! Vérifiez les données du produit #{$produitId}");
+        }
+    }
+
+    /**
+     * ✅ Restaurer stock FIFO (inverse dial decrementerStockFIFO)
+     */
+    private static function restaurerStockFIFO($produitId, $quantite)
+    {
+        // Khud l'achat l9dam (même logique)
+        $achat = Achat::where('produit_id', $produitId)
+            ->orderBy('date_achat', 'asc')
+            ->first();
+
+        if ($achat) {
+            $achat->increment('quantite_restante', $quantite);
+            Log::info("✅ FIFO Restauration: +{$quantite} unités à l'achat #{$achat->id}");
+        } else {
+            Log::warning("⚠️ FIFO Restauration: Aucun achat trouvé pour le produit #{$produitId}");
+        }
+    }
+
+    // ================================= MÉTHODES EXISTANTES ==============================
     
     /**
      * ✅ MARGE APRÈS REMISE

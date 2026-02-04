@@ -13,15 +13,13 @@ use Illuminate\Support\Facades\Log;
 class AchatController extends Controller
 {
     public function __construct()
-{
-    $this->middleware('permission:achat-list|achat-create|achat-edit|achat-delete', ['only' => ['index']]);
-    $this->middleware('permission:achat-create', ['only' => ['create', 'store']]);
-    $this->middleware('permission:achat-edit', ['only' => ['edit', 'update']]);
-    $this->middleware('permission:achat-delete', ['only' => ['destroy']]);
-}
-    /**
-     * Afficher la liste des achats avec recherche
-     */
+    {
+        $this->middleware('permission:achat-list|achat-create|achat-edit|achat-delete', ['only' => ['index']]);
+        $this->middleware('permission:achat-create', ['only' => ['create', 'store']]);
+        $this->middleware('permission:achat-edit', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:achat-delete', ['only' => ['destroy']]);
+    }
+
     public function index(Request $request)
     {
         $search = $request->input('search');
@@ -37,23 +35,15 @@ class AchatController extends Controller
     
         return view('achats.index', compact('achats'));
     }
-    
-    /**
-     * Afficher le formulaire de création
-     */
+
     public function create()
     {
-        // Charger toutes les catégories avec leurs produits
         $categories = Category::with('produits')->get();
         return view('achats.create', compact('categories'));
     }
 
-    /**
-     * Enregistrer un nouvel achat
-     */
     public function store(Request $request)
     {
-        // Log pour déboguer
         Log::info('Achat Store Request:', $request->all());
 
         $validated = $request->validate([
@@ -71,33 +61,27 @@ class AchatController extends Controller
             $produit = Produit::findOrFail($validated['produit_id']);
             $stockAvant = $produit->quantite_stock;
 
-            // 1️⃣ Créer l'achat
+            // ✅ Créer l'achat avec quantite_restante
             $achat = Achat::create([
                 'produit_id' => $validated['produit_id'],
                 'user_id' => auth()->id(),
                 'fournisseur' => $validated['fournisseur'] ?? null,
                 'numero_bon' => $validated['numero_bon'] ?? null,
                 'quantite' => $validated['quantite'],
+                'quantite_restante' => $validated['quantite'], // ✅ IMPORTANT
                 'prix_achat' => $validated['prix_achat'],
                 'total_achat' => $validated['quantite'] * $validated['prix_achat'],
                 'date_achat' => $validated['date_achat'],
                 'notes' => $validated['notes'] ?? null
             ]);
 
-            Log::info('Achat créé avec ID: ' . $achat->id);
+            Log::info("✅ Achat créé #{$achat->id} - Quantité restante: {$achat->quantite_restante}");
 
-            // 2️⃣ Vérifier si la checkbox est cochée
-            // Si cochée, $request->has('update_stock') retourne true
-            // Si décochée, $request->has('update_stock') retourne false
             $updateStock = $request->has('update_stock');
             
-            Log::info('Update Stock: ' . ($updateStock ? 'OUI' : 'NON'));
-
             if ($updateStock) {
-                // Mettre à jour le stock
                 $produit->increment('quantite_stock', $validated['quantite']);
 
-                // Enregistrer le mouvement de stock
                 StockMovement::create([
                     'produit_id' => $produit->id,
                     'user_id' => auth()->id(),
@@ -106,13 +90,12 @@ class AchatController extends Controller
                     'stock_avant' => $stockAvant,
                     'stock_apres' => $produit->fresh()->quantite_stock,
                     'reference' => $validated['numero_bon'] ?? "Achat #{$achat->id}",
-                    'motif' => "Achat - " . ($validated['fournisseur'] ?? 'Fournisseur non spécifié')
+                    'motif' => "Achat FIFO - " . ($validated['fournisseur'] ?? 'Fournisseur non spécifié')
                 ]);
 
-                Log::info('Stock mis à jour: ' . $stockAvant . ' → ' . $produit->fresh()->quantite_stock);
+                Log::info("📦 Stock mis à jour: {$stockAvant} → {$produit->fresh()->quantite_stock}");
             }
 
-            // 3️⃣ Mettre à jour le prix d'achat du produit
             $produit->update(['prix_achat' => $validated['prix_achat']]);
 
             DB::commit();
@@ -122,14 +105,11 @@ class AchatController extends Controller
                 $message .= ' (Stock non modifié)';
             }
             
-            Log::info('Achat enregistré avec succès');
-            
             return redirect()->route('achats.index')->with('success', $message);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Erreur lors de la création de l\'achat: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
+            Log::error('❌ Erreur création achat: ' . $e->getMessage());
             
             return back()
                 ->withInput()
@@ -137,9 +117,6 @@ class AchatController extends Controller
         }
     }
 
-    /**
-     * Afficher le formulaire de modification
-     */
     public function edit($id)
     {
         $achat = Achat::with('produit')->findOrFail($id);
@@ -147,9 +124,6 @@ class AchatController extends Controller
         return view('achats.edit', compact('achat', 'categories'));
     }
 
-    /**
-     * Mettre à jour un achat
-     */
     public function update(Request $request, $id)
     {
         Log::info('Achat Update Request:', $request->all());
@@ -173,21 +147,22 @@ class AchatController extends Controller
             $nouvelleQuantite = $validated['quantite'];
             $difference = $nouvelleQuantite - $ancienneQuantite;
 
-            // Vérifier la checkbox
             $updateStock = $request->has('update_stock');
-            
-            Log::info("Différence quantité: $difference, Update stock: " . ($updateStock ? 'OUI' : 'NON'));
 
             if ($updateStock && $difference != 0) {
                 $stockAvant = $produit->quantite_stock;
                 
                 if ($difference > 0) {
                     $produit->increment('quantite_stock', $difference);
+                    // ✅ Augmenter quantite_restante aussi
+                    $achat->increment('quantite_restante', $difference);
                 } elseif ($difference < 0) {
                     $produit->decrement('quantite_stock', abs($difference));
+                    // ✅ Diminuer quantite_restante (si possible)
+                    $nouvRestante = max(0, $achat->quantite_restante + $difference);
+                    $achat->quantite_restante = $nouvRestante;
                 }
 
-                // Enregistrer le mouvement
                 StockMovement::create([
                     'produit_id' => $produit->id,
                     'user_id' => auth()->id(),
@@ -196,10 +171,10 @@ class AchatController extends Controller
                     'stock_avant' => $stockAvant,
                     'stock_apres' => $produit->fresh()->quantite_stock,
                     'reference' => $validated['numero_bon'] ?? "Achat #{$achat->id}",
-                    'motif' => "Modification achat (différence: " . ($difference > 0 ? '+' : '') . $difference . ")"
+                    'motif' => "Modification achat FIFO (différence: " . ($difference > 0 ? '+' : '') . $difference . ")"
                 ]);
 
-                Log::info('Stock ajusté: ' . $stockAvant . ' → ' . $produit->fresh()->quantite_stock);
+                Log::info("📦 Stock ajusté: {$stockAvant} → {$produit->fresh()->quantite_stock}");
             }
 
             // Mettre à jour l'achat
@@ -214,7 +189,6 @@ class AchatController extends Controller
                 'notes' => $validated['notes'] ?? null
             ]);
 
-            // Mettre à jour le prix d'achat du produit
             $produit->update(['prix_achat' => $validated['prix_achat']]);
 
             DB::commit();
@@ -228,7 +202,7 @@ class AchatController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Erreur lors de la mise à jour: ' . $e->getMessage());
+            Log::error('❌ Erreur mise à jour: ' . $e->getMessage());
             
             return back()
                 ->withInput()
@@ -236,9 +210,6 @@ class AchatController extends Controller
         }
     }
 
-    /**
-     * Supprimer un achat
-     */
     public function destroy($id)
     {
         DB::beginTransaction();
@@ -249,20 +220,21 @@ class AchatController extends Controller
             if ($produit) {
                 $stockAvant = $produit->quantite_stock;
                 
-                // Retirer la quantité du stock
-                $produit->decrement('quantite_stock', $achat->quantite);
+                // Retirer SEULEMENT quantite_restante (pas quantite complète)
+                $produit->decrement('quantite_stock', $achat->quantite_restante);
 
-                // Enregistrer le mouvement
                 StockMovement::create([
                     'produit_id' => $produit->id,
                     'user_id' => auth()->id(),
                     'type' => 'ajustement',
-                    'quantite' => $achat->quantite,
+                    'quantite' => $achat->quantite_restante,
                     'stock_avant' => $stockAvant,
                     'stock_apres' => $produit->fresh()->quantite_stock,
                     'reference' => $achat->numero_bon ?? "Achat #{$achat->id}",
-                    'motif' => "Suppression achat #{$achat->id}"
+                    'motif' => "Suppression achat FIFO (restant: {$achat->quantite_restante})"
                 ]);
+                
+                Log::info("🗑️ Achat supprimé - Stock ajusté: -{$achat->quantite_restante}");
             }
 
             $achat->delete();
@@ -274,30 +246,29 @@ class AchatController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Erreur lors de la suppression: ' . $e->getMessage());
+            Log::error('❌ Erreur suppression: ' . $e->getMessage());
             
             return back()->with('error', 'Erreur: ' . $e->getMessage());
         }
     }
 
     public function getProduits(Request $request)
-{
-    $categoryId = $request->input('category_id');
-    
-    $query = Produit::select('id', 'nom', 'quantite_stock')
-        ->orderBy('nom', 'asc');
-    
-    // Si une catégorie est sélectionnée, filtrer par catégorie
-    if ($categoryId) {
-        $query->where('category_id', $categoryId);
+    {
+        $categoryId = $request->input('category_id');
+        
+        $query = Produit::select('id', 'nom', 'quantite_stock')
+            ->orderBy('nom', 'asc');
+        
+        if ($categoryId) {
+            $query->where('category_id', $categoryId);
+        }
+        
+        $produits = $query->get();
+        
+        return response()->json([
+            'success' => true,
+            'produits' => $produits,
+            'count' => $produits->count()
+        ]);
     }
-    
-    $produits = $query->get();
-    
-    return response()->json([
-        'success' => true,
-        'produits' => $produits,
-        'count' => $produits->count()
-    ]);
-}
 }

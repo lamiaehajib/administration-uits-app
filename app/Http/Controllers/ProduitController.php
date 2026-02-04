@@ -551,4 +551,15 @@ class ProduitController extends Controller
             'categories' => $categories
         ]);
     }
+
+    public function stockFifo($id)
+{
+    $produit = Produit::with('category')->findOrFail($id);
+    
+    $achatsAvecStock = Achat::where('produit_id', $id)
+        ->where('quantite_restante', '>', 0)
+        ->orderBy('date_achat', 'asc')
+        ->get();
+    
+}
 }

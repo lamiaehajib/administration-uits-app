@@ -269,6 +269,9 @@ public function store(Request $request)
     return view('recus.edit', compact('recu', 'produits', 'categories'));
 }
 
+
+Copier
+
 public function update(Request $request, RecuUcg $recu)
 {
     if (!in_array($recu->statut, ['en_cours', 'livre'])) {
@@ -298,15 +301,15 @@ public function update(Request $request, RecuUcg $recu)
 
     DB::beginTransaction();
     try {
-        // Sauvegarder les anciens items pour restaurer le stock
+        // 1️⃣ Sauvegarder les anciens items AVANT de les supprimer
         $oldItems = $recu->items()->get();
 
-        // 1️⃣ Restaurer le stock des anciens items (soft delete va le faire automatiquement)
+        // 2️⃣ Restaurer le stock des anciens items (le soft delete le fera automatiquement)
         foreach ($oldItems as $item) {
             $item->delete(); // Le stock sera restauré via l'événement 'deleted' dans RecuItem
         }
 
-        // 2️⃣ Mettre à jour les informations du reçu
+        // 3️⃣ Mettre à jour les informations du reçu
         $recu->update([
             'client_nom' => $validated['client_nom'],
             'client_prenom' => $validated['client_prenom'] ?? null,
@@ -323,15 +326,25 @@ public function update(Request $request, RecuUcg $recu)
             'notes' => $validated['notes'] ?? null,
         ]);
 
-        // 3️⃣ Créer les nouveaux items
+        // 4️⃣ Créer les nouveaux items AVEC VÉRIFICATION DU STOCK
         foreach ($validated['items'] as $itemData) {
             
             if (!empty($itemData['product_variant_id'])) {
                 // Produit avec variant
                 $variant = ProductVariant::findOrFail($itemData['product_variant_id']);
                 
-                if ($variant->quantite_stock < $itemData['quantite']) {
-                    throw new \Exception("Stock insuffisant pour {$variant->full_name}. Stock disponible: {$variant->quantite_stock}");
+                // ✅ CORRECTION: Ajout du stock restauré de l'ancien item (si même variant)
+                $stockDisponible = $variant->quantite_stock;
+                
+                // Vérifier si l'ancien reçu contenait ce même variant
+                $oldSameVariantItem = $oldItems->where('product_variant_id', $itemData['product_variant_id'])->first();
+                if ($oldSameVariantItem) {
+                    // Ajouter la quantité de l'ancien item au stock disponible
+                    $stockDisponible += $oldSameVariantItem->quantite;
+                }
+                
+                if ($stockDisponible < $itemData['quantite']) {
+                    throw new \Exception("Stock insuffisant pour {$variant->full_name}. Stock disponible: {$stockDisponible}");
                 }
 
                 $recu->items()->create([
@@ -344,8 +357,20 @@ public function update(Request $request, RecuUcg $recu)
                 // Produit simple (sans variant)
                 $produit = Produit::findOrFail($itemData['produit_id']);
                 
-                if ($produit->quantite_stock < $itemData['quantite']) {
-                    throw new \Exception("Stock insuffisant pour {$produit->nom}. Stock disponible: {$produit->quantite_stock}");
+                // ✅ CORRECTION: Ajout du stock restauré de l'ancien item (si même produit)
+                $stockDisponible = $produit->quantite_stock;
+                
+                // Vérifier si l'ancien reçu contenait ce même produit (sans variant)
+                $oldSameProductItem = $oldItems->where('produit_id', $itemData['produit_id'])
+                                               ->whereNull('product_variant_id')
+                                               ->first();
+                if ($oldSameProductItem) {
+                    // Ajouter la quantité de l'ancien item au stock disponible
+                    $stockDisponible += $oldSameProductItem->quantite;
+                }
+                
+                if ($stockDisponible < $itemData['quantite']) {
+                    throw new \Exception("Stock insuffisant pour {$produit->nom}. Stock disponible: {$stockDisponible}");
                 }
 
                 $recu->items()->create([
@@ -355,11 +380,11 @@ public function update(Request $request, RecuUcg $recu)
             }
         }
 
-        // 4️⃣ Recalculer le total
+        // 5️⃣ Recalculer le total APRÈS avoir créé tous les items
         $recu->refresh();
         $recu->calculerTotal();
 
-        // 5️⃣ Gérer le paiement (si montant_paye a changé)
+        // 6️⃣ Gérer le paiement (si montant_paye a changé)
         $montantPaye = $validated['montant_paye'] ?? 0;
         $montantDejaPayé = $recu->paiements->sum('montant');
 

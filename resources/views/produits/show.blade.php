@@ -688,6 +688,139 @@
                 </div>
             </div>
         </div>
+        
+
+
+        <!-- ✅ VERSION INTERACTIVE avec Modification Prix -->
+<div class="info-card" style="margin-top: 25px;" id="stock-fifo">
+    <div class="info-card-header">
+        <div class="info-card-icon warning">
+            <i class="fas fa-layer-group"></i>
+        </div>
+        <h3 class="info-card-title">Stock FIFO - Gestion par Batch</h3>
+    </div>
+    <div class="activity-body">
+        @php
+            $achatsAvecStock = \App\Models\Achat::where('produit_id', $produit->id)
+                ->where('quantite_restante', '>', 0)
+                ->orderBy('date_achat', 'asc')
+                ->get();
+        @endphp
+
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead style="background: linear-gradient(135deg, #C2185B, #D32F2F); color: white;">
+                    <tr>
+                        <th>Date Achat</th>
+                        <th>Fournisseur</th>
+                        <th>Stock Restant</th>
+                        <th>Prix Achat Unit.</th>
+                        <th>Prix Vente Actuel</th>
+                        <th>Marge Unit.</th>
+                        <th>Valeur Stock</th>
+                        <th>Utilisation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($achatsAvecStock as $achat)
+                    @php
+                        $prixVenteActuel = $produit->prix_vente;
+                        $margeUnit = $prixVenteActuel - $achat->prix_achat;
+                        $margePct = $achat->prix_achat > 0 ? ($margeUnit / $achat->prix_achat * 100) : 0;
+                        $tauxUtilisation = ($achat->quantite - $achat->quantite_restante) / $achat->quantite * 100;
+                    @endphp
+                    <tr>
+                        <td>
+                            <strong>{{ \Carbon\Carbon::parse($achat->date_achat)->format('d/m/Y') }}</strong>
+                            <br>
+                            <small class="text-muted">Achat #{{ $achat->id }}</small>
+                        </td>
+                        <td>{{ $achat->fournisseur ?? 'N/A' }}</td>
+                        <td>
+                            <span class="badge" style="background: #E3F2FD; color: #1976D2; font-size: 1rem; padding: 8px 12px;">
+                                <i class="fas fa-boxes"></i> 
+                                {{ $achat->quantite_restante }} / {{ $achat->quantite }}
+                            </span>
+                        </td>
+                        <td>
+                            <strong style="color: #f44336; font-size: 1.1rem;">
+                                {{ number_format($achat->prix_achat, 2) }} DH
+                            </strong>
+                        </td>
+                        <td>
+                            <strong style="color: #4CAF50; font-size: 1.1rem;">
+                                {{ number_format($prixVenteActuel, 2) }} DH
+                            </strong>
+                        </td>
+                        <td>
+                            <div>
+                                <strong style="color: {{ $margeUnit >= 0 ? '#9C27B0' : '#f44336' }}; font-size: 1.1rem;">
+                                    {{ number_format($margeUnit, 2) }} DH
+                                </strong>
+                            </div>
+                            <small class="badge" style="background: {{ $margePct >= 20 ? '#E8F5E9' : '#FFEBEE' }}; color: {{ $margePct >= 20 ? '#2E7D32' : '#C62828' }};">
+                                {{ number_format($margePct, 1) }}%
+                            </small>
+                        </td>
+                        <td>
+                            <strong style="color: #4CAF50; font-size: 1.1rem;">
+                                {{ number_format($achat->quantite_restante * $achat->prix_achat, 2) }} DH
+                            </strong>
+                        </td>
+                        <td>
+                            <div style="width: 100px;">
+                                <div style="font-size: 0.85rem; font-weight: 600; color: {{ $tauxUtilisation >= 80 ? '#C62828' : '#666' }};">
+                                    {{ number_format($tauxUtilisation, 0) }}%
+                                </div>
+                                <div class="stock-progress">
+                                    <div class="stock-progress-bar {{ $tauxUtilisation >= 80 ? 'danger' : ($tauxUtilisation >= 50 ? 'warning' : 'success') }}" 
+                                         style="width: {{ $tauxUtilisation }}%;"></div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <i class="fas fa-inbox" style="font-size: 2rem; color: #ccc;"></i>
+                            <p class="text-muted mt-2">Aucun stock disponible</p>
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+                
+                <!-- ✅ Footer avec Totaux -->
+                @if($achatsAvecStock->count() > 0)
+                <tfoot style="background: #f8f9fa; font-weight: 700;">
+                    <tr>
+                        <td colspan="2"><strong>TOTAL</strong></td>
+                        <td>
+                            <span class="badge" style="background: #C2185B; color: white; font-size: 1rem; padding: 8px 12px;">
+                                {{ $achatsAvecStock->sum('quantite_restante') }} unités
+                            </span>
+                        </td>
+                        <td colspan="3"></td>
+                        <td>
+                            <strong style="color: #4CAF50; font-size: 1.2rem;">
+                                {{ number_format($achatsAvecStock->sum(function($a) { return $a->quantite_restante * $a->prix_achat; }), 2) }} DH
+                            </strong>
+                        </td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+                @endif
+            </table>
+        </div>
+
+        <!-- ✅ Info Box -->
+        <div class="alert" style="background: #E3F2FD; border-left: 4px solid #1976D2; margin-top: 20px;">
+            <i class="fas fa-info-circle"></i>
+            <strong>FIFO (First In, First Out):</strong> 
+            Les ventes utilisent automatiquement le stock des achats les plus anciens en premier.
+            La marge réelle est calculée selon le prix d'achat de chaque batch vendu.
+        </div>
+    </div>
+</div>
 
         <!-- Recent Activity -->
         <div class="activity-section">

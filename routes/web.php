@@ -330,6 +330,9 @@ Route::post('produits/{id}/restore', [ProduitController::class, 'restore'])->nam
 // Route للحذف النهائي
 Route::delete('produits/{id}/force-delete', [ProduitController::class, 'forceDelete'])->name('produits.forceDelete');
 
+
+Route::get('/produits/{id}/stock-fifo', [ProduitController::class, 'stockFifo'])
+    ->name('produits.stock_fifo');
 // 2. الـ Route الأساسي (Resource) - يجب أن يأتي ثانياً
 Route::resource('produits', ProduitController::class);
 

@@ -953,6 +953,7 @@
                 <i class="fas fa-trash"></i> Corbeille
             </a>
             @endcan
+            
         </div>
 
         <!-- Products Table -->
@@ -1078,6 +1079,8 @@
                                         <i class="fas fa-exchange-alt"></i>
                                     </a>
                                     @endcan
+
+                                    
                                 </div>
                             </td>
                         </tr>

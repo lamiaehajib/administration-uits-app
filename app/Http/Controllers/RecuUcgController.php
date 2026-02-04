@@ -270,7 +270,7 @@ public function store(Request $request)
 }
 
 
-Copier
+
 
 public function update(Request $request, RecuUcg $recu)
 {

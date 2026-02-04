@@ -381,24 +381,23 @@ public function update(Request $request, RecuUcg $recu)
         $recu->refresh();
         $recu->calculerTotal();
 
-        // 6️⃣ ✅ CORRECTION : Gérer le paiement correctement (sans supprimer les anciens)
+        // 6️⃣ Gérer le paiement (si montant_paye a changé)
         $montantPaye = $validated['montant_paye'] ?? 0;
         $montantDejaPayé = $recu->paiements->sum('montant');
 
-        if ($montantPaye > $montantDejaPayé) {
-            // Ajouter la différence comme nouveau paiement
-            $difference = $montantPaye - $montantDejaPayé;
-            
-            $recu->ajouterPaiement(
-                $difference,
-                $validated['mode_paiement'],
-                null
-            );
-        } elseif ($montantPaye < $montantDejaPayé) {
-            // Empêcher la réduction du montant payé
-            throw new \Exception("Vous ne pouvez pas réduire le montant déjà payé. Montant actuel : " . number_format($montantDejaPayé, 2) . " DH");
+        if ($montantPaye != $montantDejaPayé) {
+            // Supprimer tous les anciens paiements
+            $recu->paiements()->delete();
+
+            // Ajouter le nouveau paiement si montant > 0
+            if ($montantPaye > 0) {
+                $recu->ajouterPaiement(
+                    $montantPaye,
+                    $validated['mode_paiement'],
+                    null
+                );
+            }
         }
-        // Si montantPaye == montantDejaPayé, ne rien faire
 
         DB::commit();
 

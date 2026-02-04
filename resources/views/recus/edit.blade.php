@@ -207,7 +207,7 @@
                 </div>
             </div>
 
-            <!-- ✅ AMÉLIORATION : Section Paiement avec validation et info -->
+            <!-- Section Paiement -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0"><i class="fas fa-credit-card me-2"></i>Paiement & Montants</h5>
@@ -239,49 +239,16 @@
                                 <option value="credit" {{ old('mode_paiement', $recu->mode_paiement) == 'credit' ? 'selected' : '' }}>Crédit</option>
                             </select>
                         </div>
-                        
-                        <!-- ✅ AMÉLIORATION : Montant Payé avec message d'information -->
                         <div class="col-md-4">
                             <label class="form-label">Montant Payé (DH)</label>
-                            <input type="number" name="montant_paye" id="montant-paye" class="form-control" 
-                                   step="0.01" min="{{ $recu->paiements->sum('montant') }}" 
-                                   value="{{ old('montant_paye', $recu->paiements->sum('montant')) }}">
-                            
-                            @if($recu->paiements->count() > 0)
-                                <div class="alert alert-info mt-2 mb-0 py-2">
-                                    <small>
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        <strong>Montant actuel :</strong> {{ number_format($recu->paiements->sum('montant'), 2) }} DH
-                                        <br>
-                                        <strong>Historique :</strong>
-                                        @foreach($recu->paiements as $p)
-                                            {{ number_format($p->montant, 2) }} DH ({{ $p->date_paiement->format('d/m/Y') }}){{ !$loop->last ? ' + ' : '' }}
-                                        @endforeach
-                                        <br>
-                                        <span class="text-warning">
-                                            <i class="fas fa-exclamation-triangle me-1"></i>
-                                            Vous pouvez seulement <strong>ajouter</strong> un nouveau paiement (pas réduire).
-                                        </span>
-                                    </small>
-                                </div>
-                            @else
-                                <small class="text-muted">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    Aucun paiement enregistré pour ce reçu.
-                                </small>
-                            @endif
+                            <input type="number" name="montant_paye" class="form-control" 
+                                   step="0.01" min="0" value="{{ old('montant_paye', $recu->paiements->sum('montant')) }}">
                         </div>
-                        
                         <div class="col-md-4">
                             <label class="form-label">Date de Paiement</label>
                             <input type="date" name="date_paiement" class="form-control" 
                                    value="{{ old('date_paiement', $recu->date_paiement ? $recu->date_paiement->format('Y-m-d') : date('Y-m-d')) }}">
-                            <small class="text-muted">
-                                <i class="fas fa-calendar me-1"></i>
-                                Date du prochain paiement (si vous en ajoutez un)
-                            </small>
                         </div>
-                        
                         <div class="col-12">
                             <label class="form-label">Notes</label>
                             <textarea name="notes" class="form-control" rows="2">{{ old('notes', $recu->notes) }}</textarea>
@@ -304,10 +271,9 @@
 
     @push('scripts')
     <script>
-        console.log('✅ Script variants + catégories + validation paiement chargé (EDIT MODE)');
+        console.log('✅ Script variants + catégories chargé (EDIT MODE)');
         
         let itemIndex = {{ count($recu->items) }};
-        const montantActuel = {{ $recu->paiements->sum('montant') }};
         
         // ✅ Stocker les produits au chargement
         const produitsOptions = `
@@ -324,34 +290,6 @@
         `;
 
         $(document).ready(function() {
-            // ✅ VALIDATION DU MONTANT PAYÉ EN TEMPS RÉEL
-            $('#montant-paye').on('input', function() {
-                const nouveauMontant = parseFloat($(this).val()) || 0;
-                
-                // Supprimer les anciens messages
-                $(this).removeClass('is-invalid');
-                $(this).siblings('.invalid-feedback').remove();
-                $(this).parent().find('.text-success').remove();
-                
-                if (nouveauMontant < montantActuel) {
-                    $(this).addClass('is-invalid');
-                    $(this).after(`
-                        <div class="invalid-feedback d-block">
-                            <i class="fas fa-exclamation-circle me-1"></i>
-                            Le montant ne peut pas être inférieur au montant déjà payé (${montantActuel.toFixed(2)} DH)
-                        </div>
-                    `);
-                } else if (nouveauMontant > montantActuel) {
-                    const difference = nouveauMontant - montantActuel;
-                    $(this).parent().find('.alert-info').after(`
-                        <small class="text-success mt-1 d-block fw-bold">
-                            <i class="fas fa-plus-circle me-1"></i>
-                            Nouveau paiement de <strong>${difference.toFixed(2)} DH</strong> sera ajouté
-                        </small>
-                    `);
-                }
-            });
-
             // ✅ FILTRE PAR CATÉGORIE
             $('#category-filter').on('change', function() {
                 const categoryId = $(this).val();
@@ -568,12 +506,10 @@
                 $('.remove-item').prop('disabled', itemCount <= 1);
             }
 
-            // ✅ VALIDATION DU FORMULAIRE AVANT SOUMISSION
             $('#recuForm').on('submit', function(e) {
                 let valid = true;
                 let errors = [];
 
-                // Validation des produits
                 $('.item-row').each(function() {
                     const row = $(this);
                     const produitId = row.find('.produit-select').val();
@@ -591,13 +527,6 @@
                     }
                 });
 
-                // ✅ Validation du montant payé
-                const nouveauMontant = parseFloat($('#montant-paye').val()) || 0;
-                if (nouveauMontant < montantActuel) {
-                    valid = false;
-                    errors.push(`Le montant payé ne peut pas être inférieur au montant déjà payé (${montantActuel.toFixed(2)} DH)`);
-                }
-
                 if (!valid) {
                     e.preventDefault();
                     Swal.fire({
@@ -606,7 +535,6 @@
                         html: errors.join('<br>'),
                         confirmButtonText: 'OK'
                     });
-                    return false;
                 }
             });
 

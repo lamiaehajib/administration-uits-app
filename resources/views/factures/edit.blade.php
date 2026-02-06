@@ -94,6 +94,19 @@
             border-radius: 8px;
             font-weight: 600;
         }
+        .btn-important {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .important-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
         .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
         .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
         .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
@@ -390,6 +403,39 @@
                 </div>
             </div>
 
+            <!-- ✅ SECTION INFORMATIONS IMPORTANTES -->
+            <div class="form-card">
+                <div class="section-header">
+                    <div class="section-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h3 class="section-title">Informations Importantes</h3>
+                </div>
+
+                <div id="important-container">
+                    @if($facture->importantInfoo && $facture->importantInfoo->count() > 0)
+                        @foreach($facture->importantInfoo as $info)
+                            <div class="important-row mb-2">
+                                <input type="text" name="important[]" class="form-control" value="{{ $info->info }}" placeholder="Ajouter une information importante">
+                                <button type="button" class="btn btn-remove" onclick="removeImportant(this)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="important-row mb-2">
+                            <input type="text" name="important[]" class="form-control" placeholder="Ajouter une information importante">
+                            <button type="button" class="btn btn-remove" onclick="removeImportant(this)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    @endif
+                </div>
+                <button type="button" class="btn btn-important mt-3" onclick="addImportant()">
+                    <i class="fas fa-plus me-2"></i> Ajouter une information
+                </button>
+            </div>
+
             <div class="d-flex justify-content-end gap-3 mt-4">
                 <a href="{{ route('factures.index') }}" class="btn btn-secondary">
                     <i class="fas fa-times me-2"></i> Annuler
@@ -584,6 +630,30 @@
         document.querySelectorAll(container + ' .product-row').forEach((row, index) => {
             row.querySelector('.product-number').textContent = index + 1;
         });
+    }
+
+    // ✅ FONCTION: Ajouter Information Importante
+    function addImportant() {
+        const container = document.getElementById('important-container');
+        const newRow = document.createElement('div');
+        newRow.className = 'important-row mb-2';
+        newRow.innerHTML = `
+            <input type="text" name="important[]" class="form-control" placeholder="Ajouter une information importante">
+            <button type="button" class="btn btn-remove" onclick="removeImportant(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        container.appendChild(newRow);
+    }
+
+    // ✅ FONCTION: Supprimer Information Importante
+    function removeImportant(button) {
+        const container = document.getElementById('important-container');
+        if (container.children.length > 1) {
+            button.closest('.important-row').remove();
+        } else {
+            alert('Vous devez avoir au moins une ligne d\'information importante.');
+        }
     }
 
     document.addEventListener('DOMContentLoaded', function() {

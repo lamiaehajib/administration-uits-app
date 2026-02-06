@@ -89,20 +89,26 @@ class RecuItem extends Model
                 // ✅ FIFO - Produit Simple
                 $produit = $item->produit;
                 if ($produit) {
-                    if (empty($item->prix_unitaire)) {
-                        $item->prix_unitaire = $produit->prix_vente ?? 0;
-                    }
-                    
-                    // ✅ Khud prix_achat mn awwal achat li 3ando stock
-                    if (empty($item->prix_achat)) {
+                    // ✅ Khud l'achat l9dam li 3ando stock
+                    if (empty($item->prix_achat) || empty($item->prix_unitaire)) {
                         $achatActif = Achat::where('produit_id', $produit->id)
                             ->where('quantite_restante', '>', 0)
                             ->orderBy('date_achat', 'asc')
                             ->first();
                         
-                        $item->prix_achat = $achatActif ? $achatActif->prix_achat : ($produit->prix_achat ?? 0);
-                        
-                        Log::info("🔍 FIFO Prix Achat: " . ($achatActif ? "Achat #{$achatActif->id} @ {$achatActif->prix_achat} DH" : "Prix par défaut: {$produit->prix_achat} DH"));
+                        if ($achatActif) {
+                            // ✅ Utiliser prix_achat & prix_vente_suggere du batch
+                            $item->prix_achat = $achatActif->prix_achat;
+                            $item->prix_unitaire = $achatActif->prix_vente_suggere ?? $produit->prix_vente;
+                            
+                            Log::info("🔍 FIFO: Achat #{$achatActif->id} - PA: {$achatActif->prix_achat} DH, PV: " . ($achatActif->prix_vente_suggere ?? $produit->prix_vente) . " DH");
+                        } else {
+                            // Fallback sur produit si pas d'achat disponible
+                            $item->prix_achat = $produit->prix_achat ?? 0;
+                            $item->prix_unitaire = $produit->prix_vente ?? 0;
+                            
+                            Log::warning("⚠️ FIFO: Pas d'achat disponible pour produit #{$produit->id}, utilisation prix par défaut");
+                        }
                     }
 
                     $item->produit_nom = $produit->nom;
@@ -114,6 +120,8 @@ class RecuItem extends Model
             $item->sous_total = $item->quantite * $item->prix_unitaire;
             $item->marge_unitaire = $item->prix_unitaire - $item->prix_achat;
             $item->marge_totale = $item->marge_unitaire * $item->quantite;
+            
+            Log::info("💰 Calcul Marge: PV {$item->prix_unitaire} - PA {$item->prix_achat} = Marge {$item->marge_unitaire} DH/unité (Total: {$item->marge_totale} DH)");
         });
 
         static::created(function ($item) {
@@ -257,12 +265,12 @@ class RecuItem extends Model
                 // Had l'achat 3ando bzaf, khud li bghitina
                 $achat->decrement('quantite_restante', $quantiteRestante);
                 
-                Log::info("✅ FIFO: Décrémenter {$quantiteRestante} unités de l'achat #{$achat->id} (Prix: {$achat->prix_achat} DH) - Reçu #{$recuId}");
+                Log::info("✅ FIFO Décrément: {$quantiteRestante} unités de l'achat #{$achat->id} (PA: {$achat->prix_achat} DH, PV: " . ($achat->prix_vente_suggere ?? 'N/A') . " DH) - Reçu #{$recuId}");
                 
                 $quantiteRestante = 0;
             } else {
                 // Had l'achat ma3andoch bzaf, khud kolchi o kmal
-                Log::info("⚠️ FIFO: Épuiser achat #{$achat->id} ({$achat->quantite_restante} unités, Prix: {$achat->prix_achat} DH) - Reçu #{$recuId}");
+                Log::info("⚠️ FIFO Épuisement: achat #{$achat->id} ({$achat->quantite_restante} unités, PA: {$achat->prix_achat} DH, PV: " . ($achat->prix_vente_suggere ?? 'N/A') . " DH) - Reçu #{$recuId}");
                 
                 $quantiteRestante -= $achat->quantite_restante;
                 $achat->update(['quantite_restante' => 0]);
@@ -271,7 +279,7 @@ class RecuItem extends Model
 
         // ✅ Safety check
         if ($quantiteRestante > 0) {
-            Log::warning("⚠️ FIFO: Manque {$quantiteRestante} unités dans les achats! Vérifiez les données du produit #{$produitId}");
+            Log::warning("⚠️ FIFO ALERTE: Manque {$quantiteRestante} unités dans les achats! Produit #{$produitId} - Vérifiez les données");
         }
     }
 
@@ -287,7 +295,7 @@ class RecuItem extends Model
 
         if ($achat) {
             $achat->increment('quantite_restante', $quantite);
-            Log::info("✅ FIFO Restauration: +{$quantite} unités à l'achat #{$achat->id}");
+            Log::info("✅ FIFO Restauration: +{$quantite} unités à l'achat #{$achat->id} (PA: {$achat->prix_achat} DH, PV: " . ($achat->prix_vente_suggere ?? 'N/A') . " DH)");
         } else {
             Log::warning("⚠️ FIFO Restauration: Aucun achat trouvé pour le produit #{$produitId}");
         }

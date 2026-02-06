@@ -16,8 +16,10 @@ class Achat extends Model
         'fournisseur',
         'numero_bon',
         'quantite',
-        'quantite_restante', // ✅ NOUVEAU
+        'quantite_restante',
         'prix_achat',
+        'prix_vente_suggere', // ✅ NOUVEAU
+        'marge_pourcentage',   // ✅ NOUVEAU
         'total_achat',
         'date_achat',
         'notes',
@@ -26,9 +28,11 @@ class Achat extends Model
     protected $casts = [
         'date_achat' => 'date',
         'prix_achat' => 'decimal:2',
+        'prix_vente_suggere' => 'decimal:2', // ✅ NOUVEAU
+        'marge_pourcentage' => 'decimal:2',   // ✅ NOUVEAU
         'total_achat' => 'decimal:2',
         'quantite' => 'integer',
-        'quantite_restante' => 'integer', // ✅ NOUVEAU
+        'quantite_restante' => 'integer',
     ];
 
     // ✅ Events
@@ -37,8 +41,21 @@ class Achat extends Model
         parent::boot();
 
         static::creating(function ($achat) {
-            // F wa9t création, quantite_restante = quantite
+            // Quantite_restante = quantite
             $achat->quantite_restante = $achat->quantite;
+            
+            // ✅ Calculer prix_vente_suggere si pas fourni
+            if (empty($achat->prix_vente_suggere) && $achat->prix_achat > 0) {
+                $margePct = $achat->marge_pourcentage ?? 20;
+                $achat->prix_vente_suggere = $achat->prix_achat * (1 + ($margePct / 100));
+            }
+        });
+
+        static::updating(function ($achat) {
+            // ✅ Recalculer prix_vente si marge change
+            if ($achat->isDirty('marge_pourcentage') && $achat->prix_achat > 0) {
+                $achat->prix_vente_suggere = $achat->prix_achat * (1 + ($achat->marge_pourcentage / 100));
+            }
         });
     }
 
@@ -79,5 +96,17 @@ class Achat extends Model
     {
         if ($this->quantite == 0) return 0;
         return round(($this->quantite_vendue / $this->quantite) * 100, 1);
+    }
+
+    // ✅ Calculer marge réelle
+    public function getMargeUnitaireAttribute()
+    {
+        return $this->prix_vente_suggere - $this->prix_achat;
+    }
+
+    public function getMargePourcentageReelAttribute()
+    {
+        if ($this->prix_achat == 0) return 0;
+        return round((($this->prix_vente_suggere - $this->prix_achat) / $this->prix_achat) * 100, 2);
     }
 }

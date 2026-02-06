@@ -515,6 +515,26 @@
                             @enderror
                         </div>
 
+                        <!-- ✅ NOUVEAU: Marge % -->
+<div class="col-md-4">
+    <label class="form-label">
+        <i class="fas fa-percentage"></i> Marge souhaitée (%)
+    </label>
+    <input type="number" step="0.01" name="marge_pourcentage" id="marge_pourcentage" 
+           class="form-control" value="{{ old('marge_pourcentage', 20) }}">
+    <small class="text-muted">Défaut: 20%</small>
+</div>
+
+<!-- ✅ NOUVEAU: Prix de Vente Suggéré (auto-calculé) -->
+<div class="col-md-4">
+    <label class="form-label">
+        <i class="fas fa-tag"></i> Prix de vente suggéré (DH)
+    </label>
+    <input type="number" step="0.01" name="prix_vente_suggere" id="prix_vente_suggere" 
+           class="form-control bg-light" value="{{ old('prix_vente_suggere') }}" readonly>
+    <small class="text-muted">Calculé automatiquement</small>
+</div>
+
                         <!-- Total (calculé automatiquement) -->
                         <div class="col-md-4">
                             <label class="form-label">
@@ -585,6 +605,25 @@
 
     <script>
         $(document).ready(function() {
+
+            function calculerPrixVente() {
+        const prixAchat = parseFloat($('#prix_achat').val()) || 0;
+        const margePct = parseFloat($('#marge_pourcentage').val()) || 20;
+        
+        const prixVente = prixAchat * (1 + (margePct / 100));
+        $('#prix_vente_suggere').val(prixVente.toFixed(2));
+        
+        // Afficher marge en DH
+        const margeDh = prixVente - prixAchat;
+        $('#marge_info').html(`
+            <i class="fas fa-info-circle"></i> 
+            Marge: <strong>${margeDh.toFixed(2)} DH</strong> 
+            (${margePct}%)
+        `);
+    }
+    
+    $('#prix_achat, #marge_pourcentage').on('input', calculerPrixVente);
+    calculerPrixVente(); // Initial
             // ====================================
             // INITIALISATION SELECT2
             // ====================================

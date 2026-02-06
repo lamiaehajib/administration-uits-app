@@ -1,4 +1,3 @@
-
 <x-app-layout>
     <style>
         /* Styles identiques à votre code original */
@@ -95,6 +94,19 @@
             padding: 8px 20px;
             border-radius: 8px;
             font-weight: 600;
+        }
+        .btn-important {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .important-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
         .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
         .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
@@ -443,23 +455,38 @@
             </div>
 
             <!-- Informations Importantes -->
-            @if(isset($devis) && $devis->importantInfos->count() > 0)
             <div class="form-card">
                 <div class="section-header">
-                    <div class="section-icon"><i class="fas fa-exclamation-circle"></i></div>
+                    <div class="section-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
                     <h3 class="section-title">Informations Importantes</h3>
                 </div>
-                <div id="important-container">
-                    @foreach($devis->importantInfos as $index => $info)
-                    <div class="mb-3">
-                        <input type="text" name="important[]" class="form-control" 
-                               value="{{ $info->info }}" placeholder="Information importante">
-                    </div>
-                    @endforeach
-                </div>
-            </div>
-            @endif
 
+                <div id="important-container">
+                    @if (isset($devis) && $devis->importantInfos && $devis->importantInfos->count() > 0)
+                        @foreach ($devis->importantInfos as $info)
+                            <div class="important-row mb-2">
+                                <input type="text" name="important[]" class="form-control" value="{{ $info->info }}" placeholder="Ajouter une information importante">
+                                <button type="button" class="btn btn-remove" onclick="removeImportant(this)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="important-row mb-2">
+                            <input type="text" name="important[]" class="form-control" placeholder="Ajouter une information importante" value="{{ old('important.0') }}">
+                            <button type="button" class="btn btn-remove" onclick="removeImportant(this)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    @endif
+                </div>
+                <button type="button" class="btn btn-important mt-3" onclick="addImportant()">
+                    <i class="fas fa-plus me-2"></i> Ajouter une information
+                </button>
+            </div>
+          
             <div class="d-flex justify-content-end gap-3 mt-4">
                 <a href="{{ route('factures.index') }}" class="btn btn-secondary">
                     <i class="fas fa-times me-2"></i> Annuler
@@ -547,7 +574,7 @@ async function loadProduits(selectElement) {
     }
 }
 
-// Sélectionner un produittes
+// Sélectionner un produit
 function selectProduit(selectElement) {
     const option = selectElement.options[selectElement.selectedIndex];
     const row = selectElement.closest('.product-row');
@@ -720,6 +747,30 @@ function updateRowNumbers() {
     productCount = document.querySelectorAll(container + ' .product-row').length;
 }
 
+// ✅ FONCTION: Ajouter Information Importante
+function addImportant() {
+    const container = document.getElementById('important-container');
+    const newRow = document.createElement('div');
+    newRow.className = 'important-row mb-2';
+    newRow.innerHTML = `
+        <input type="text" name="important[]" class="form-control" placeholder="Ajouter une information importante">
+        <button type="button" class="btn btn-remove" onclick="removeImportant(this)">
+            <i class="fas fa-trash"></i>
+        </button>
+    `;
+    container.appendChild(newRow);
+}
+
+// ✅ FONCTION: Supprimer Information Importante
+function removeImportant(button) {
+    const container = document.getElementById('important-container');
+    if (container.children.length > 1) {
+        button.closest('.important-row').remove();
+    } else {
+        alert('Vous devez avoir au moins une ligne d\'information importante.');
+    }
+}
+
 // ✅ Validation avant soumission
 document.getElementById('facture-form').addEventListener('submit', function(e) {
     const type = document.querySelector('input[name="type"]:checked').value;
@@ -745,11 +796,16 @@ document.getElementById('facture-form').addEventListener('submit', function(e) {
     }
 });
 
-// ✅ INITIALISATION : Désactiver les champs Produits au chargement (puisque Services est actif par défaut)
+// ✅ INITIALISATION : Désactiver les champs Produits au chargement
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('#produits-section input, #produits-section textarea, #produits-section select').forEach(el => {
         el.disabled = true;
     });
+    
+    // Calculer totaux initiaux si devis existe
+    @if(isset($devis))
+    calculateTotals();
+    @endif
 });
 </script>
 

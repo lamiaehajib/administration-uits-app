@@ -41,81 +41,93 @@ class AchatController extends Controller
         $categories = Category::with('produits')->get();
         return view('achats.create', compact('categories'));
     }
+public function store(Request $request)
+{
+    Log::info('Achat Store Request:', $request->all());
 
-    public function store(Request $request)
-    {
-        Log::info('Achat Store Request:', $request->all());
+    $validated = $request->validate([
+        'produit_id' => 'required|exists:produits,id',
+        'fournisseur' => 'nullable|string|max:255',
+        'numero_bon' => 'nullable|string|max:255',
+        'quantite' => 'required|integer|min:1',
+        'prix_achat' => 'required|numeric|min:0',
+        'marge_pourcentage' => 'nullable|numeric|min:0|max:1000', // ✅ NOUVEAU
+        'prix_vente_suggere' => 'nullable|numeric|min:0',          // ✅ NOUVEAU
+        'date_achat' => 'required|date',
+        'notes' => 'nullable|string',
+    ]);
 
-        $validated = $request->validate([
-            'produit_id' => 'required|exists:produits,id',
-            'fournisseur' => 'nullable|string|max:255',
-            'numero_bon' => 'nullable|string|max:255',
-            'quantite' => 'required|integer|min:1',
-            'prix_achat' => 'required|numeric|min:0',
-            'date_achat' => 'required|date',
-            'notes' => 'nullable|string',
+    DB::beginTransaction();
+    try {
+        $produit = Produit::findOrFail($validated['produit_id']);
+        $stockAvant = $produit->quantite_stock;
+
+        // ✅ Calculer prix_vente_suggere si pas fourni
+        if (empty($validated['prix_vente_suggere'])) {
+            $margePct = $validated['marge_pourcentage'] ?? 20;
+            $validated['prix_vente_suggere'] = $validated['prix_achat'] * (1 + ($margePct / 100));
+        }
+
+        // Créer l'achat
+        $achat = Achat::create([
+            'produit_id' => $validated['produit_id'],
+            'user_id' => auth()->id(),
+            'fournisseur' => $validated['fournisseur'] ?? null,
+            'numero_bon' => $validated['numero_bon'] ?? null,
+            'quantite' => $validated['quantite'],
+            'quantite_restante' => $validated['quantite'],
+            'prix_achat' => $validated['prix_achat'],
+            'prix_vente_suggere' => $validated['prix_vente_suggere'], // ✅ NOUVEAU
+            'marge_pourcentage' => $validated['marge_pourcentage'] ?? 20, // ✅ NOUVEAU
+            'total_achat' => $validated['quantite'] * $validated['prix_achat'],
+            'date_achat' => $validated['date_achat'],
+            'notes' => $validated['notes'] ?? null
         ]);
 
-        DB::beginTransaction();
-        try {
-            $produit = Produit::findOrFail($validated['produit_id']);
-            $stockAvant = $produit->quantite_stock;
+        Log::info("✅ Achat créé #{$achat->id} - PV suggéré: {$achat->prix_vente_suggere} DH");
 
-            // ✅ Créer l'achat avec quantite_restante
-            $achat = Achat::create([
-                'produit_id' => $validated['produit_id'],
+        $updateStock = $request->has('update_stock');
+        
+        if ($updateStock) {
+            $produit->increment('quantite_stock', $validated['quantite']);
+
+            StockMovement::create([
+                'produit_id' => $produit->id,
                 'user_id' => auth()->id(),
-                'fournisseur' => $validated['fournisseur'] ?? null,
-                'numero_bon' => $validated['numero_bon'] ?? null,
+                'type' => 'entree',
                 'quantite' => $validated['quantite'],
-                'quantite_restante' => $validated['quantite'], // ✅ IMPORTANT
-                'prix_achat' => $validated['prix_achat'],
-                'total_achat' => $validated['quantite'] * $validated['prix_achat'],
-                'date_achat' => $validated['date_achat'],
-                'notes' => $validated['notes'] ?? null
+                'stock_avant' => $stockAvant,
+                'stock_apres' => $produit->fresh()->quantite_stock,
+                'reference' => $validated['numero_bon'] ?? "Achat #{$achat->id}",
+                'motif' => "Achat FIFO - PV: {$achat->prix_vente_suggere} DH"
             ]);
-
-            Log::info("✅ Achat créé #{$achat->id} - Quantité restante: {$achat->quantite_restante}");
-
-            $updateStock = $request->has('update_stock');
-            
-            if ($updateStock) {
-                $produit->increment('quantite_stock', $validated['quantite']);
-
-                StockMovement::create([
-                    'produit_id' => $produit->id,
-                    'user_id' => auth()->id(),
-                    'type' => 'entree',
-                    'quantite' => $validated['quantite'],
-                    'stock_avant' => $stockAvant,
-                    'stock_apres' => $produit->fresh()->quantite_stock,
-                    'reference' => $validated['numero_bon'] ?? "Achat #{$achat->id}",
-                    'motif' => "Achat FIFO - " . ($validated['fournisseur'] ?? 'Fournisseur non spécifié')
-                ]);
-
-                Log::info("📦 Stock mis à jour: {$stockAvant} → {$produit->fresh()->quantite_stock}");
-            }
-
-            $produit->update(['prix_achat' => $validated['prix_achat']]);
-
-            DB::commit();
-            
-            $message = 'Achat ajouté avec succès!';
-            if (!$updateStock) {
-                $message .= ' (Stock non modifié)';
-            }
-            
-            return redirect()->route('achats.index')->with('success', $message);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('❌ Erreur création achat: ' . $e->getMessage());
-            
-            return back()
-                ->withInput()
-                ->with('error', 'Erreur: ' . $e->getMessage());
         }
+
+        // ✅ Mettre à jour prix_vente du produit SEULEMENT si c'est le plus récent
+        $dernierAchat = Achat::where('produit_id', $produit->id)
+            ->latest('date_achat')
+            ->first();
+        
+        if ($dernierAchat && $dernierAchat->id == $achat->id) {
+            $produit->update([
+                'prix_achat' => $validated['prix_achat'],
+                'prix_vente' => $validated['prix_vente_suggere']
+            ]);
+        }
+
+        DB::commit();
+        
+        return redirect()->route('achats.index')->with('success', 'Achat ajouté avec succès!');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('❌ Erreur création achat: ' . $e->getMessage());
+        
+        return back()
+            ->withInput()
+            ->with('error', 'Erreur: ' . $e->getMessage());
     }
+}
 
     public function edit($id)
     {

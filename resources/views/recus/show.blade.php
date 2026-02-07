@@ -250,7 +250,7 @@
                                 <tbody>
                                     @forelse($recu->paiements as $paiement)
                                         <tr>
-                                            <td>{{ $paiement->date_paiement->format('d/m/Y H:i') }}</td>
+                                            <td>{{ $paiement->date_paiement->format('d/m/Y') }}</td>
                                             <td class="fw-bold text-success">{{ number_format($paiement->montant, 2) }} DH</td>
                                             <td>
                                                 <span class="badge bg-info">

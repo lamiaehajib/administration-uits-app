@@ -238,168 +238,181 @@ public function store(Request $request)
         return view('recus.show', compact('recu'));
     }
 
-   public function edit(RecuUcg $recu)
-{
-    // ✅ Charger TOUTES les catégories
-    $categories = \App\Models\Category::orderBy('nom')->get();
+  public function edit(RecuUcg $recu)
+    {
+        // ✅ Charger TOUTES les catégories
+        $categories = \App\Models\Category::orderBy('nom')->get();
 
-    // ✅ Charger TOUS les produits actifs (sans filtre de stock)
-    $produits = Produit::with(['category', 'variants' => function($query) {
-        $query->where('actif', true); // Pas de filtre sur quantite_stock
-    }])
-    ->where('actif', true)
-    ->orderBy('nom')
-    ->get();
+        // ✅ Charger TOUS les produits actifs (sans filtre de stock)
+        $produits = Produit::with(['category', 'variants' => function($query) {
+            $query->where('actif', true); // Pas de filtre sur quantite_stock
+        }])
+        ->where('actif', true)
+        ->orderBy('nom')
+        ->get();
 
-    // ✅ Charger les relations complètes
-    $recu->load(['items.produit.category', 'items.variant', 'paiements']);
+        // ✅ Charger les relations complètes
+        $recu->load(['items.produit.category', 'items.variant', 'paiements']);
 
-    return view('recus.edit', compact('recu', 'produits', 'categories'));
-}
-
-public function update(Request $request, RecuUcg $recu)
-{
-    if (!in_array($recu->statut, ['en_cours', 'livre'])) {
-        return back()->with('error', 'Ce reçu ne peut pas être modifié');
+        return view('recus.edit', compact('recu', 'produits', 'categories'));
     }
 
-    $validated = $request->validate([
-        'client_nom' => 'required|string|max:255',
-        'client_prenom' => 'nullable|string|max:255',
-        'client_telephone' => 'nullable|string|max:20',
-        'client_email' => 'nullable|email|max:255',
-        'client_adresse' => 'nullable|string',
-        'equipement' => 'nullable|string|max:255',
-        'details' => 'nullable|string',
-        'type_garantie' => 'required|in:30_jours,90_jours,180_jours,360_jours,sans_garantie',
-        'remise' => 'nullable|numeric|min:0',
-        'tva' => 'nullable|numeric|min:0',
-        'mode_paiement' => 'required|in:especes,carte,cheque,virement,credit',
-        'montant_paye' => 'nullable|numeric|min:0',
-        'date_paiement' => 'nullable|date',
-        'notes' => 'nullable|string',
-        'items' => 'required|array|min:1',
-        'items.*.produit_id' => 'required|exists:produits,id',
-        'items.*.product_variant_id' => 'nullable|exists:product_variants,id',
-        'items.*.quantite' => 'required|integer|min:1',
-    ]);
-
-    DB::beginTransaction();
-    try {
-        // 1️⃣ Sauvegarder les anciens items AVANT de les supprimer
-        $oldItems = $recu->items()->get();
-
-        // 2️⃣ Restaurer le stock des anciens items (le soft delete le fera automatiquement)
-        foreach ($oldItems as $item) {
-            $item->delete(); // Le stock sera restauré via l'événement 'deleted' dans RecuItem
+    /**
+     * ✅ MÉTHODE UPDATE CORRIGÉE - Fix paiement en double
+     */
+    public function update(Request $request, RecuUcg $recu)
+    {
+        if (!in_array($recu->statut, ['en_cours', 'livre'])) {
+            return back()->with('error', 'Ce reçu ne peut pas être modifié');
         }
 
-        // 3️⃣ Mettre à jour les informations du reçu
-        $recu->update([
-            'client_nom' => $validated['client_nom'],
-            'client_prenom' => $validated['client_prenom'] ?? null,
-            'client_telephone' => $validated['client_telephone'] ?? null,
-            'client_email' => $validated['client_email'] ?? null,
-            'client_adresse' => $validated['client_adresse'] ?? null,
-            'equipement' => $validated['equipement'] ?? null,
-            'details' => $validated['details'] ?? null,
-            'type_garantie' => $validated['type_garantie'],
-            'remise' => $validated['remise'] ?? 0,
-            'tva' => $validated['tva'] ?? 0,
-            'mode_paiement' => $validated['mode_paiement'],
-            'date_paiement' => $validated['date_paiement'] ?? now(),
-            'notes' => $validated['notes'] ?? null,
+        $validated = $request->validate([
+            'client_nom' => 'required|string|max:255',
+            'client_prenom' => 'nullable|string|max:255',
+            'client_telephone' => 'nullable|string|max:20',
+            'client_email' => 'nullable|email|max:255',
+            'client_adresse' => 'nullable|string',
+            'equipement' => 'nullable|string|max:255',
+            'details' => 'nullable|string',
+            'type_garantie' => 'required|in:30_jours,90_jours,180_jours,360_jours,sans_garantie',
+            'remise' => 'nullable|numeric|min:0',
+            'tva' => 'nullable|numeric|min:0',
+            'mode_paiement' => 'required|in:especes,carte,cheque,virement,credit',
+            'montant_paye' => 'nullable|numeric|min:0',
+            'date_paiement' => 'nullable|date',
+            'notes' => 'nullable|string',
+            'items' => 'required|array|min:1',
+            'items.*.produit_id' => 'required|exists:produits,id',
+            'items.*.product_variant_id' => 'nullable|exists:product_variants,id',
+            'items.*.quantite' => 'required|integer|min:1',
         ]);
 
-        // 4️⃣ Créer les nouveaux items AVEC VÉRIFICATION DU STOCK
-        foreach ($validated['items'] as $itemData) {
-            
-            if (!empty($itemData['product_variant_id'])) {
-                // Produit avec variant
-                $variant = ProductVariant::findOrFail($itemData['product_variant_id']);
-                
-                // ✅ CORRECTION: Ajout du stock restauré de l'ancien item (si même variant)
-                $stockDisponible = $variant->quantite_stock;
-                
-                // Vérifier si l'ancien reçu contenait ce même variant
-                $oldSameVariantItem = $oldItems->where('product_variant_id', $itemData['product_variant_id'])->first();
-                if ($oldSameVariantItem) {
-                    // Ajouter la quantité de l'ancien item au stock disponible
-                    $stockDisponible += $oldSameVariantItem->quantite;
-                }
-                
-                if ($stockDisponible < $itemData['quantite']) {
-                    throw new \Exception("Stock insuffisant pour {$variant->full_name}. Stock disponible: {$stockDisponible}");
-                }
+        DB::beginTransaction();
+        try {
+            // 1️⃣ Sauvegarder les anciens items AVANT de les supprimer
+            $oldItems = $recu->items()->get();
 
-                $recu->items()->create([
-                    'produit_id' => $itemData['produit_id'],
-                    'product_variant_id' => $itemData['product_variant_id'],
-                    'quantite' => $itemData['quantite'],
-                ]);
-
-            } else {
-                // Produit simple (sans variant)
-                $produit = Produit::findOrFail($itemData['produit_id']);
-                
-                // ✅ CORRECTION: Ajout du stock restauré de l'ancien item (si même produit)
-                $stockDisponible = $produit->quantite_stock;
-                
-                // Vérifier si l'ancien reçu contenait ce même produit (sans variant)
-                $oldSameProductItem = $oldItems->where('produit_id', $itemData['produit_id'])
-                                               ->whereNull('product_variant_id')
-                                               ->first();
-                if ($oldSameProductItem) {
-                    // Ajouter la quantité de l'ancien item au stock disponible
-                    $stockDisponible += $oldSameProductItem->quantite;
-                }
-                
-                if ($stockDisponible < $itemData['quantite']) {
-                    throw new \Exception("Stock insuffisant pour {$produit->nom}. Stock disponible: {$stockDisponible}");
-                }
-
-                $recu->items()->create([
-                    'produit_id' => $itemData['produit_id'],
-                    'quantite' => $itemData['quantite'],
-                ]);
+            // 2️⃣ Restaurer le stock des anciens items (le soft delete le fera automatiquement)
+            foreach ($oldItems as $item) {
+                $item->delete(); // Le stock sera restauré via l'événement 'deleted' dans RecuItem
             }
-        }
 
-        // 5️⃣ Recalculer le total APRÈS avoir créé tous les items
-        $recu->refresh();
-        $recu->calculerTotal();
+            // 3️⃣ Mettre à jour les informations du reçu
+            $recu->update([
+                'client_nom' => $validated['client_nom'],
+                'client_prenom' => $validated['client_prenom'] ?? null,
+                'client_telephone' => $validated['client_telephone'] ?? null,
+                'client_email' => $validated['client_email'] ?? null,
+                'client_adresse' => $validated['client_adresse'] ?? null,
+                'equipement' => $validated['equipement'] ?? null,
+                'details' => $validated['details'] ?? null,
+                'type_garantie' => $validated['type_garantie'],
+                'remise' => $validated['remise'] ?? 0,
+                'tva' => $validated['tva'] ?? 0,
+                'mode_paiement' => $validated['mode_paiement'],
+                'date_paiement' => $validated['date_paiement'] ?? now(),
+                'notes' => $validated['notes'] ?? null,
+            ]);
 
-        // 6️⃣ Gérer le paiement (si montant_paye a changé)
-        $montantPaye = $validated['montant_paye'] ?? 0;
-        $montantDejaPayé = $recu->paiements->sum('montant');
+            // 4️⃣ Créer les nouveaux items AVEC VÉRIFICATION DU STOCK
+            foreach ($validated['items'] as $itemData) {
+                
+                if (!empty($itemData['product_variant_id'])) {
+                    // Produit avec variant
+                    $variant = ProductVariant::findOrFail($itemData['product_variant_id']);
+                    
+                    // ✅ CORRECTION: Ajout du stock restauré de l'ancien item (si même variant)
+                    $stockDisponible = $variant->quantite_stock;
+                    
+                    // Vérifier si l'ancien reçu contenait ce même variant
+                    $oldSameVariantItem = $oldItems->where('product_variant_id', $itemData['product_variant_id'])->first();
+                    if ($oldSameVariantItem) {
+                        // Ajouter la quantité de l'ancien item au stock disponible
+                        $stockDisponible += $oldSameVariantItem->quantite;
+                    }
+                    
+                    if ($stockDisponible < $itemData['quantite']) {
+                        throw new \Exception("Stock insuffisant pour {$variant->full_name}. Stock disponible: {$stockDisponible}");
+                    }
 
-        if ($montantPaye != $montantDejaPayé) {
-            // Supprimer tous les anciens paiements
-            $recu->paiements()->delete();
+                    $recu->items()->create([
+                        'produit_id' => $itemData['produit_id'],
+                        'product_variant_id' => $itemData['product_variant_id'],
+                        'quantite' => $itemData['quantite'],
+                    ]);
 
-            // Ajouter le nouveau paiement si montant > 0
-            if ($montantPaye > 0) {
-                $recu->ajouterPaiement(
-                    $montantPaye,
-                    $validated['mode_paiement'],
-                    null
-                );
+                } else {
+                    // Produit simple (sans variant)
+                    $produit = Produit::findOrFail($itemData['produit_id']);
+                    
+                    // ✅ CORRECTION: Ajout du stock restauré de l'ancien item (si même produit)
+                    $stockDisponible = $produit->quantite_stock;
+                    
+                    // Vérifier si l'ancien reçu contenait ce même produit (sans variant)
+                    $oldSameProductItem = $oldItems->where('produit_id', $itemData['produit_id'])
+                                                   ->whereNull('product_variant_id')
+                                                   ->first();
+                    if ($oldSameProductItem) {
+                        // Ajouter la quantité de l'ancien item au stock disponible
+                        $stockDisponible += $oldSameProductItem->quantite;
+                    }
+                    
+                    if ($stockDisponible < $itemData['quantite']) {
+                        throw new \Exception("Stock insuffisant pour {$produit->nom}. Stock disponible: {$stockDisponible}");
+                    }
+
+                    $recu->items()->create([
+                        'produit_id' => $itemData['produit_id'],
+                        'quantite' => $itemData['quantite'],
+                    ]);
+                }
             }
+
+            // 5️⃣ Recalculer le total APRÈS avoir créé tous les items
+            $recu->refresh();
+            $recu->calculerTotal();
+
+            // ✅ 6️⃣ CORRECTION IMPORTANTE - Gérer le paiement SANS DOUBLER
+            $montantPaye = $validated['montant_paye'] ?? 0;
+            $montantDejaPayé = $recu->paiements->sum('montant');
+
+            if ($montantPaye != $montantDejaPayé) {
+                // Supprimer tous les anciens paiements
+                $recu->paiements()->delete();
+
+                // ✅ RESET montant_paye à 0 AVANT d'ajouter nouveau paiement
+                $recu->updateQuietly(['montant_paye' => 0]);
+
+                // Ajouter le nouveau paiement si montant > 0
+                if ($montantPaye > 0) {
+                    $recu->ajouterPaiement(
+                        $montantPaye,
+                        $validated['mode_paiement'],
+                        null
+                    );
+                } else {
+                    // ✅ Si montant = 0, update directement
+                    $recu->update([
+                        'montant_paye' => 0,
+                        'reste' => $recu->total,
+                        'statut_paiement' => RecuUcg::STATUT_PAIEMENT_IMPAYE
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return redirect()
+                ->route('recus.show', $recu)
+                ->with('success', "Reçu {$recu->numero_recu} mis à jour avec succès!");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()
+                ->withInput()
+                ->with('error', 'Erreur: ' . $e->getMessage());
         }
-
-        DB::commit();
-
-        return redirect()
-            ->route('recus.show', $recu)
-            ->with('success', "Reçu {$recu->numero_recu} mis à jour avec succès!");
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return back()
-            ->withInput()
-            ->with('error', 'Erreur: ' . $e->getMessage());
     }
-}
 
     public function updateStatut(Request $request, RecuUcg $recu)
     {
@@ -426,6 +439,7 @@ public function update(Request $request, RecuUcg $recu)
             return back()->with('error', 'Erreur: ' . $e->getMessage());
         }
     }
+
 
     public function destroy(RecuUcg $recu)
     {

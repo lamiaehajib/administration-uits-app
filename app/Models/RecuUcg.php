@@ -173,8 +173,7 @@ class RecuUcg extends Model
     }
 
     /**
-     * ✅ MARGE GLOBALE - Somme des marges SANS affecter par remise
-     * La remise est appliquée sur le prix de vente, pas sur la marge
+     * ✅ MARGE GLOBALE - Somme des marges APRÈS remises
      */
     public function getTotalMargeAttribute()
     {
@@ -182,8 +181,7 @@ class RecuUcg extends Model
             $this->load('items'); 
         }
         
-        // Retourne la somme des marges calculées dans RecuItem
-        // (Prix Vente - Prix Achat) * Quantité pour chaque item
+        // Retourne la somme des marges (déjà ajustées par remises dans RecuItem)
         return $this->items->sum('marge_totale'); 
     }
 
@@ -202,10 +200,7 @@ class RecuUcg extends Model
     }
 
     /**
-     * ✅ CALCUL TOTAL SIMPLIFIÉ
-     * - Sous-total = somme des items
-     * - Total = Sous-total - Remise + TVA
-     * - Remise s'applique sur le PRIX, pas sur la MARGE
+     * ✅ CALCUL TOTAL MODIFIÉ - Prend en compte les remises par article
      */
     public function calculerTotal()
     {
@@ -213,23 +208,27 @@ class RecuUcg extends Model
             $this->load('items'); 
         }
         
-        // 1️⃣ Calculer sous-total (somme des items)
+        // 1️⃣ Calculer sous-total (somme des sous-totaux SANS remises)
         $this->sous_total = $this->items->sum('sous_total');
         
-        // 2️⃣ Calculer total avec remise et TVA
-        // La remise diminue le prix de vente, PAS la marge
-        $this->total = $this->sous_total - $this->remise + $this->tva;
+        // 2️⃣ Calculer total des remises appliquées sur les items
+        $totalRemisesItems = $this->items->sum('montant_remise');
         
-        // 3️⃣ Calculer reste à payer
+        // 3️⃣ Sauvegarder total remises dans le champ 'remise' (pour affichage)
+        $this->remise = $totalRemisesItems;
+        
+        // 4️⃣ Calculer total = Sous-total - Remises + TVA
+        $this->total = $this->sous_total - $totalRemisesItems + $this->tva;
+        
+        // 5️⃣ Calculer reste à payer
         $this->reste = $this->total - $this->montant_paye;
         
-        // 4️⃣ Sauvegarder
+        // 6️⃣ Sauvegarder
         $this->saveQuietly();
     }
     
     /**
-     * ✅ MARGE GLOBALE - Retourne la vraie marge (Prix Vente - Prix Achat)
-     * NON affectée par la remise
+     * ✅ MARGE GLOBALE - Retourne la marge totale (déjà impactée par remises)
      */
     public function margeGlobale(): float
     {
@@ -237,14 +236,12 @@ class RecuUcg extends Model
             $this->load('items'); 
         }
         
-        // Somme de toutes les marges des items
-        // Chaque marge = (Prix Vente - Prix Achat) * Quantité
+        // Les marges dans items sont déjà ajustées par les remises
         return (float) $this->items->sum('marge_totale');
     }
 
     /**
-     * ✅ TAUX DE MARGE - Basé sur le TOTAL (après remise)
-     * C'est normal que le taux baisse quand tu fais une remise
+     * ✅ TAUX DE MARGE - Basé sur le TOTAL final
      */
     public function tauxMarge(): float
     {
@@ -256,24 +253,19 @@ class RecuUcg extends Model
     }
 
     /**
-     * ✅ MARGE APRÈS REMISE - Si tu veux voir l'impact de la remise
-     * Marge réelle après avoir donné la remise
+     * ✅ MARGE APRÈS REMISE - Alias pour compatibilité
      */
     public function margeApresRemise(): float
     {
-        return $this->margeGlobale() - $this->remise;
+        return $this->margeGlobale();
     }
 
     /**
-     * ✅ TAUX DE MARGE RÉEL - Prend en compte la remise
+     * ✅ TAUX DE MARGE RÉEL - Alias pour compatibilité
      */
     public function tauxMargeReel(): float
     {
-        if ($this->total == 0) {
-            return 0;
-        }
-        
-        return ($this->margeApresRemise() / $this->total) * 100;
+        return $this->tauxMarge();
     }
 
     public function isGarantieValide(): bool

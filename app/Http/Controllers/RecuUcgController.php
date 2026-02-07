@@ -652,58 +652,117 @@ public function forceDelete($id)
 }
 
 
-public function appliquerRemise(Request $request, RecuUcg $recu, RecuItem $item)
-    {
-        // Vérifier que l'item appartient bien au reçu
-        if ($item->recu_ucg_id !== $recu->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cet article n\'appartient pas à ce reçu'
-            ], 400);
-        }
-
-        // Vérifier qu'il y a une remise
-        if ($recu->remise <= 0) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Aucune remise définie sur ce reçu'
-            ], 400);
-        }
-
-        DB::beginTransaction();
-        try {
-            // 1️⃣ Enlever la remise de tous les autres items
-            RecuItem::where('recu_ucg_id', $recu->id)
-                ->where('id', '!=', $item->id)
-                ->update(['remise_appliquee' => false]);
-
-            // 2️⃣ Appliquer la remise sur l'item sélectionné
-            $item->update(['remise_appliquee' => true]);
-
-            // 3️⃣ Recalculer le total
-            $recu->calculerTotal();
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Remise appliquée avec succès',
-                'recu' => [
-                    'sous_total' => number_format($recu->sous_total, 2),
-                    'remise' => number_format($recu->remise, 2),
-                    'total' => number_format($recu->total, 2),
-                    'marge_globale' => number_format($recu->margeGlobale(), 2),
-                    'marge_apres_remise' => number_format($recu->margeApresRemise(), 2),
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur: ' . $e->getMessage()
-            ], 500);
-        }
+public function appliquerRemiseItem(Request $request, RecuUcg $recu, RecuItem $item)
+{
+    // Vérifier que l'item appartient au reçu
+    if ($item->recu_ucg_id !== $recu->id) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Article invalide'
+        ], 400);
     }
 
+    $validated = $request->validate([
+        'type_remise' => 'required|in:montant,pourcentage',
+        'valeur_remise' => 'required|numeric|min:0',
+    ]);
+
+    DB::beginTransaction();
+    try {
+        if ($validated['type_remise'] === 'pourcentage') {
+            if ($validated['valeur_remise'] > 100) {
+                throw new \Exception("Pourcentage maximum: 100%");
+            }
+            
+            $item->update([
+                'remise_appliquee' => true,
+                'remise_pourcentage' => $validated['valeur_remise'],
+                'remise_montant' => 0,
+            ]);
+            
+        } else {
+            if ($validated['valeur_remise'] > $item->sous_total) {
+                throw new \Exception("Remise ne peut pas dépasser le sous-total");
+            }
+            
+            $item->update([
+                'remise_appliquee' => true,
+                'remise_montant' => $validated['valeur_remise'],
+                'remise_pourcentage' => 0,
+            ]);
+        }
+
+        $item->refresh();
+        $item->calculerRemise();
+        $item->save();
+        
+        $recu->calculerTotal();
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Remise appliquée avec succès',
+            'item' => [
+                'sous_total' => number_format($item->sous_total, 2),
+                'remise' => number_format($item->montant_remise, 2),
+                'total_apres_remise' => number_format($item->total_apres_remise, 2),
+                'marge_totale' => number_format($item->marge_totale, 2),
+            ],
+            'recu' => [
+                'total' => number_format($recu->total, 2),
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
+
+/**
+ * ✅ Supprimer remise d'un article
+ */
+public function supprimerRemiseItem(RecuUcg $recu, RecuItem $item)
+{
+    if ($item->recu_ucg_id !== $recu->id) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Article invalide'
+        ], 400);
+    }
+
+    DB::beginTransaction();
+    try {
+        $item->update([
+            'remise_appliquee' => false,
+            'remise_montant' => 0,
+            'remise_pourcentage' => 0,
+            'total_apres_remise' => $item->sous_total,
+        ]);
+        
+        // Recalculer marge originale
+        $item->marge_totale = $item->marge_unitaire * $item->quantite;
+        $item->save();
+        
+        $recu->calculerTotal();
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Remise supprimée'
+        ]);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
 }

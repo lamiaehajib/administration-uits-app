@@ -356,9 +356,12 @@ Route::controller(App\Http\Controllers\RecuUcgController::class)->prefix('recus'
     ->name('api.produits.by-category');
 
 
-    Route::post('recus/{recu}/items/{item}/appliquer-remise', 
-    [RecuUcgController::class, 'appliquerRemise'])
-    ->name('recus.items.appliquer-remise');
+  
+    Route::post('recus/{recu}/items/{item}/remise', [RecuUcgController::class, 'appliquerRemiseItem'])
+    ->name('recus.items.remise');
+    
+Route::delete('recus/{recu}/items/{item}/remise', [RecuUcgController::class, 'supprimerRemiseItem'])
+    ->name('recus.items.remise.delete');
 
 Route::resource('recus', RecuUcgController::class);
 Route::post('recus/{recu}/items', [RecuUcgController::class, 'addItem'])->name('recus.items.add');

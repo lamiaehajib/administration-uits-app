@@ -25,6 +25,9 @@ class RecuItem extends Model
         'marge_unitaire', 
         'marge_totale',
         'remise_appliquee',
+        'remise_montant',          // ✅ Nouveau: Montant fixe de remise
+        'remise_pourcentage',      // ✅ Nouveau: Pourcentage de remise
+        'total_apres_remise',      // ✅ Nouveau: Total après remise
         'notes'
     ];
 
@@ -36,6 +39,9 @@ class RecuItem extends Model
         'marge_unitaire' => 'decimal:2',
         'marge_totale' => 'decimal:2',
         'remise_appliquee' => 'boolean',
+        'remise_montant' => 'decimal:2',         // ✅ Nouveau
+        'remise_pourcentage' => 'decimal:2',     // ✅ Nouveau
+        'total_apres_remise' => 'decimal:2',     // ✅ Nouveau
     ];
 
     // ================================= RELATIONS ==============================
@@ -121,7 +127,33 @@ class RecuItem extends Model
             $item->marge_unitaire = $item->prix_unitaire - $item->prix_achat;
             $item->marge_totale = $item->marge_unitaire * $item->quantite;
             
+            // ✅ Calculer remise si appliquée
+            if ($item->remise_appliquee) {
+                $item->calculerRemise();
+            } else {
+                $item->total_apres_remise = $item->sous_total;
+            }
+            
             Log::info("💰 Calcul Marge: PV {$item->prix_unitaire} - PA {$item->prix_achat} = Marge {$item->marge_unitaire} DH/unité (Total: {$item->marge_totale} DH)");
+        });
+
+        static::updating(function ($item) {
+            // ✅ Recalculer si remise ou quantité change
+            if ($item->isDirty(['remise_appliquee', 'remise_montant', 'remise_pourcentage', 'quantite', 'prix_unitaire'])) {
+                // Recalculer sous-total et marges
+                $item->sous_total = $item->quantite * $item->prix_unitaire;
+                $item->marge_unitaire = $item->prix_unitaire - $item->prix_achat;
+                $item->marge_totale = $item->marge_unitaire * $item->quantite;
+                
+                // Recalculer remise
+                if ($item->remise_appliquee) {
+                    $item->calculerRemise();
+                } else {
+                    $item->total_apres_remise = $item->sous_total;
+                    $item->remise_montant = 0;
+                    $item->remise_pourcentage = 0;
+                }
+            }
         });
 
         static::created(function ($item) {
@@ -301,22 +333,73 @@ class RecuItem extends Model
         }
     }
 
-    // ================================= MÉTHODES EXISTANTES ==============================
+    // ================================= MÉTHODES REMISE ==============================
     
     /**
+     * ✅ CALCULER REMISE ET TOTAL APRÈS REMISE
+     * Gère les remises en montant fixe OU en pourcentage
+     */
+    public function calculerRemise()
+    {
+        // Recalculer sous-total au cas où
+        $this->sous_total = $this->quantite * $this->prix_unitaire;
+        
+        $montantRemise = 0;
+        
+        if ($this->remise_appliquee) {
+            if ($this->remise_pourcentage > 0) {
+                // Remise en pourcentage
+                $montantRemise = ($this->sous_total * $this->remise_pourcentage) / 100;
+                // Synchroniser remise_montant avec le calcul
+                $this->remise_montant = $montantRemise;
+            } elseif ($this->remise_montant > 0) {
+                // Remise en montant fixe
+                $montantRemise = $this->remise_montant;
+            }
+        }
+        
+        // Total après remise
+        $this->total_apres_remise = max(0, $this->sous_total - $montantRemise);
+        
+        // Recalculer marge après remise (la remise diminue la marge)
+        $this->marge_totale = (($this->prix_unitaire - $this->prix_achat) * $this->quantite) - $montantRemise;
+        
+        Log::info("🏷️ Remise calculée: " . ($this->remise_pourcentage > 0 ? "{$this->remise_pourcentage}%" : "{$montantRemise} DH") . " - Total après remise: {$this->total_apres_remise} DH");
+    }
+    
+    /**
+     * ✅ GET MONTANT REMISE RÉEL (Accessor)
+     * Retourne le montant réel de la remise (calculé si pourcentage)
+     */
+    public function getMontantRemiseAttribute()
+    {
+        if (!$this->remise_appliquee) {
+            return 0;
+        }
+        
+        // Si remise en pourcentage, calculer le montant
+        if ($this->attributes['remise_pourcentage'] > 0) {
+            return ($this->sous_total * $this->attributes['remise_pourcentage']) / 100;
+        }
+        
+        // Sinon retourner le montant fixe
+        return $this->attributes['remise_montant'] ?? 0;
+    }
+
+    /**
      * ✅ MARGE APRÈS REMISE
-     * Maintenant basée sur remise_appliquee plutôt que isPremierItem()
+     * Retourne la marge réelle après application de la remise
      */
     public function margeApresRemise(): float
     {
-        $recu = $this->recuUcg;
-        
-        // Si remise appliquée SUR CET ITEM
-        if ($recu && $recu->remise > 0 && $this->remise_appliquee) {
-            return max(0, $this->marge_totale - $recu->remise);
+        if (!$this->remise_appliquee) {
+            return $this->marge_totale;
         }
         
-        return $this->marge_totale;
+        // La marge est déjà ajustée dans calculerRemise()
+        // Mais on peut aussi la calculer à la volée:
+        $margeBase = ($this->prix_unitaire - $this->prix_achat) * $this->quantite;
+        return max(0, $margeBase - $this->montant_remise);
     }
 
     /**
@@ -325,5 +408,47 @@ class RecuItem extends Model
     public function aRemiseAppliquee(): bool
     {
         return (bool) $this->remise_appliquee;
+    }
+    
+    /**
+     * ✅ GET TYPE DE REMISE
+     * Retourne 'pourcentage', 'montant' ou null
+     */
+    public function getTypeRemise(): ?string
+    {
+        if (!$this->remise_appliquee) {
+            return null;
+        }
+        
+        if ($this->remise_pourcentage > 0) {
+            return 'pourcentage';
+        }
+        
+        if ($this->remise_montant > 0) {
+            return 'montant';
+        }
+        
+        return null;
+    }
+    
+    /**
+     * ✅ GET VALEUR REMISE (pour affichage)
+     * Retourne "15%" ou "50 DH"
+     */
+    public function getRemiseFormatee(): string
+    {
+        if (!$this->remise_appliquee) {
+            return '-';
+        }
+        
+        if ($this->remise_pourcentage > 0) {
+            return number_format($this->remise_pourcentage, 2) . '%';
+        }
+        
+        if ($this->remise_montant > 0) {
+            return number_format($this->remise_montant, 2) . ' DH';
+        }
+        
+        return '-';
     }
 }

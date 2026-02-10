@@ -16,9 +16,21 @@
             </div>
         </div>
 
+        <!-- Alert info sur remises -->
+        @if($recu->items->where('remise_appliquee', true)->count() > 0)
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Attention:</strong> Ce reçu contient {{ $recu->items->where('remise_appliquee', true)->count() }} article(s) avec remise.
+            Les remises seront conservées lors de la modification.
+        </div>
+        @endif
+
         <form action="{{ route('recus.update', $recu) }}" method="POST" id="recuForm">
             @csrf
             @method('PUT')
+            
+            <!-- ✅ Champ remise caché (conserve remise actuelle calculée automatiquement) -->
+            <input type="hidden" name="remise" value="{{ $recu->remise }}">
             
             <div class="row">
                 <!-- Section Client -->
@@ -94,7 +106,7 @@
                 </div>
             </div>
 
-            <!-- ✅ NOUVEAU : Filtre par Catégorie -->
+            <!-- ✅ Filtre par Catégorie -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-info text-white">
                     <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filtre par Catégorie</h5>
@@ -119,15 +131,34 @@
                 </div>
             </div>
 
-            <!-- Section Produits avec Variants -->
+            <!-- Section Produits -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0"><i class="fas fa-boxes me-2"></i>Produits</h5>
                 </div>
                 <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note:</strong> Pour gérer les remises par article, veuillez utiliser la page de détails du reçu après la sauvegarde.
+                    </div>
+                    
                     <div id="items-container">
                         @foreach($recu->items as $index => $item)
-                        <div class="item-row mb-3 p-3 border rounded">
+                        <div class="item-row mb-3 p-3 border rounded {{ $item->remise_appliquee ? 'border-warning' : '' }}">
+                            @if($item->remise_appliquee)
+                            <div class="alert alert-warning py-1 mb-2">
+                                <small>
+                                    <i class="fas fa-tag me-1"></i>
+                                    Remise appliquée: 
+                                    @if($item->remise_pourcentage > 0)
+                                        {{ $item->remise_pourcentage }}%
+                                    @else
+                                        {{ number_format($item->remise_montant, 2) }} DH
+                                    @endif
+                                </small>
+                            </div>
+                            @endif
+                            
                             <div class="row g-3">
                                 <!-- Sélection Produit -->
                                 <div class="col-md-5">
@@ -139,7 +170,7 @@
                                                     data-prix="{{ $produit->prix_vente }}"
                                                     data-stock="{{ $produit->quantite_stock }}"
                                                     data-category="{{ $produit->category_id }}"
-                                                    data-has-variants="{{ $produit->variants->where('actif', true)->where('quantite_stock', '>', 0)->count() > 0 ? 'true' : 'false' }}"
+                                                    data-has-variants="{{ $produit->variants->count() > 0 ? 'true' : 'false' }}"
                                                     {{ $item->produit_id == $produit->id ? 'selected' : '' }}>
                                                 {{ $produit->nom }} (Stock: {{ $produit->quantite_stock }})
                                             </option>
@@ -207,29 +238,25 @@
                 </div>
             </div>
 
-            <!-- Section Paiement -->
+            <!-- Section Paiement (SANS champ remise) -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0"><i class="fas fa-credit-card me-2"></i>Paiement & Montants</h5>
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
-                        <div class="col-md-3">
-                            <label class="form-label">Remise (DH)</label>
-                            <input type="number" name="remise" id="remise" class="form-control" 
-                                   step="0.01" min="0" value="{{ old('remise', $recu->remise) }}">
-                        </div>
-                        <div class="col-md-3">
+                        <div class="col-md-6">
                             <label class="form-label">TVA (DH)</label>
                             <input type="number" name="tva" id="tva" class="form-control" 
                                    step="0.01" min="0" value="{{ old('tva', $recu->tva) }}">
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Total (DH)</label>
+                        <div class="col-md-6">
+                            <label class="form-label">Total Estimé (DH)</label>
                             <input type="text" id="total-display" class="form-control bg-light" 
                                    readonly value="{{ number_format($recu->total, 2) }}">
+                            <small class="text-muted">Le total sera recalculé automatiquement</small>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label class="form-label">Mode de Paiement <span class="text-danger">*</span></label>
                             <select name="mode_paiement" class="form-select" required>
                                 <option value="especes" {{ old('mode_paiement', $recu->mode_paiement) == 'especes' ? 'selected' : '' }}>Espèces</option>
@@ -271,11 +298,10 @@
 
     @push('scripts')
     <script>
-        console.log('✅ Script variants + catégories chargé (EDIT MODE)');
+        console.log('✅ Script Edit Mode chargé');
         
         let itemIndex = {{ count($recu->items) }};
         
-        // ✅ Stocker les produits au chargement
         const produitsOptions = `
             <option value="">-- Sélectionner un produit --</option>
             @foreach($produits as $produit)
@@ -283,14 +309,13 @@
                         data-prix="{{ $produit->prix_vente }}"
                         data-stock="{{ $produit->quantite_stock }}"
                         data-category="{{ $produit->category_id }}"
-                        data-has-variants="{{ $produit->variants->where('actif', true)->where('quantite_stock', '>', 0)->count() > 0 ? 'true' : 'false' }}">
+                        data-has-variants="{{ $produit->variants->count() > 0 ? 'true' : 'false' }}">
                     {{ $produit->nom }} (Stock: {{ $produit->quantite_stock }})
                 </option>
             @endforeach
         `;
 
         $(document).ready(function() {
-            // ✅ FILTRE PAR CATÉGORIE
             $('#category-filter').on('change', function() {
                 const categoryId = $(this).val();
                 
@@ -313,33 +338,19 @@
                     success: function(response) {
                         if (response.success && response.produits.length > 0) {
                             let options = '<option value="">-- Sélectionner un produit --</option>';
-                            
                             response.produits.forEach(produit => {
-                                options += `
-                                    <option value="${produit.id}" 
-                                            data-prix="${produit.prix_vente}"
-                                            data-stock="${produit.quantite_stock}"
-                                            data-has-variants="${produit.has_variants}">
-                                        ${produit.nom} (Stock: ${produit.quantite_stock})
-                                    </option>
-                                `;
+                                options += `<option value="${produit.id}" data-prix="${produit.prix_vente}" data-stock="${produit.quantite_stock}" data-has-variants="${produit.has_variants}">${produit.nom} (Stock: ${produit.quantite_stock})</option>`;
                             });
-                            
                             $('.produit-select').each(function() {
                                 const currentVal = $(this).val();
                                 $(this).html(options);
                                 $(this).val(currentVal);
                             });
-                            
-                            $('#filter-info').html(`<span class="text-success">✅ ${response.produits.length} produit(s) trouvé(s)</span>`);
+                            $('#filter-info').html(`<span class="text-success">✅ ${response.produits.length} produit(s)</span>`);
                         } else {
-                            $('.produit-select').html('<option value="">Aucun produit dans cette catégorie</option>');
-                            $('#filter-info').html('<span class="text-warning">⚠️ Aucun produit disponible</span>');
+                            $('.produit-select').html('<option value="">Aucun produit</option>');
+                            $('#filter-info').html('<span class="text-warning">⚠️ Aucun produit</span>');
                         }
-                    },
-                    error: function(xhr) {
-                        console.error('❌ Erreur AJAX:', xhr.responseText);
-                        $('#filter-info').html('<span class="text-danger">❌ Erreur de chargement</span>');
                     }
                 });
             });
@@ -350,49 +361,28 @@
 
             $(document).on('change', '.produit-select', function() {
                 const row = $(this).closest('.item-row');
-                const produitId = $(this).val();
                 const hasVariants = $(this).find(':selected').data('has-variants') === true;
                 const prix = $(this).find(':selected').data('prix');
                 const stock = $(this).find(':selected').data('stock');
 
                 row.find('.variant-container').hide();
-                row.find('.variant-select').html('<option value="">-- Produit de base (sans variant) --</option>');
-                row.find('.variant-specs').hide();
-                row.find('.prix-display').val('');
-
-                if (!produitId) return;
-
                 row.find('.prix-display').val(parseFloat(prix).toFixed(2) + ' DH');
                 row.find('.quantite-input').attr('max', stock);
 
                 if (hasVariants) {
+                    const produitId = $(this).val();
                     $.ajax({
                         url: `/api/variants/produit/${produitId}`,
                         method: 'GET',
-                        beforeSend: function() {
-                            row.find('.variant-info').text('🔄 Chargement...');
-                        },
                         success: function(response) {
-                            if (response.success && response.variants.length > 0) {
+                            if (response.success) {
                                 row.find('.variant-container').show();
-                                let variantOptions = '<option value="">-- Produit de base (sans variant) --</option>';
-                                response.variants.forEach(variant => {
-                                    variantOptions += `
-                                        <option value="${variant.id}" 
-                                                data-prix="${variant.prix_vente_final}"
-                                                data-stock="${variant.stock}"
-                                                data-specs="${variant.variant_name}">
-                                            ${variant.variant_name} - ${variant.prix_vente_final} DH (Stock: ${variant.stock})
-                                        </option>
-                                    `;
+                                let options = '<option value="">-- Produit de base --</option>';
+                                response.variants.forEach(v => {
+                                    options += `<option value="${v.id}" data-prix="${v.prix_vente_final}" data-stock="${v.stock}" data-specs="${v.variant_name}">${v.variant_name} - ${v.prix_vente_final} DH</option>`;
                                 });
-                                row.find('.variant-select').html(variantOptions);
-                                row.find('.variant-info').html('<small class="text-info">💡 Optionnel</small>');
+                                row.find('.variant-select').html(options);
                             }
-                        },
-                        error: function(xhr) {
-                            console.error('❌ Erreur API:', xhr.responseText);
-                            row.find('.variant-info').text('❌ Erreur');
                         }
                     });
                 }
@@ -402,65 +392,46 @@
             $(document).on('change', '.variant-select', function() {
                 const row = $(this).closest('.item-row');
                 const variantId = $(this).val();
-                
                 if (variantId) {
                     const prix = $(this).find(':selected').data('prix');
                     const stock = $(this).find(':selected').data('stock');
-                    const specs = $(this).find(':selected').data('specs');
-
                     row.find('.prix-display').val(parseFloat(prix).toFixed(2) + ' DH');
                     row.find('.quantite-input').attr('max', stock);
                     row.find('.variant-specs').show();
-                    row.find('.specs-text').html(`<strong>Specs:</strong> ${specs}`);
+                    row.find('.specs-text').html(`<strong>Specs:</strong> ${$(this).find(':selected').data('specs')}`);
                 } else {
                     const produitSelect = row.find('.produit-select');
                     const prix = produitSelect.find(':selected').data('prix');
-                    const stock = produitSelect.find(':selected').data('stock');
-                    
                     row.find('.prix-display').val(parseFloat(prix).toFixed(2) + ' DH');
-                    row.find('.quantite-input').attr('max', stock);
                     row.find('.variant-specs').hide();
                 }
                 calculateTotal();
             });
 
             $('#add-item').click(function() {
-                const currentOptions = $('.produit-select').first().html();
                 const newItem = `
                     <div class="item-row mb-3 p-3 border rounded">
                         <div class="row g-3">
                             <div class="col-md-5">
-                                <label class="form-label">Produit <span class="text-danger">*</span></label>
-                                <select name="items[${itemIndex}][produit_id]" class="form-select produit-select" required>
-                                    ${currentOptions}
-                                </select>
+                                <label class="form-label">Produit *</label>
+                                <select name="items[${itemIndex}][produit_id]" class="form-select produit-select" required>${produitsOptions}</select>
                             </div>
                             <div class="col-md-4 variant-container" style="display: none;">
                                 <label class="form-label">Variant (optionnel)</label>
-                                <select name="items[${itemIndex}][product_variant_id]" class="form-select variant-select">
-                                    <option value="">-- Produit de base (sans variant) --</option>
-                                </select>
-                                <small class="text-muted variant-info"></small>
+                                <select name="items[${itemIndex}][product_variant_id]" class="form-select variant-select"><option value="">-- Produit de base --</option></select>
                             </div>
                             <div class="col-md-2">
-                                <label class="form-label">Quantité <span class="text-danger">*</span></label>
-                                <input type="number" name="items[${itemIndex}][quantite]" class="form-control quantite-input"
-                                       min="1" value="1" required>
+                                <label class="form-label">Quantité *</label>
+                                <input type="number" name="items[${itemIndex}][quantite]" class="form-control quantite-input" min="1" value="1" required>
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label">Prix Unit.</label>
                                 <input type="text" class="form-control prix-display" readonly>
                             </div>
                             <div class="col-md-1 d-flex align-items-end">
-                                <button type="button" class="btn btn-danger remove-item">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                                <button type="button" class="btn btn-danger remove-item"><i class="fas fa-trash"></i></button>
                             </div>
-                            <div class="col-12 variant-specs" style="display: none;">
-                                <div class="alert alert-info mb-0 py-2">
-                                    <small class="specs-text"></small>
-                                </div>
-                            </div>
+                            <div class="col-12 variant-specs" style="display: none;"><div class="alert alert-info mb-0 py-2"><small class="specs-text"></small></div></div>
                         </div>
                     </div>
                 `;
@@ -475,7 +446,7 @@
                 calculateTotal();
             });
 
-            $(document).on('input', '.quantite-input, #remise, #tva', calculateTotal);
+            $(document).on('input', '.quantite-input, #tva', calculateTotal);
 
             function calculateTotal() {
                 let sousTotal = 0;
@@ -484,20 +455,16 @@
                     let prix = 0;
                     const variantSelect = row.find('.variant-select');
                     const produitSelect = row.find('.produit-select');
-                    
                     if (variantSelect.val()) {
                         prix = parseFloat(variantSelect.find(':selected').data('prix')) || 0;
                     } else {
                         prix = parseFloat(produitSelect.find(':selected').data('prix')) || 0;
                     }
-                    
                     const quantite = parseInt(row.find('.quantite-input').val()) || 0;
                     sousTotal += prix * quantite;
                 });
-
-                const remise = parseFloat($('#remise').val()) || 0;
                 const tva = parseFloat($('#tva').val()) || 0;
-                const total = sousTotal - remise + tva;
+                const total = sousTotal + tva; // ✅ Pas de remise
                 $('#total-display').val(total.toFixed(2));
             }
 
@@ -505,38 +472,6 @@
                 const itemCount = $('.item-row').length;
                 $('.remove-item').prop('disabled', itemCount <= 1);
             }
-
-            $('#recuForm').on('submit', function(e) {
-                let valid = true;
-                let errors = [];
-
-                $('.item-row').each(function() {
-                    const row = $(this);
-                    const produitId = row.find('.produit-select').val();
-                    const quantite = parseInt(row.find('.quantite-input').val());
-                    const maxStock = parseInt(row.find('.quantite-input').attr('max'));
-
-                    if (!produitId) {
-                        valid = false;
-                        errors.push('Veuillez sélectionner un produit pour chaque ligne');
-                    }
-
-                    if (quantite > maxStock) {
-                        valid = false;
-                        errors.push(`Stock insuffisant pour "${row.find('.produit-select option:selected').text()}"`);
-                    }
-                });
-
-                if (!valid) {
-                    e.preventDefault();
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur de validation',
-                        html: errors.join('<br>'),
-                        confirmButtonText: 'OK'
-                    });
-                }
-            });
 
             calculateTotal();
         });

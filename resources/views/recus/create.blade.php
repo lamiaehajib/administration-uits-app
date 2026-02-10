@@ -19,6 +19,9 @@
         <form action="{{ route('recus.store') }}" method="POST" id="recuForm">
             @csrf
             
+            <!-- ✅ Champ remise caché (valeur 0 par défaut) -->
+            <input type="hidden" name="remise" value="0">
+            
             <div class="row">
                 <!-- Section Client -->
                 <div class="col-md-6">
@@ -89,7 +92,7 @@
                 </div>
             </div>
 
-            <!-- ✅ NOUVEAU : Filtre par Catégorie -->
+            <!-- ✅ Filtre par Catégorie -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-info text-white">
                     <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filtre par Catégorie</h5>
@@ -120,6 +123,11 @@
                     <h5 class="mb-0"><i class="fas fa-boxes me-2"></i>Produits</h5>
                 </div>
                 <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note:</strong> Les remises peuvent être appliquées individuellement sur chaque article après la création du reçu.
+                    </div>
+                    
                     <div id="items-container">
                         <div class="item-row mb-3 p-3 border rounded">
                             <div class="row g-3">
@@ -185,26 +193,22 @@
                 </div>
             </div>
 
-            <!-- Section Paiement -->
+            <!-- Section Paiement (SANS champ remise) -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0"><i class="fas fa-credit-card me-2"></i>Paiement & Montants</h5>
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
-                        <div class="col-md-3">
-                            <label class="form-label">Remise (DH)</label>
-                            <input type="number" name="remise" id="remise" class="form-control" step="0.01" min="0" value="0">
-                        </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label class="form-label">TVA (DH)</label>
                             <input type="number" name="tva" id="tva" class="form-control" step="0.01" min="0" value="0">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label class="form-label">Total (DH)</label>
                             <input type="text" id="total-display" class="form-control bg-light" readonly value="0.00">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label class="form-label">Mode de Paiement <span class="text-danger">*</span></label>
                             <select name="mode_paiement" class="form-select" required>
                                 <option value="especes">Espèces</option>
@@ -214,11 +218,11 @@
                                 <option value="credit">Crédit</option>
                             </select>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label class="form-label">Montant Payé (DH)</label>
                             <input type="number" name="montant_paye" class="form-control" step="0.01" min="0" value="0">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label class="form-label">Date de Paiement</label>
                             <input type="date" name="date_paiement" class="form-control" value="{{ date('Y-m-d') }}">
                         </div>
@@ -247,9 +251,7 @@
         console.log('✅ Script variants + catégories chargé');
         
         let itemIndex = 1;
-        let allProduits = []; // Stocker tous les produits
 
-        // ✅ Stocker les produits au chargement
         const produitsOptions = `
             <option value="">-- Sélectionner un produit --</option>
             @foreach($produits as $produit)
@@ -269,7 +271,6 @@
                 const categoryId = $(this).val();
                 
                 if (!categoryId) {
-                    // Réinitialiser : afficher tous les produits
                     $('.produit-select').each(function() {
                         $(this).html(produitsOptions);
                     });
@@ -277,7 +278,6 @@
                     return;
                 }
 
-                // Charger les produits de cette catégorie via AJAX
                 $.ajax({
                     url: `/api/produits/category/${categoryId}`,
                     method: 'GET',
@@ -299,11 +299,10 @@
                                 `;
                             });
                             
-                            // Mettre à jour tous les selects de produits
                             $('.produit-select').each(function() {
                                 const currentVal = $(this).val();
                                 $(this).html(options);
-                                $(this).val(currentVal); // Garder la sélection si possible
+                                $(this).val(currentVal);
                             });
                             
                             $('#filter-info').html(`<span class="text-success">✅ ${response.produits.length} produit(s) trouvé(s)</span>`);
@@ -319,12 +318,10 @@
                 });
             });
 
-            // Bouton réinitialiser
             $('#reset-filter').on('click', function() {
                 $('#category-filter').val('').trigger('change');
             });
 
-            // Gestion sélection produit
             $(document).on('change', '.produit-select', function() {
                 const row = $(this).closest('.item-row');
                 const produitId = $(this).val();
@@ -332,7 +329,6 @@
                 const prix = $(this).find(':selected').data('prix');
                 const stock = $(this).find(':selected').data('stock');
 
-                // Reset
                 row.find('.variant-container').hide();
                 row.find('.variant-select').html('<option value="">-- Produit de base (sans variant) --</option>');
                 row.find('.variant-specs').hide();
@@ -340,12 +336,10 @@
 
                 if (!produitId) return;
 
-                // Afficher le prix du produit de base
                 row.find('.prix-display').val(parseFloat(prix).toFixed(2) + ' DH');
                 row.find('.quantite-input').attr('max', stock);
 
                 if (hasVariants) {
-                    console.log('⚡ Chargement variants...');
                     $.ajax({
                         url: `/api/variants/produit/${produitId}`,
                         method: 'GET',
@@ -369,17 +363,12 @@
                                 row.find('.variant-select').html(variantOptions);
                                 row.find('.variant-info').html('<small class="text-info">💡 Optionnel</small>');
                             }
-                        },
-                        error: function(xhr) {
-                            console.error('❌ Erreur API:', xhr.responseText);
-                            row.find('.variant-info').text('❌ Erreur');
                         }
                     });
                 }
                 calculateTotal();
             });
 
-            // Gestion sélection variant
             $(document).on('change', '.variant-select', function() {
                 const row = $(this).closest('.item-row');
                 const variantId = $(this).val();
@@ -405,9 +394,8 @@
                 calculateTotal();
             });
 
-            // Ajouter item
             $('#add-item').click(function() {
-                const currentOptions = $('.produit-select').first().html(); // Copier les options actuelles
+                const currentOptions = $('.produit-select').first().html();
                 const newItem = `
                     <div class="item-row mb-3 p-3 border rounded">
                         <div class="row g-3">
@@ -451,15 +439,13 @@
                 updateRemoveButtons();
             });
 
-            // Supprimer item
             $(document).on('click', '.remove-item', function() {
                 $(this).closest('.item-row').remove();
                 updateRemoveButtons();
                 calculateTotal();
             });
 
-            // Calcul total
-            $(document).on('input', '.quantite-input, #remise, #tva', calculateTotal);
+            $(document).on('input', '.quantite-input, #tva', calculateTotal);
 
             function calculateTotal() {
                 let sousTotal = 0;
@@ -479,9 +465,8 @@
                     sousTotal += prix * quantite;
                 });
 
-                const remise = parseFloat($('#remise').val()) || 0;
                 const tva = parseFloat($('#tva').val()) || 0;
-                const total = sousTotal - remise + tva;
+                const total = sousTotal + tva; // ✅ Pas de remise ici
                 $('#total-display').val(total.toFixed(2));
             }
 
@@ -490,7 +475,6 @@
                 $('.remove-item').prop('disabled', itemCount <= 1);
             }
 
-            // Validation
             $('#recuForm').on('submit', function(e) {
                 let valid = true;
                 let errors = [];

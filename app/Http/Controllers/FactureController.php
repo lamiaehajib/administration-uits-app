@@ -352,6 +352,14 @@ private function exportExcel($factures)
         ->orderBy('nom')
         ->get();
     
+    // ✅ Modifier la date du devis pour la date d'aujourd'hui
+    $devis->date = now()->format('Y-m-d');
+    
+    // ✅ Définir la TVA par défaut à 20% si elle n'est pas déjà définie
+    if (!isset($devis->tva_rate) || $devis->tva_rate == 0) {
+        $devis->tva_rate = 20;
+    }
+    
     // Passer le devis ET les catégories à la vue
     return view('factures.create', compact('devis', 'categories'));
 }

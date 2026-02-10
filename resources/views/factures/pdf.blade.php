@@ -61,9 +61,9 @@
         .devis-table th,
         .devis-table td {
             border: 2px dashed red;
-            padding: 3px;
+            padding: 2px;
             text-align: center;
-            font-size: 12px;
+            font-size: 11px;
         }
 
         .devis-table thead th {
@@ -100,13 +100,14 @@
         }
 
         .important-title {
-        font-size: 18px;
+        font-size: 15px;
         font-weight: bold;
         color: #c0392b; /* لون بارز */
         text-transform: uppercase;
-        margin-bottom: 20px;
+        margin-bottom: 50px;
         border-left: 5px solid #e74c3c; /* شريط تزييني على اليسار */
         padding-left: 10px; /* مسافة بين الشريط والنص */
+        margin-top: -100px;
     }
 
 

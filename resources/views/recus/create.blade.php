@@ -253,17 +253,23 @@
         let itemIndex = 1;
 
         const produitsOptions = `
-            <option value="">-- Sélectionner un produit --</option>
-            @foreach($produits as $produit)
-                <option value="{{ $produit->id }}" 
-                        data-prix="{{ $produit->prix_vente }}"
-                        data-stock="{{ $produit->quantite_stock }}"
-                        data-category="{{ $produit->category_id }}"
-                        data-has-variants="{{ $produit->variants->where('actif', true)->where('quantite_stock', '>', 0)->count() > 0 ? 'true' : 'false' }}">
-                    {{ $produit->nom }} (Stock: {{ $produit->quantite_stock }})
-                </option>
-            @endforeach
-        `;
+    <option value="">-- Sélectionner un produit --</option>
+    @foreach($produits as $produit)
+        <option value="{{ $produit->id }}" 
+                data-prix="{{ $produit->prix_vente_fifo }}"
+                data-stock="{{ $produit->quantite_stock }}"
+                data-stock-fifo="{{ $produit->stock_fifo }}"
+                data-category="{{ $produit->category_id }}"
+                data-has-variants="{{ $produit->variants->where('actif', true)->where('quantite_stock', '>', 0)->count() > 0 ? 'true' : 'false' }}">
+            {{ $produit->nom }} 
+            @if($produit->stock_fifo > 0)
+                (FIFO: {{ number_format($produit->prix_vente_fifo, 2) }} DH - Stock: {{ $produit->stock_fifo }}/{{ $produit->quantite_stock }})
+            @else
+                (Stock: {{ $produit->quantite_stock }})
+            @endif
+        </option>
+    @endforeach
+`;
 
         $(document).ready(function() {
             // ✅ FILTRE PAR CATÉGORIE

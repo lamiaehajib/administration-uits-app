@@ -41,7 +41,8 @@ class AchatController extends Controller
         $categories = Category::with('produits')->get();
         return view('achats.create', compact('categories'));
     }
-public function store(Request $request)
+
+    public function store(Request $request)
 {
     Log::info('Achat Store Request:', $request->all());
 
@@ -51,8 +52,7 @@ public function store(Request $request)
         'numero_bon' => 'nullable|string|max:255',
         'quantite' => 'required|integer|min:1',
         'prix_achat' => 'required|numeric|min:0',
-        'marge_pourcentage' => 'nullable|numeric|min:0|max:1000', // ✅ NOUVEAU
-        'prix_vente_suggere' => 'nullable|numeric|min:0',          // ✅ NOUVEAU
+        'prix_vente_suggere' => 'required|numeric|min:0',
         'date_achat' => 'required|date',
         'notes' => 'nullable|string',
     ]);
@@ -62,10 +62,13 @@ public function store(Request $request)
         $produit = Produit::findOrFail($validated['produit_id']);
         $stockAvant = $produit->quantite_stock;
 
-        // ✅ Calculer prix_vente_suggere si pas fourni
-        if (empty($validated['prix_vente_suggere'])) {
-            $margePct = $validated['marge_pourcentage'] ?? 20;
-            $validated['prix_vente_suggere'] = $validated['prix_achat'] * (1 + ($margePct / 100));
+        $prixAchat = $validated['prix_achat'];
+        $prixVente = $validated['prix_vente_suggere'];
+        
+        if ($prixAchat > 0) {
+            $margePourcentage = (($prixVente - $prixAchat) / $prixAchat) * 100;
+        } else {
+            $margePourcentage = 0;
         }
 
         // Créer l'achat
@@ -76,15 +79,15 @@ public function store(Request $request)
             'numero_bon' => $validated['numero_bon'] ?? null,
             'quantite' => $validated['quantite'],
             'quantite_restante' => $validated['quantite'],
-            'prix_achat' => $validated['prix_achat'],
-            'prix_vente_suggere' => $validated['prix_vente_suggere'], // ✅ NOUVEAU
-            'marge_pourcentage' => $validated['marge_pourcentage'] ?? 20, // ✅ NOUVEAU
-            'total_achat' => $validated['quantite'] * $validated['prix_achat'],
+            'prix_achat' => $prixAchat,
+            'prix_vente_suggere' => $prixVente,
+            'marge_pourcentage' => round($margePourcentage, 2),
+            'total_achat' => $validated['quantite'] * $prixAchat,
             'date_achat' => $validated['date_achat'],
             'notes' => $validated['notes'] ?? null
         ]);
 
-        Log::info("✅ Achat créé #{$achat->id} - PV suggéré: {$achat->prix_vente_suggere} DH");
+        Log::info("✅ Achat créé #{$achat->id} - PV: {$achat->prix_vente_suggere} DH, Marge: {$achat->marge_pourcentage}%");
 
         $updateStock = $request->has('update_stock');
         
@@ -99,21 +102,30 @@ public function store(Request $request)
                 'stock_avant' => $stockAvant,
                 'stock_apres' => $produit->fresh()->quantite_stock,
                 'reference' => $validated['numero_bon'] ?? "Achat #{$achat->id}",
-                'motif' => "Achat FIFO - PV: {$achat->prix_vente_suggere} DH"
+                'motif' => "Achat FIFO - PV: {$achat->prix_vente_suggere} DH (Marge: {$achat->marge_pourcentage}%)"
             ]);
         }
 
-        // ✅ Mettre à jour prix_vente du produit SEULEMENT si c'est le plus récent
-        $dernierAchat = Achat::where('produit_id', $produit->id)
-            ->latest('date_achat')
-            ->first();
+        // ✅ SUPPRIMÉ: Ne plus mettre à jour prix_achat/prix_vente du produit
+        // Les prix restent dans chaque achat individuellement
         
-        if ($dernierAchat && $dernierAchat->id == $achat->id) {
-            $produit->update([
-                'prix_achat' => $validated['prix_achat'],
-                'prix_vente' => $validated['prix_vente_suggere']
-            ]);
+        // ✅ OPTIONNEL: Si tu veux quand même un "prix de référence" dans la table produits,
+        // tu peux calculer le CUMP (Coût Unitaire Moyen Pondéré):
+        /*
+        $totalQuantite = Achat::where('produit_id', $produit->id)
+            ->where('quantite_restante', '>', 0)
+            ->sum('quantite_restante');
+        
+        $valeurTotale = Achat::where('produit_id', $produit->id)
+            ->where('quantite_restante', '>', 0)
+            ->selectRaw('SUM(quantite_restante * prix_achat) as total')
+            ->value('total');
+        
+        if ($totalQuantite > 0) {
+            $prixMoyen = $valeurTotale / $totalQuantite;
+            $produit->update(['prix_achat' => round($prixMoyen, 2)]);
         }
+        */
 
         DB::commit();
         
@@ -137,90 +149,100 @@ public function store(Request $request)
     }
 
     public function update(Request $request, $id)
-    {
-        Log::info('Achat Update Request:', $request->all());
+{
+    Log::info('Achat Update Request:', $request->all());
 
-        $validated = $request->validate([
-            'produit_id' => 'required|exists:produits,id',
-            'fournisseur' => 'nullable|string|max:255',
-            'numero_bon' => 'nullable|string|max:255',
-            'quantite' => 'required|integer|min:1',
-            'prix_achat' => 'required|numeric|min:0',
-            'date_achat' => 'required|date',
-            'notes' => 'nullable|string',
-        ]);
+    $validated = $request->validate([
+        'produit_id' => 'required|exists:produits,id',
+        'fournisseur' => 'nullable|string|max:255',
+        'numero_bon' => 'nullable|string|max:255',
+        'quantite' => 'required|integer|min:1',
+        'prix_achat' => 'required|numeric|min:0',
+        'prix_vente_suggere' => 'required|numeric|min:0',
+        'date_achat' => 'required|date',
+        'notes' => 'nullable|string',
+    ]);
 
-        DB::beginTransaction();
-        try {
-            $achat = Achat::findOrFail($id);
-            $produit = Produit::findOrFail($validated['produit_id']);
+    DB::beginTransaction();
+    try {
+        $achat = Achat::findOrFail($id);
+        $produit = Produit::findOrFail($validated['produit_id']);
 
-            $ancienneQuantite = $achat->quantite;
-            $nouvelleQuantite = $validated['quantite'];
-            $difference = $nouvelleQuantite - $ancienneQuantite;
+        $ancienneQuantite = $achat->quantite;
+        $nouvelleQuantite = $validated['quantite'];
+        $difference = $nouvelleQuantite - $ancienneQuantite;
 
-            $updateStock = $request->has('update_stock');
+        $prixAchat = $validated['prix_achat'];
+        $prixVente = $validated['prix_vente_suggere'];
+        
+        if ($prixAchat > 0) {
+            $margePourcentage = (($prixVente - $prixAchat) / $prixAchat) * 100;
+        } else {
+            $margePourcentage = 0;
+        }
 
-            if ($updateStock && $difference != 0) {
-                $stockAvant = $produit->quantite_stock;
-                
-                if ($difference > 0) {
-                    $produit->increment('quantite_stock', $difference);
-                    // ✅ Augmenter quantite_restante aussi
-                    $achat->increment('quantite_restante', $difference);
-                } elseif ($difference < 0) {
-                    $produit->decrement('quantite_stock', abs($difference));
-                    // ✅ Diminuer quantite_restante (si possible)
-                    $nouvRestante = max(0, $achat->quantite_restante + $difference);
-                    $achat->quantite_restante = $nouvRestante;
-                }
+        $updateStock = $request->has('update_stock');
 
-                StockMovement::create([
-                    'produit_id' => $produit->id,
-                    'user_id' => auth()->id(),
-                    'type' => $difference > 0 ? 'entree' : 'ajustement',
-                    'quantite' => abs($difference),
-                    'stock_avant' => $stockAvant,
-                    'stock_apres' => $produit->fresh()->quantite_stock,
-                    'reference' => $validated['numero_bon'] ?? "Achat #{$achat->id}",
-                    'motif' => "Modification achat FIFO (différence: " . ($difference > 0 ? '+' : '') . $difference . ")"
-                ]);
-
-                Log::info("📦 Stock ajusté: {$stockAvant} → {$produit->fresh()->quantite_stock}");
+        if ($updateStock && $difference != 0) {
+            $stockAvant = $produit->quantite_stock;
+            
+            if ($difference > 0) {
+                $produit->increment('quantite_stock', $difference);
+                $achat->increment('quantite_restante', $difference);
+            } elseif ($difference < 0) {
+                $produit->decrement('quantite_stock', abs($difference));
+                $nouvRestante = max(0, $achat->quantite_restante + $difference);
+                $achat->quantite_restante = $nouvRestante;
             }
 
-            // Mettre à jour l'achat
-            $achat->update([
-                'produit_id' => $validated['produit_id'],
-                'fournisseur' => $validated['fournisseur'] ?? null,
-                'numero_bon' => $validated['numero_bon'] ?? null,
-                'quantite' => $validated['quantite'],
-                'prix_achat' => $validated['prix_achat'],
-                'total_achat' => $validated['quantite'] * $validated['prix_achat'],
-                'date_achat' => $validated['date_achat'],
-                'notes' => $validated['notes'] ?? null
+            StockMovement::create([
+                'produit_id' => $produit->id,
+                'user_id' => auth()->id(),
+                'type' => $difference > 0 ? 'entree' : 'ajustement',
+                'quantite' => abs($difference),
+                'stock_avant' => $stockAvant,
+                'stock_apres' => $produit->fresh()->quantite_stock,
+                'reference' => $validated['numero_bon'] ?? "Achat #{$achat->id}",
+                'motif' => "Modification achat FIFO (différence: " . ($difference > 0 ? '+' : '') . $difference . ")"
             ]);
 
-            $produit->update(['prix_achat' => $validated['prix_achat']]);
-
-            DB::commit();
-            
-            $message = 'Achat mis à jour avec succès!';
-            if (!$updateStock && $difference != 0) {
-                $message .= ' (Stock non modifié)';
-            }
-            
-            return redirect()->route('achats.index')->with('success', $message);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('❌ Erreur mise à jour: ' . $e->getMessage());
-            
-            return back()
-                ->withInput()
-                ->with('error', 'Erreur: ' . $e->getMessage());
+            Log::info("📦 Stock ajusté: {$stockAvant} → {$produit->fresh()->quantite_stock}");
         }
+
+        // Mettre à jour l'achat
+        $achat->update([
+            'produit_id' => $validated['produit_id'],
+            'fournisseur' => $validated['fournisseur'] ?? null,
+            'numero_bon' => $validated['numero_bon'] ?? null,
+            'quantite' => $validated['quantite'],
+            'prix_achat' => $prixAchat,
+            'prix_vente_suggere' => $prixVente,
+            'marge_pourcentage' => round($margePourcentage, 2),
+            'total_achat' => $validated['quantite'] * $prixAchat,
+            'date_achat' => $validated['date_achat'],
+            'notes' => $validated['notes'] ?? null
+        ]);
+
+        // ✅ SUPPRIMÉ: Ne plus mettre à jour prix_achat/prix_vente du produit
+        
+        DB::commit();
+        
+        $message = 'Achat mis à jour avec succès!';
+        if (!$updateStock && $difference != 0) {
+            $message .= ' (Stock non modifié)';
+        }
+        
+        return redirect()->route('achats.index')->with('success', $message);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('❌ Erreur mise à jour: ' . $e->getMessage());
+        
+        return back()
+            ->withInput()
+            ->with('error', 'Erreur: ' . $e->getMessage());
     }
+}
 
     public function destroy($id)
     {
@@ -232,7 +254,6 @@ public function store(Request $request)
             if ($produit) {
                 $stockAvant = $produit->quantite_stock;
                 
-                // Retirer SEULEMENT quantite_restante (pas quantite complète)
                 $produit->decrement('quantite_stock', $achat->quantite_restante);
 
                 StockMovement::create([

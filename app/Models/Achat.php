@@ -18,8 +18,8 @@ class Achat extends Model
         'quantite',
         'quantite_restante',
         'prix_achat',
-        'prix_vente_suggere', // ✅ NOUVEAU
-        'marge_pourcentage',   // ✅ NOUVEAU
+        'prix_vente_suggere',
+        'marge_pourcentage',
         'total_achat',
         'date_achat',
         'notes',
@@ -28,8 +28,8 @@ class Achat extends Model
     protected $casts = [
         'date_achat' => 'date',
         'prix_achat' => 'decimal:2',
-        'prix_vente_suggere' => 'decimal:2', // ✅ NOUVEAU
-        'marge_pourcentage' => 'decimal:2',   // ✅ NOUVEAU
+        'prix_vente_suggere' => 'decimal:2',
+        'marge_pourcentage' => 'decimal:2',
         'total_achat' => 'decimal:2',
         'quantite' => 'integer',
         'quantite_restante' => 'integer',
@@ -44,17 +44,16 @@ class Achat extends Model
             // Quantite_restante = quantite
             $achat->quantite_restante = $achat->quantite;
             
-            // ✅ Calculer prix_vente_suggere si pas fourni
-            if (empty($achat->prix_vente_suggere) && $achat->prix_achat > 0) {
-                $margePct = $achat->marge_pourcentage ?? 20;
-                $achat->prix_vente_suggere = $achat->prix_achat * (1 + ($margePct / 100));
+            // ✅ NOUVEAU: Calculer marge_pourcentage si prix_vente_suggere est fourni
+            if (!empty($achat->prix_vente_suggere) && $achat->prix_achat > 0) {
+                $achat->marge_pourcentage = (($achat->prix_vente_suggere - $achat->prix_achat) / $achat->prix_achat) * 100;
             }
         });
 
         static::updating(function ($achat) {
-            // ✅ Recalculer prix_vente si marge change
-            if ($achat->isDirty('marge_pourcentage') && $achat->prix_achat > 0) {
-                $achat->prix_vente_suggere = $achat->prix_achat * (1 + ($achat->marge_pourcentage / 100));
+            // ✅ NOUVEAU: Recalculer marge si prix de vente ou prix d'achat change
+            if (($achat->isDirty('prix_vente_suggere') || $achat->isDirty('prix_achat')) && $achat->prix_achat > 0) {
+                $achat->marge_pourcentage = (($achat->prix_vente_suggere - $achat->prix_achat) / $achat->prix_achat) * 100;
             }
         });
     }

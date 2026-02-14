@@ -209,6 +209,22 @@
             box-shadow: var(--shadow-lg);
         }
 
+        /* Champ Marge calculée automatiquement */
+        #marge_display {
+            background: linear-gradient(135deg, #4CAF50, #388E3C);
+            color: #fff;
+            font-size: 18px;
+            font-weight: 700;
+            text-align: center;
+            border: none;
+            box-shadow: var(--shadow-md);
+            letter-spacing: 1px;
+        }
+
+        #marge_display:focus {
+            box-shadow: var(--shadow-lg);
+        }
+
         /* Switch personnalisé */
         .form-check-input {
             width: 55px;
@@ -504,7 +520,7 @@
                         <!-- Prix d'achat unitaire -->
                         <div class="col-md-4">
                             <label class="form-label">
-                                <i class="fas fa-dollar-sign"></i> Prix unitaire (DH) <span class="text-danger">*</span>
+                                <i class="fas fa-dollar-sign"></i> Prix d'achat (DH) <span class="text-danger">*</span>
                             </label>
                             <input type="number" step="0.01" name="prix_achat" id="prix_achat" 
                                    class="form-control @error('prix_achat') is-invalid @enderror" 
@@ -515,25 +531,27 @@
                             @enderror
                         </div>
 
-                        <!-- ✅ NOUVEAU: Marge % -->
-<div class="col-md-4">
-    <label class="form-label">
-        <i class="fas fa-percentage"></i> Marge souhaitée (%)
-    </label>
-    <input type="number" step="0.01" name="marge_pourcentage" id="marge_pourcentage" 
-           class="form-control" value="{{ old('marge_pourcentage', 20) }}">
-    <small class="text-muted">Défaut: 20%</small>
-</div>
+                        <!-- ✅ NOUVEAU: Prix de Vente (ENTRÉE MANUELLE) -->
+                        <div class="col-md-4">
+                            <label class="form-label">
+                                <i class="fas fa-tag"></i> Prix de vente (DH) <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" step="0.01" name="prix_vente_suggere" id="prix_vente_suggere" 
+                                   class="form-control @error('prix_vente_suggere') is-invalid @enderror" 
+                                   value="{{ old('prix_vente_suggere') }}" min="0" required>
+                            @error('prix_vente_suggere')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <small class="text-muted">Entrez le prix de vente souhaité</small>
+                        </div>
 
-<!-- ✅ NOUVEAU: Prix de Vente Suggéré (auto-calculé) -->
-<div class="col-md-4">
-    <label class="form-label">
-        <i class="fas fa-tag"></i> Prix de vente suggéré (DH)
-    </label>
-    <input type="number" step="0.01" name="prix_vente_suggere" id="prix_vente_suggere" 
-           class="form-control bg-light" value="{{ old('prix_vente_suggere') }}" readonly>
-    <small class="text-muted">Calculé automatiquement</small>
-</div>
+                        <!-- ✅ NOUVEAU: Marge % (AUTO-CALCULÉE) -->
+                        <div class="col-md-4">
+                            <label class="form-label">
+                                <i class="fas fa-percentage"></i> Marge (%)</label>
+                            <input type="text" id="marge_display" class="form-control" readonly value="0.00%">
+                            <small class="text-muted">Calculée automatiquement</small>
+                        </div>
 
                         <!-- Total (calculé automatiquement) -->
                         <div class="col-md-4">
@@ -606,24 +624,31 @@
     <script>
         $(document).ready(function() {
 
-            function calculerPrixVente() {
-        const prixAchat = parseFloat($('#prix_achat').val()) || 0;
-        const margePct = parseFloat($('#marge_pourcentage').val()) || 20;
-        
-        const prixVente = prixAchat * (1 + (margePct / 100));
-        $('#prix_vente_suggere').val(prixVente.toFixed(2));
-        
-        // Afficher marge en DH
-        const margeDh = prixVente - prixAchat;
-        $('#marge_info').html(`
-            <i class="fas fa-info-circle"></i> 
-            Marge: <strong>${margeDh.toFixed(2)} DH</strong> 
-            (${margePct}%)
-        `);
-    }
-    
-    $('#prix_achat, #marge_pourcentage').on('input', calculerPrixVente);
-    calculerPrixVente(); // Initial
+            // ✅ NOUVEAU: Calculer la marge à partir du prix de vente
+            function calculerMarge() {
+                const prixAchat = parseFloat($('#prix_achat').val()) || 0;
+                const prixVente = parseFloat($('#prix_vente_suggere').val()) || 0;
+                
+                if (prixAchat > 0) {
+                    const margePct = ((prixVente - prixAchat) / prixAchat) * 100;
+                    const margeDh = prixVente - prixAchat;
+                    
+                    $('#marge_display').val(margePct.toFixed(2) + '%');
+                    $('#marge_display').attr('title', 'Marge: ' + margeDh.toFixed(2) + ' DH');
+                } else {
+                    $('#marge_display').val('0.00%');
+                }
+            }
+            
+            // Déclencher le calcul quand le prix d'achat ou le prix de vente change
+            $('#prix_achat, #prix_vente_suggere').on('input', function() {
+                calculerMarge();
+                calculerTotal();
+            });
+            
+            // Calcul initial
+            calculerMarge();
+
             // ====================================
             // INITIALISATION SELECT2
             // ====================================
@@ -714,7 +739,7 @@
                 }, 600);
             }
 
-            $('#quantite, #prix_achat').on('input', calculerTotal);
+            $('#quantite').on('input', calculerTotal);
 
             // Calcul initial
             calculerTotal();
@@ -726,8 +751,9 @@
                 const produitId = $('#produit_id').val();
                 const quantite = $('#quantite').val();
                 const prixAchat = $('#prix_achat').val();
+                const prixVente = $('#prix_vente_suggere').val();
 
-                if (!produitId || !quantite || !prixAchat) {
+                if (!produitId || !quantite || !prixAchat || !prixVente) {
                     e.preventDefault();
                     alert('Veuillez remplir tous les champs obligatoires');
                     return false;

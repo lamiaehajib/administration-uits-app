@@ -68,74 +68,95 @@ class RecuItem extends Model
         parent::boot();
 
         static::creating(function ($item) {
-            // Gérer les variants
-            if ($item->product_variant_id) {
-                $variant = ProductVariant::find($item->product_variant_id);
-                if ($variant) {
-                    $item->produit_id = $variant->produit_id;
-                    $item->produit_nom = $variant->produit->nom;
-                    $item->produit_reference = $variant->produit->reference;
-                    $item->designation = $variant->variant_name;
+    // Gérer les variants (makhdmin mazal)
+    if ($item->product_variant_id) {
+        $variant = ProductVariant::find($item->product_variant_id);
+        if ($variant) {
+            $item->produit_id = $variant->produit_id;
+            $item->produit_nom = $variant->produit->nom;
+            $item->produit_reference = $variant->produit->reference;
+            $item->designation = $variant->variant_name;
+            
+            if (empty($item->prix_unitaire)) {
+                $item->prix_unitaire = $variant->prix_vente_final;
+            }
+            
+            if (empty($item->prix_achat)) {
+                $achatActif = Achat::where('produit_id', $variant->produit_id)
+                    ->where('quantite_restante', '>', 0)
+                    ->orderBy('date_achat', 'asc')
+                    ->first();
+                
+                $item->prix_achat = $achatActif ? $achatActif->prix_achat : ($variant->prix_achat ?? 0);
+            }
+        }
+    } else {
+        // ✅ PRODUIT SIMPLE - LOGIQUE HYBRIDE
+        $produit = $item->produit;
+        if ($produit) {
+            // 🔍 Calculer stock total dans les achats
+            $stockFifo = Achat::where('produit_id', $produit->id)
+                ->where('quantite_restante', '>', 0)
+                ->sum('quantite_restante');
+            
+            // 🎯 Stock "manuel" (créé sans achat)
+            $stockManuel = max(0, $produit->quantite_stock - $stockFifo);
+            
+            Log::info("📊 Calcul Hybride Produit #{$produit->id}:");
+            Log::info("   - Stock Total: {$produit->quantite_stock}");
+            Log::info("   - Stock FIFO: {$stockFifo}");
+            Log::info("   - Stock Manuel: {$stockManuel}");
+            
+            if (empty($item->prix_achat) || empty($item->prix_unitaire)) {
+                // ✅ PRIORITÉ 1: Utiliser stock manuel SI disponible
+                if ($stockManuel > 0) {
+                    // Utiliser prix du produit (stock créé manuellement)
+                    $item->prix_achat = $produit->prix_achat ?? 0;
+                    $item->prix_unitaire = $produit->prix_vente ?? 0;
                     
-                    if (empty($item->prix_unitaire)) {
-                        $item->prix_unitaire = $variant->prix_vente_final;
-                    }
+                    Log::info("✅ STOCK MANUEL: PA: {$item->prix_achat} DH, PV: {$item->prix_unitaire} DH");
+                } 
+                // ✅ PRIORITÉ 2: Utiliser FIFO si stock manuel épuisé
+                else {
+                    $achatActif = Achat::where('produit_id', $produit->id)
+                        ->where('quantite_restante', '>', 0)
+                        ->orderBy('date_achat', 'asc')
+                        ->first();
                     
-                    // ✅ FIFO - Khud prix_achat mn awwal achat disponible
-                    if (empty($item->prix_achat)) {
-                        $achatActif = Achat::where('produit_id', $variant->produit_id)
-                            ->where('quantite_restante', '>', 0)
-                            ->orderBy('date_achat', 'asc')
-                            ->first();
+                    if ($achatActif) {
+                        $item->prix_achat = $achatActif->prix_achat;
+                        $item->prix_unitaire = $achatActif->prix_vente_suggere ?? $produit->prix_vente;
                         
-                        $item->prix_achat = $achatActif ? $achatActif->prix_achat : ($variant->prix_achat ?? 0);
-                    }
-                }
-            } else {
-                // ✅ FIFO - Produit Simple
-                $produit = $item->produit;
-                if ($produit) {
-                    // ✅ Khud l'achat l9dam li 3ando stock
-                    if (empty($item->prix_achat) || empty($item->prix_unitaire)) {
-                        $achatActif = Achat::where('produit_id', $produit->id)
-                            ->where('quantite_restante', '>', 0)
-                            ->orderBy('date_achat', 'asc')
-                            ->first();
+                        Log::info("✅ FIFO: Achat #{$achatActif->id} - PA: {$item->prix_achat} DH, PV: {$item->prix_unitaire} DH");
+                    } else {
+                        // Fallback sur produit si aucun achat disponible
+                        $item->prix_achat = $produit->prix_achat ?? 0;
+                        $item->prix_unitaire = $produit->prix_vente ?? 0;
                         
-                        if ($achatActif) {
-                            // ✅ Utiliser prix_achat & prix_vente_suggere du batch
-                            $item->prix_achat = $achatActif->prix_achat;
-                            $item->prix_unitaire = $achatActif->prix_vente_suggere ?? $produit->prix_vente;
-                            
-                            Log::info("🔍 FIFO: Achat #{$achatActif->id} - PA: {$achatActif->prix_achat} DH, PV: " . ($achatActif->prix_vente_suggere ?? $produit->prix_vente) . " DH");
-                        } else {
-                            // Fallback sur produit si pas d'achat disponible
-                            $item->prix_achat = $produit->prix_achat ?? 0;
-                            $item->prix_unitaire = $produit->prix_vente ?? 0;
-                            
-                            Log::warning("⚠️ FIFO: Pas d'achat disponible pour produit #{$produit->id}, utilisation prix par défaut");
-                        }
+                        Log::warning("⚠️ Fallback: Pas d'achat ni stock manuel, utilisation prix par défaut");
                     }
-
-                    $item->produit_nom = $produit->nom;
-                    $item->produit_reference = $produit->reference;
                 }
             }
 
-            // Calcul de base (sans remise)
-            $item->sous_total = $item->quantite * $item->prix_unitaire;
-            $item->marge_unitaire = $item->prix_unitaire - $item->prix_achat;
-            $item->marge_totale = $item->marge_unitaire * $item->quantite;
-            
-            // ✅ Calculer remise si appliquée
-            if ($item->remise_appliquee) {
-                $item->calculerRemise();
-            } else {
-                $item->total_apres_remise = $item->sous_total;
-            }
-            
-            Log::info("💰 Calcul Marge: PV {$item->prix_unitaire} - PA {$item->prix_achat} = Marge {$item->marge_unitaire} DH/unité (Total: {$item->marge_totale} DH)");
-        });
+            $item->produit_nom = $produit->nom;
+            $item->produit_reference = $produit->reference;
+        }
+    }
+
+    // Calcul de base (sans remise)
+    $item->sous_total = $item->quantite * $item->prix_unitaire;
+    $item->marge_unitaire = $item->prix_unitaire - $item->prix_achat;
+    $item->marge_totale = $item->marge_unitaire * $item->quantite;
+    
+    // ✅ Calculer remise si appliquée
+    if ($item->remise_appliquee) {
+        $item->calculerRemise();
+    } else {
+        $item->total_apres_remise = $item->sous_total;
+    }
+    
+    Log::info("💰 Calcul Marge: PV {$item->prix_unitaire} - PA {$item->prix_achat} = Marge {$item->marge_unitaire} DH/unité (Total: {$item->marge_totale} DH)");
+});
 
         static::updating(function ($item) {
             // ✅ Recalculer si remise ou quantité change
@@ -378,41 +399,59 @@ class RecuItem extends Model
      * ✅ MÉTHODE FIFO - Décrémenter stock mn les achats kadim
      */
     private static function decrementerStockFIFO($produitId, $quantiteVendue, $recuId)
-    {
-        // Khud les achats li 3andhom stock, triés mn l9dam
-        $achats = Achat::where('produit_id', $produitId)
-            ->where('quantite_restante', '>', 0)
-            ->orderBy('date_achat', 'asc')
-            ->get();
-
-        $quantiteRestante = $quantiteVendue;
-
-        foreach ($achats as $achat) {
-            if ($quantiteRestante <= 0) {
-                break; // Kamal kolchi
-            }
-
-            if ($achat->quantite_restante >= $quantiteRestante) {
-                // Had l'achat 3ando bzaf, khud li bghitina
-                $achat->decrement('quantite_restante', $quantiteRestante);
-                
-                Log::info("✅ FIFO Décrément: {$quantiteRestante} unités de l'achat #{$achat->id} (PA: {$achat->prix_achat} DH, PV: " . ($achat->prix_vente_suggere ?? 'N/A') . " DH) - Reçu #{$recuId}");
-                
-                $quantiteRestante = 0;
-            } else {
-                // Had l'achat ma3andoch bzaf, khud kolchi o kmal
-                Log::info("⚠️ FIFO Épuisement: achat #{$achat->id} ({$achat->quantite_restante} unités, PA: {$achat->prix_achat} DH, PV: " . ($achat->prix_vente_suggere ?? 'N/A') . " DH) - Reçu #{$recuId}");
-                
-                $quantiteRestante -= $achat->quantite_restante;
-                $achat->update(['quantite_restante' => 0]);
-            }
-        }
-
-        // ✅ Safety check
-        if ($quantiteRestante > 0) {
-            Log::warning("⚠️ FIFO ALERTE: Manque {$quantiteRestante} unités dans les achats! Produit #{$produitId} - Vérifiez les données");
+{
+    $produit = Produit::find($produitId);
+    
+    // 🔍 Calculer stock manuel
+    $stockFifo = Achat::where('produit_id', $produitId)
+        ->where('quantite_restante', '>', 0)
+        ->sum('quantite_restante');
+    
+    $stockManuel = max(0, $produit->quantite_stock - $stockFifo);
+    
+    // ✅ PRIORITÉ 1: Décrémenter stock manuel d'abord
+    if ($stockManuel > 0) {
+        $quantiteManuel = min($stockManuel, $quantiteVendue);
+        
+        Log::info("✅ STOCK MANUEL: -{$quantiteManuel} unités (PA: {$produit->prix_achat} DH, PV: {$produit->prix_vente} DH) - Reçu #{$recuId}");
+        
+        $quantiteVendue -= $quantiteManuel;
+        
+        // Si tout vendu depuis stock manuel, on sort
+        if ($quantiteVendue <= 0) {
+            return;
         }
     }
+    
+    // ✅ PRIORITÉ 2: Décrémenter FIFO (achats)
+    $achats = Achat::where('produit_id', $produitId)
+        ->where('quantite_restante', '>', 0)
+        ->orderBy('date_achat', 'asc')
+        ->get();
+
+    foreach ($achats as $achat) {
+        if ($quantiteVendue <= 0) {
+            break;
+        }
+
+        if ($achat->quantite_restante >= $quantiteVendue) {
+            $achat->decrement('quantite_restante', $quantiteVendue);
+            
+            Log::info("✅ FIFO Décrément: {$quantiteVendue} unités de l'achat #{$achat->id} (PA: {$achat->prix_achat} DH) - Reçu #{$recuId}");
+            
+            $quantiteVendue = 0;
+        } else {
+            Log::info("⚠️ FIFO Épuisement: achat #{$achat->id} ({$achat->quantite_restante} unités) - Reçu #{$recuId}");
+            
+            $quantiteVendue -= $achat->quantite_restante;
+            $achat->update(['quantite_restante' => 0]);
+        }
+    }
+
+    if ($quantiteVendue > 0) {
+        Log::warning("⚠️ ALERTE: Manque {$quantiteVendue} unités! Produit #{$produitId}");
+    }
+}
 
     /**
      * ✅ Restaurer stock FIFO (inverse dial decrementerStockFIFO)

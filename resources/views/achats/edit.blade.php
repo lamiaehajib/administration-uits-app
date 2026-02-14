@@ -125,9 +125,8 @@
             gap: 8px;
         }
 
-        /* Correction pour les labels existants dans edit.blade */
         .form-label.fw-bold {
-             font-weight: 600 !important; /* Maintient le bold */
+             font-weight: 600 !important;
              color: #2c3e50;
              margin-bottom: 10px;
              font-size: 15px;
@@ -148,12 +147,10 @@
             font-size: 12px;
         }
         
-        /* Assurez-vous que les icônes conservent la couleur dans le header */
         .page-header h3 i {
-             background: transparent; /* Annule l'effet de l'icône de label */
+             background: transparent;
              color: #fff;
         }
-
 
         /* Inputs avec effet moderne */
         .form-control, .form-select {
@@ -213,10 +210,26 @@
             border: none;
             box-shadow: var(--shadow-md);
             letter-spacing: 1px;
-            padding: 12px 18px; /* Assure la cohérence de la hauteur */
+            padding: 12px 18px;
         }
 
         #total_display:focus {
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Champ Marge calculée automatiquement */
+        #marge_display {
+            background: linear-gradient(135deg, #4CAF50, #388E3C);
+            color: #fff;
+            font-size: 18px;
+            font-weight: 700;
+            text-align: center;
+            border: none;
+            box-shadow: var(--shadow-md);
+            letter-spacing: 1px;
+        }
+
+        #marge_display:focus {
             box-shadow: var(--shadow-lg);
         }
 
@@ -246,7 +259,7 @@
             cursor: pointer;
         }
 
-        /* Box d'information (pour l'alerte initiale et l'avertissement) */
+        /* Box d'information */
         .alert-info {
              background: linear-gradient(135deg, rgba(3, 169, 244, 0.05), rgba(0, 188, 212, 0.05)) !important;
              border-left: 4px solid #03A9F4 !important;
@@ -340,7 +353,7 @@
             font-size: 16px;
         }
 
-        /* Footer des boutons (ajusté pour la mise en page existante) */
+        /* Footer des boutons */
         .action-buttons {
             border-top: 2px solid #f0f0f0;
             padding-top: 25px;
@@ -390,7 +403,7 @@
                 font-size: 22px;
             }
 
-            .d-flex.justify-content-between.mt-4.pt-3.border-top { /* Les boutons */
+            .d-flex.justify-content-between.mt-4.pt-3.border-top {
                 flex-direction: column;
                 gap: 15px;
             }
@@ -403,7 +416,8 @@
     </style>
 
     <div class="container-fluid">
-        <div class="page-header"> <h3 class="hight">
+        <div class="page-header">
+            <h3>
                 <i class="fas fa-edit"></i> Modifier l'Achat
             </h3>
             <nav aria-label="breadcrumb">
@@ -423,9 +437,9 @@
                     <strong>Stock produit:</strong> {{ $achat->produit->quantite_stock }}
                 </div>
                 <div class="col-md-6">
-                    <strong>Prix unitaire:</strong> {{ number_format($achat->prix_achat, 2) }} DH<br>
-                    <strong>Total:</strong> {{ number_format($achat->total_achat, 2) }} DH<br>
-                    <strong>Date:</strong> {{ $achat->date_achat?->format('d/m/Y') ?? $achat->created_at->format('d/m/Y') }}
+                    <strong>Prix d'achat:</strong> {{ number_format($achat->prix_achat, 2) }} DH<br>
+                    <strong>Prix de vente:</strong> {{ number_format($achat->prix_vente_suggere, 2) }} DH<br>
+                    <strong>Marge:</strong> {{ number_format($achat->marge_pourcentage, 2) }}%
                 </div>
             </div>
         </div>
@@ -520,7 +534,7 @@
 
                         <div class="col-md-4">
                             <label class="form-label fw-bold">
-                                <i class="fas fa-dollar-sign"></i> Prix unitaire (DH) <span class="text-danger">*</span>
+                                <i class="fas fa-dollar-sign"></i> Prix d'achat (DH) <span class="text-danger">*</span>
                             </label>
                             <input type="number" step="0.01" name="prix_achat" id="prix_achat" 
                                     class="form-control @error('prix_achat') is-invalid @enderror" 
@@ -529,6 +543,29 @@
                             @error('prix_achat')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                        </div>
+
+                        <!-- ✅ NOUVEAU: Prix de Vente (ENTRÉE MANUELLE) -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-tag"></i> Prix de vente (DH) <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" step="0.01" name="prix_vente_suggere" id="prix_vente_suggere" 
+                                   class="form-control @error('prix_vente_suggere') is-invalid @enderror" 
+                                   value="{{ old('prix_vente_suggere', $achat->prix_vente_suggere) }}" min="0" required>
+                            @error('prix_vente_suggere')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <small class="text-muted">Entrez le prix de vente souhaité</small>
+                        </div>
+
+                        <!-- ✅ NOUVEAU: Marge % (AUTO-CALCULÉE) -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-percentage"></i> Marge (%)
+                            </label>
+                            <input type="text" id="marge_display" class="form-control" readonly value="0.00%">
+                            <small class="text-muted">Calculée automatiquement</small>
                         </div>
 
                         <div class="col-md-4">
@@ -603,6 +640,33 @@
             const produitIdOriginal = '{{ $achat->produit->id }}';
 
             // ====================================
+            // ✅ NOUVEAU: Calculer la marge
+            // ====================================
+            function calculerMarge() {
+                const prixAchat = parseFloat($('#prix_achat').val()) || 0;
+                const prixVente = parseFloat($('#prix_vente_suggere').val()) || 0;
+                
+                if (prixAchat > 0) {
+                    const margePct = ((prixVente - prixAchat) / prixAchat) * 100;
+                    const margeDh = prixVente - prixAchat;
+                    
+                    $('#marge_display').val(margePct.toFixed(2) + '%');
+                    $('#marge_display').attr('title', 'Marge: ' + margeDh.toFixed(2) + ' DH');
+                } else {
+                    $('#marge_display').val('0.00%');
+                }
+            }
+            
+            // Calcul initial
+            calculerMarge();
+            
+            // Déclencher le calcul quand les prix changent
+            $('#prix_achat, #prix_vente_suggere').on('input', function() {
+                calculerMarge();
+                calculerTotal();
+            });
+
+            // ====================================
             // INITIALISATION SELECT2
             // ====================================
             $('.select2').select2({
@@ -616,15 +680,13 @@
             $('#category_id').on('change', function() {
                 const categoryId = $(this).val();
                 const $produitSelect = $('#produit_id');
-                const selectedProduitId = $produitSelect.val(); // ID du produit actuellement sélectionné
+                const selectedProduitId = $produitSelect.val();
 
-                // Afficher/masquer les options
                 $produitSelect.find('option').each(function() {
                     const $option = $(this);
                     const optionCategoryId = $option.data('category');
                     const optionId = $option.val();
 
-                    // Afficher si l'option est la valeur vide (default) OU l'achat original OU correspond à la catégorie sélectionnée
                     if (optionId === '' || optionId === produitIdOriginal || optionCategoryId == categoryId) {
                         $option.show();
                     } else {
@@ -632,7 +694,6 @@
                     }
                 });
                 
-                // Mettre à jour Select2
                 $produitSelect.trigger('change');
             });
 
@@ -646,7 +707,6 @@
                 
                 $('#total_display').val(total.toFixed(2) + ' DH');
                 
-                // Afficher l'avertissement si quantité modifiée
                 if (quantite !== quantiteOriginale) {
                     $('#warningChange').slideDown();
                 } else {
@@ -654,12 +714,12 @@
                 }
             }
 
-            $('#quantite, #prix_achat').on('input', calculerTotal);
+            $('#quantite').on('input', calculerTotal);
 
             // Calcul initial
             calculerTotal();
             
-            // Appliquer le filtre initial au chargement si une catégorie est sélectionnée
+            // Appliquer le filtre initial
             const initialCategoryId = $('#category_id').val();
             if(initialCategoryId) {
                  $('#category_id').trigger('change');

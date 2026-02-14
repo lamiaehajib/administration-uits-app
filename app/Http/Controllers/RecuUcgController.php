@@ -57,16 +57,13 @@ class RecuUcgController extends Controller
 
 public function create()
 {
-    // Charger toutes les catégories actives
-    $categories = \App\Models\Category::
-        orderBy('nom')
-        ->get();
+    $categories = \App\Models\Category::orderBy('nom')->get();
 
-    // Charger tous les produits (comme avant) 
+    // ✅ Charger produits AVEC leur prix FIFO
     $produits = Produit::with(['variants' => function($query) {
         $query->where('actif', true)
               ->where('quantite_stock', '>', 0);
-    }])
+              }])
     ->where('actif', true)
     ->where(function($q) {
         $q->where('quantite_stock', '>', 0)
@@ -76,7 +73,28 @@ public function create()
           });
     })
     ->orderBy('nom')
-    ->get();
+    ->get()
+    ->map(function($produit) {
+        // ✅ Khud prix FIFO (awwal achat disponible)
+        $achatFifo = \App\Models\Achat::where('produit_id', $produit->id)
+            ->where('quantite_restante', '>', 0)
+            ->orderBy('date_achat', 'asc')
+            ->first();
+        
+        // ✅ Si achat disponible, utiliser son prix_vente_suggere
+        if ($achatFifo) {
+            $produit->prix_vente_fifo = $achatFifo->prix_vente_suggere ?? $produit->prix_vente;
+            $produit->prix_achat_fifo = $achatFifo->prix_achat;
+            $produit->stock_fifo = $achatFifo->quantite_restante;
+        } else {
+            // Fallback sur prix produit
+            $produit->prix_vente_fifo = $produit->prix_vente;
+            $produit->prix_achat_fifo = $produit->prix_achat ?? 0;
+            $produit->stock_fifo = 0;
+        }
+        
+        return $produit;
+    });
 
     return view('recus.create', compact('produits', 'categories'));
 }

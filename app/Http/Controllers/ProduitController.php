@@ -29,151 +29,189 @@ class ProduitController extends Controller
      * ✅ AVEC FILTRES PERSISTANTS
      */
    public function index(Request $request)
-    {
-        $search      = $request->input('search');
-        $category_id = $request->input('category_id');
-        $statut      = $request->input('statut');
-        $sort_by     = $request->input('sort_by', 'nom');
-        $sort_order  = $request->input('sort_order', 'asc');
+{
+    $search      = $request->input('search');
+    $category_id = $request->input('category_id');
+    $statut      = $request->input('statut');
+    $sort_by     = $request->input('sort_by', 'nom');
+    $sort_order  = $request->input('sort_order', 'asc');
 
-        // ✅ Filtres date pour les statistiques
-        $stat_mois   = $request->input('stat_mois');   // ex: "2025-02"
-        $stat_annee  = $request->input('stat_annee');  // ex: "2025"
+    // ✅ Filtres date pour les statistiques
+    $stat_mois   = $request->input('stat_mois');   // ex: "2025-02"
+    $stat_annee  = $request->input('stat_annee');  // ex: "2025"
 
-        // Calcul de la période pour les stats
-        if ($stat_mois) {
-            $dateDebutStats = Carbon::parse($stat_mois . '-01')->startOfMonth();
-            $dateFinStats   = Carbon::parse($stat_mois . '-01')->endOfMonth();
-        } elseif ($stat_annee) {
-            $dateDebutStats = Carbon::create($stat_annee, 1, 1)->startOfYear();
-            $dateFinStats   = Carbon::create($stat_annee, 12, 31)->endOfYear();
-        } else {
-            $dateDebutStats = null;
-            $dateFinStats   = null;
-        }
-
-        $categories = Category::orderBy('nom')->get();
-
-        $query = Produit::with(['category']);
-
-        if ($search) {
-            $query->where(function($q) use ($search) {
-                $q->where('nom', 'like', '%' . $search . '%')
-                  ->orWhere('reference', 'like', '%' . $search . '%');
-            });
-        }
-        if ($category_id) {
-            $query->where('category_id', $category_id);
-        }
-        if ($statut) {
-            switch ($statut) {
-                case 'actif':
-                    $query->where('actif', true);
-                    break;
-                case 'inactif':
-                    $query->where('actif', false);
-                    break;
-                case 'alerte_stock':
-                    $query->whereColumn('quantite_stock', '<=', 'stock_alerte');
-                    break;
-            }
-        }
-
-        switch ($sort_by) {
-            case 'prix_vente':
-                $query->orderBy('prix_vente', $sort_order);
-                break;
-            case 'stock':
-                $query->orderBy('quantite_stock', $sort_order);
-                break;
-            case 'nom':
-            default:
-                $query->orderBy('nom', $sort_order);
-                break;
-        }
-
-        $produits = $query->paginate(10)->appends([
-            'search'      => $search,
-            'category_id' => $category_id,
-            'statut'      => $statut,
-            'sort_by'     => $sort_by,
-            'sort_order'  => $sort_order,
-            'stat_mois'   => $stat_mois,
-            'stat_annee'  => $stat_annee,
-        ]);
-
-        foreach ($produits as $produit) {
-            // Quantité vendue (filtrée par période si applicable)
-            $qVendue = RecuItem::where('produit_id', $produit->id)
-                ->whereHas('recuUcg', function($q) use ($dateDebutStats, $dateFinStats) {
-                    $q->whereIn('statut', ['en_cours', 'livre']);
-                    if ($dateDebutStats && $dateFinStats) {
-                        $q->whereBetween('created_at', [$dateDebutStats, $dateFinStats]);
-                    }
-                });
-            $produit->quantite_vendue = $qVendue->sum('quantite');
-
-            // Total ventes CA brut (filtré)
-            $produit->total_vendu_montant = RecuItem::where('produit_id', $produit->id)
-                ->whereHas('recuUcg', function($q) use ($dateDebutStats, $dateFinStats) {
-                    $q->whereIn('statut', ['en_cours', 'livre']);
-                    if ($dateDebutStats && $dateFinStats) {
-                        $q->whereBetween('created_at', [$dateDebutStats, $dateFinStats]);
-                    }
-                })
-                ->sum('sous_total');
-
-            // ✅ MARGE = profit réel, indépendant de la remise (filtré par période)
-            $produit->marge_totale = RecuItem::where('produit_id', $produit->id)
-                ->whereHas('recuUcg', function($q) use ($dateDebutStats, $dateFinStats) {
-                    $q->whereIn('statut', ['en_cours', 'livre']);
-                    if ($dateDebutStats && $dateFinStats) {
-                        $q->whereBetween('created_at', [$dateDebutStats, $dateFinStats]);
-                    }
-                })
-                ->sum('marge_totale');
-
-            // Dernier prix d'achat
-            $dernierAchat = Achat::where('produit_id', $produit->id)
-                ->latest('date_achat')
-                ->first();
-            $produit->dernier_prix_achat = $dernierAchat ? $dernierAchat->prix_achat : ($produit->prix_achat ?? 0);
-
-            // Catégorie
-            $produit->categorie_nom = $produit->category ? $produit->category->nom : 'N/A';
-
-            // Marge en pourcentage
-            if ($produit->prix_achat > 0 && $produit->prix_vente > 0) {
-                $produit->marge_pourcentage = (($produit->prix_vente - $produit->prix_achat) / $produit->prix_achat) * 100;
-            } else {
-                $produit->marge_pourcentage = 0;
-            }
-        }
-
-        // ✅ STATISTIQUES GLOBALES (filtrées par période)
-        $statsGlobales = $this->getStatsGlobales($dateDebutStats, $dateFinStats);
-
-        // Années disponibles pour le filtre
-        $anneesDisponibles = RecuUcg::whereIn('statut', ['en_cours', 'livre'])
-            ->selectRaw('YEAR(created_at) as annee')
-            ->distinct()
-            ->orderByDesc('annee')
-            ->pluck('annee');
-
-        return view('produits.index', compact(
-            'produits',
-            'categories',
-            'search',
-            'category_id',
-            'statut',
-            'sort_by',
-            'sort_order',
-            'stat_mois',
-            'stat_annee',
-            'statsGlobales',
-            'anneesDisponibles'
-        ));
+    // Calcul de la période pour les stats
+    if ($stat_mois) {
+        $dateDebutStats = Carbon::parse($stat_mois . '-01')->startOfMonth();
+        $dateFinStats   = Carbon::parse($stat_mois . '-01')->endOfMonth();
+    } elseif ($stat_annee) {
+        $dateDebutStats = Carbon::create($stat_annee, 1, 1)->startOfYear();
+        $dateFinStats   = Carbon::create($stat_annee, 12, 31)->endOfYear();
+    } else {
+        $dateDebutStats = null;
+        $dateFinStats   = null;
     }
+
+    $categories = Category::orderBy('nom')->get();
+
+    $query = Produit::with(['category']);
+
+    if ($search) {
+        $query->where(function($q) use ($search) {
+            $q->where('nom', 'like', '%' . $search . '%')
+              ->orWhere('reference', 'like', '%' . $search . '%');
+        });
+    }
+    if ($category_id) {
+        $query->where('category_id', $category_id);
+    }
+    if ($statut) {
+        switch ($statut) {
+            case 'actif':
+                $query->where('actif', true);
+                break;
+            case 'inactif':
+                $query->where('actif', false);
+                break;
+            case 'alerte_stock':
+                $query->whereColumn('quantite_stock', '<=', 'stock_alerte');
+                break;
+        }
+    }
+
+    switch ($sort_by) {
+        case 'prix_vente':
+            $query->orderBy('prix_vente', $sort_order);
+            break;
+        case 'stock':
+            $query->orderBy('quantite_stock', $sort_order);
+            break;
+        case 'nom':
+        default:
+            $query->orderBy('nom', $sort_order);
+            break;
+    }
+
+    $produits = $query->paginate(10)->appends([
+        'search'      => $search,
+        'category_id' => $category_id,
+        'statut'      => $statut,
+        'sort_by'     => $sort_by,
+        'sort_order'  => $sort_order,
+        'stat_mois'   => $stat_mois,
+        'stat_annee'  => $stat_annee,
+    ]);
+
+    foreach ($produits as $produit) {
+        // Quantité vendue (filtrée par période si applicable)
+        $qVendue = RecuItem::where('produit_id', $produit->id)
+            ->whereHas('recuUcg', function($q) use ($dateDebutStats, $dateFinStats) {
+                $q->whereIn('statut', ['en_cours', 'livre']);
+                if ($dateDebutStats && $dateFinStats) {
+                    $q->whereBetween('created_at', [$dateDebutStats, $dateFinStats]);
+                }
+            });
+        $produit->quantite_vendue = $qVendue->sum('quantite');
+
+        // Total ventes CA brut (filtré)
+        $produit->total_vendu_montant = RecuItem::where('produit_id', $produit->id)
+            ->whereHas('recuUcg', function($q) use ($dateDebutStats, $dateFinStats) {
+                $q->whereIn('statut', ['en_cours', 'livre']);
+                if ($dateDebutStats && $dateFinStats) {
+                    $q->whereBetween('created_at', [$dateDebutStats, $dateFinStats]);
+                }
+            })
+            ->sum('sous_total');
+
+        // ✅ MARGE = profit réel, indépendant de la remise (filtré par période)
+        $produit->marge_totale = RecuItem::where('produit_id', $produit->id)
+            ->whereHas('recuUcg', function($q) use ($dateDebutStats, $dateFinStats) {
+                $q->whereIn('statut', ['en_cours', 'livre']);
+                if ($dateDebutStats && $dateFinStats) {
+                    $q->whereBetween('created_at', [$dateDebutStats, $dateFinStats]);
+                }
+            })
+            ->sum('marge_totale');
+
+        // ✅ CALCUL PRIX ACHAT MOYEN PONDÉRÉ (CUMP)
+        // 1️⃣ Stock FIFO (enregistré dans achats)
+        $stockFifo = Achat::where('produit_id', $produit->id)
+            ->where('quantite_restante', '>', 0)
+            ->sum('quantite_restante');
+        
+        $valeurStockFifo = Achat::where('produit_id', $produit->id)
+            ->where('quantite_restante', '>', 0)
+            ->selectRaw('SUM(quantite_restante * prix_achat) as total')
+            ->value('total') ?? 0;
+        
+        // 2️⃣ Stock Manuel (non enregistré dans achats)
+        $stockManuel = max(0, $produit->quantite_stock - $stockFifo);
+        $valeurStockManuel = $stockManuel * ($produit->prix_achat ?? 0);
+        
+        // 3️⃣ CUMP Prix Achat
+        $quantiteTotale = $stockFifo + $stockManuel;
+        $valeurTotale = $valeurStockFifo + $valeurStockManuel;
+        
+        if ($quantiteTotale > 0) {
+            $produit->prix_achat_moyen = $valeurTotale / $quantiteTotale;
+        } else {
+            $produit->prix_achat_moyen = $produit->prix_achat ?? 0;
+        }
+
+        // ✅ CALCUL PRIX VENTE MOYEN PONDÉRÉ (PVMP)
+        // 1️⃣ Valeur Prix Vente FIFO
+        $valeurVenteFifo = Achat::where('produit_id', $produit->id)
+            ->where('quantite_restante', '>', 0)
+            ->selectRaw('SUM(quantite_restante * prix_vente_suggere) as total')
+            ->value('total') ?? 0;
+        
+        // 2️⃣ Valeur Prix Vente Manuel
+        $valeurVenteManuel = $stockManuel * ($produit->prix_vente ?? 0);
+        
+        // 3️⃣ PVMP = Valeur Vente Totale / Quantité Totale
+        $valeurVenteTotale = $valeurVenteFifo + $valeurVenteManuel;
+        
+        if ($quantiteTotale > 0) {
+            $produit->prix_vente_moyen = $valeurVenteTotale / $quantiteTotale;
+        } else {
+            $produit->prix_vente_moyen = $produit->prix_vente ?? 0;
+        }
+
+        // Catégorie
+        $produit->categorie_nom = $produit->category ? $produit->category->nom : 'N/A';
+
+        // ✅ Marge en pourcentage (basée sur prix moyens)
+        if ($produit->prix_achat_moyen > 0 && $produit->prix_vente_moyen > 0) {
+            $produit->marge_pourcentage = (($produit->prix_vente_moyen - $produit->prix_achat_moyen) / $produit->prix_achat_moyen) * 100;
+        } else {
+            $produit->marge_pourcentage = 0;
+        }
+    }
+
+    // ✅ STATISTIQUES GLOBALES (filtrées par période)
+    $statsGlobales = $this->getStatsGlobales($dateDebutStats, $dateFinStats);
+
+    // Années disponibles pour le filtre
+    $anneesDisponibles = RecuUcg::whereIn('statut', ['en_cours', 'livre'])
+        ->selectRaw('YEAR(created_at) as annee')
+        ->distinct()
+        ->orderByDesc('annee')
+        ->pluck('annee');
+
+    return view('produits.index', compact(
+        'produits',
+        'categories',
+        'search',
+        'category_id',
+        'statut',
+        'sort_by',
+        'sort_order',
+        'stat_mois',
+        'stat_annee',
+        'statsGlobales',
+        'anneesDisponibles'
+    ));
+}
 
     /**
      * ✅ Calcul des statistiques globales filtrées par période

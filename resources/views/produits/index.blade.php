@@ -1228,8 +1228,31 @@
                                     {{ $produit->categorie_nom }}
                                 </span>
                             </td>
-                            <td><strong>{{ number_format($produit->dernier_prix_achat, 2) }} DH</strong></td>
-                            <td><strong class="text-success">{{ number_format($produit->prix_vente, 2) }} DH</strong></td>
+                           <td>
+    <strong>{{ number_format($produit->prix_achat_moyen, 2) }} DH</strong>
+    @if($produit->quantite_stock > 0)
+    @php
+        $stockFifo = \App\Models\Achat::where('produit_id', $produit->id)
+            ->where('quantite_restante', '>', 0)
+            ->sum('quantite_restante');
+        $stockManuel = max(0, $produit->quantite_stock - $stockFifo);
+    @endphp
+    <br>
+    <small class="text-muted" style="font-size: 0.75rem;" 
+           title="FIFO: {{ $stockFifo }} unités | Manuel: {{ $stockManuel }} unités">
+        <i class="fas fa-info-circle"></i> CUMP
+    </small>
+    @endif
+</td>
+                           <td>
+    <strong class="text-success">{{ number_format($produit->prix_vente_moyen, 2) }} DH</strong>
+    @if($produit->quantite_stock > 0)
+    <br>
+    <small class="text-muted" style="font-size: 0.75rem;">
+        <i class="fas fa-calculator"></i> PVMP
+    </small>
+    @endif
+</td>
                             <td>
                                 <div>
                                     <strong>{{ $produit->quantite_stock }}</strong> unités

@@ -215,7 +215,9 @@ class RecuItem extends Model
             $item->recuUcg->calculerTotal();
         });
 
-        static::deleting(function ($item) {
+         static::deleting(function ($item) {
+        // ✅ Restaurer stock UNIQUEMENT si soft delete
+        if (!$item->isForceDeleting()) {
             if ($item->product_variant_id) {
                 // Kod dial variant kaybqa nfso
                 $variant = $item->variant;
@@ -264,14 +266,111 @@ class RecuItem extends Model
                     ]);
                 }
             }
-        });
+        } else {
+            // ✅ Force delete - AUCUNE modification stock
+            Log::info("⚠️ Force delete détecté - Stock NON modifié pour item #{$item->id} (Produit: {$item->produit_nom}, Quantité: {$item->quantite})");
+        }
+    });
 
         static::deleted(function ($item) {
+        if ($item->recuUcg && !$item->isForceDeleting()) {
+            $item->recuUcg->calculerTotal();
+        }
+    });
+
+
+
+         // ✅ ✅ ✅ NOUVEAU EVENT - RESTORATION
+        static::restored(function ($item) {
+            Log::info("🔄 Restauration item #{$item->id} - Reçu #{$item->recu_ucg_id}");
+            
+            if ($item->product_variant_id) {
+                // ✅ VARIANT - Vérifier stock puis décrémenter
+                $variant = $item->variant;
+                
+                if ($variant) {
+                    // Vérifier si stock suffisant
+                    if ($variant->quantite_stock < $item->quantite) {
+                        throw new \Exception("Stock insuffisant pour restaurer {$variant->full_name}. Stock actuel: {$variant->quantite_stock}, besoin: {$item->quantite}");
+                    }
+                    
+                    $stockAvant = $variant->quantite_stock;
+                    $variant->decrement('quantite_stock', $item->quantite);
+                    
+                    $produit = $variant->produit;
+                    $totalStock = $produit->variants()->sum('quantite_stock');
+                    $produit->update(['quantite_stock' => $totalStock]);
+
+                    StockMovement::create([
+                        'produit_id' => $item->produit_id,
+                        'recu_ucg_id' => $item->recu_ucg_id,
+                        'user_id' => auth()->id(),
+                        'type' => 'sortie',
+                        'quantite' => $item->quantite,
+                        'stock_avant' => $stockAvant,
+                        'stock_apres' => $variant->fresh()->quantite_stock,
+                        'motif' => "Restauration variant ({$variant->variant_name}) - Reçu #{$item->recuUcg->numero_recu}",
+                        'reference' => "RESTORE-VARIANT-{$variant->id}"
+                    ]);
+                    
+                    Log::info("✅ Variant {$variant->variant_name} - Stock décrementé: {$stockAvant} → {$variant->fresh()->quantite_stock}");
+                }
+            } else {
+                // ✅ PRODUIT SIMPLE - Vérifier stock puis décrémenter FIFO
+                $produit = $item->produit;
+
+                if ($produit) {
+                    // Vérifier si stock suffisant
+                    if ($produit->quantite_stock < $item->quantite) {
+                        throw new \Exception("Stock insuffisant pour restaurer {$produit->nom}. Stock actuel: {$produit->quantite_stock}, besoin: {$item->quantite}");
+                    }
+                    
+                    $stockAvant = $produit->quantite_stock;
+                    
+                    // ✅ Décrémenter stock FIFO
+                    self::decrementerStockFIFO($item->produit_id, $item->quantite, $item->recu_ucg_id);
+                    
+                    // Décrémenter stock global
+                    $produit->decrement('quantite_stock', $item->quantite);
+                    $produit->increment('total_vendu', $item->quantite);
+
+                    StockMovement::create([
+                        'produit_id' => $produit->id,
+                        'recu_ucg_id' => $item->recu_ucg_id,
+                        'user_id' => auth()->id(),
+                        'type' => 'sortie',
+                        'quantite' => $item->quantite,
+                        'stock_avant' => $stockAvant,
+                        'stock_apres' => $produit->fresh()->quantite_stock,
+                        'motif' => "Restauration FIFO - Reçu #{$item->recuUcg->numero_recu}"
+                    ]);
+                    
+                    Log::info("✅ Produit {$produit->nom} - Stock décrementé: {$stockAvant} → {$produit->fresh()->quantite_stock}");
+                }
+            }
+
+            // Recalculer total du reçu
             if ($item->recuUcg) {
                 $item->recuUcg->calculerTotal();
+                Log::info("✅ Total reçu recalculé: {$item->recuUcg->total} DH");
             }
         });
+
+        static::forceDeleting(function ($item) {
+        // ⚠️ CRITIQUE: Ne JAMAIS toucher au stock lors du force delete!
+        // Le stock a déjà été restauré lors du soft delete (deleting event)
+        
+        Log::info("🗑️ PERMANENT DELETE: Item #{$item->id} - Produit: {$item->produit_nom} (Qté: {$item->quantite}) - Stock INCHANGÉ");
+        
+        // ✅ Pas de manipulation stock ici!
+        // ✅ Pas de StockMovement création!
+        // ✅ Juste du logging pour audit
+    });
     }
+    
+
+
+    
 
     // ================================= MÉTHODES FIFO ==============================
     

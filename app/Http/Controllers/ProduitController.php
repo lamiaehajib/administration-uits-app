@@ -272,78 +272,58 @@ class ProduitController extends Controller
     }
 
     public function show($id)
-    {
-        $produit = Produit::with(['category', 'achats', 'stockMovements'])
-            ->findOrFail($id);
+{
+    $produit = Produit::with(['category', 'achats', 'stockMovements'])
+        ->findOrFail($id);
 
-        // Total achats (inchangé)
-        $totalAchats = Achat::where('produit_id', $id)->sum('quantite');
-        
-        // Total ventes (inchangé)
-        $totalVentes = RecuItem::where('produit_id', $id)
-            ->whereHas('recuUcg', function($q) {
-                $q->whereIn('statut', ['en_cours', 'livre']);
-            })
-            ->sum('quantite');
-
-        // Valeur stock (inchangée)
-        $valeurStock = $produit->quantite_stock * ($produit->prix_achat ?? 0);
-
-        // CA total (inchangé)
-        $caTotal = RecuItem::where('produit_id', $id)
-            ->whereHas('recuUcg', function($q) {
-                $q->whereIn('statut', ['en_cours', 'livre']);
-            })
-            ->sum('sous_total');
-
-        // ✅ MARGE RÉELLE = Marge Brute - Part de remise
-        $recusAvecItems = RecuUcg::with(['items' => function($q) use ($id) {
-            $q->where('produit_id', $id);
-        }])
-        ->whereIn('statut', ['en_cours', 'livre'])
-        ->whereHas('items', function($q) use ($id) {
-            $q->where('produit_id', $id);
+    // Total achats
+    $totalAchats = Achat::where('produit_id', $id)->sum('quantite');
+    
+    // Total ventes
+    $totalVentes = RecuItem::where('produit_id', $id)
+        ->whereHas('recuUcg', function($q) {
+            $q->whereIn('statut', ['en_cours', 'livre']);
         })
+        ->sum('quantite');
+
+    // Valeur stock
+    $valeurStock = $produit->quantite_stock * ($produit->prix_achat ?? 0);
+
+    // CA total
+    $caTotal = RecuItem::where('produit_id', $id)
+        ->whereHas('recuUcg', function($q) {
+            $q->whereIn('statut', ['en_cours', 'livre']);
+        })
+        ->sum('sous_total');
+
+    // ✅ MARGE RÉELLE (déjà ajustée par remises dans RecuItem)
+    $margeReelle = RecuItem::where('produit_id', $id)
+        ->whereHas('recuUcg', function($q) {
+            $q->whereIn('statut', ['en_cours', 'livre']);
+        })
+        ->sum('marge_totale');
+
+    $stats = [
+        'total_achats' => $totalAchats,
+        'total_ventes' => $totalVentes,
+        'valeur_stock' => $valeurStock,
+        'ca_total' => $caTotal,
+        'marge_totale' => $margeReelle, // ✅ Marge corrigée
+    ];
+
+    $derniersAchats = Achat::where('produit_id', $id)
+        ->latest('date_achat')
+        ->take(5)
         ->get();
 
-        $marge_reelle = 0;
-        foreach ($recusAvecItems as $recu) {
-            foreach ($recu->items as $item) {
-                if ($item->produit_id == $id) {
-                    // Marge brute de l'item
-                    $marge_item = $item->marge_totale;
-                    
-                    // ✅ Si remise appliquée sur CET item
-                    if ($recu->remise > 0 && $item->remise_appliquee) {
-                        $marge_item -= $recu->remise;
-                    }
-                    
-                    $marge_reelle += $marge_item;
-                }
-            }
-        }
+    $dernieresVentes = RecuItem::where('produit_id', $id)
+        ->with('recuUcg')
+        ->latest('created_at')
+        ->take(5)
+        ->get();
 
-        $stats = [
-            'total_achats' => $totalAchats,
-            'total_ventes' => $totalVentes,
-            'valeur_stock' => $valeurStock,
-            'ca_total' => $caTotal,
-            'marge_totale' => $marge_reelle, // ✅ Marge corrigée
-        ];
-
-        $derniersAchats = Achat::where('produit_id', $id)
-            ->latest('date_achat')
-            ->take(5)
-            ->get();
-
-        $dernieresVentes = RecuItem::where('produit_id', $id)
-            ->with('recuUcg')
-            ->latest('created_at')
-            ->take(5)
-            ->get();
-
-        return view('produits.show', compact('produit', 'stats', 'derniersAchats', 'dernieresVentes'));
-    }
+    return view('produits.show', compact('produit', 'stats', 'derniersAchats', 'dernieresVentes'));
+}
 
 
 

@@ -620,26 +620,34 @@ public function forceDelete($id)
 
     DB::beginTransaction();
     try {
-        // 1️⃣ Supprimer définitivement les items
+        // ⚠️ IMPORTANT: Ma n3awdoch stock hna!
+        // Stock déjà restauré wakt soft delete (deleting event)
+        
+        // 1️⃣ Supprimer définitivement les items (sans toucher au stock)
         $items = \App\Models\RecuItem::onlyTrashed()
             ->where('recu_ucg_id', $recu->id)
             ->get();
             
         foreach ($items as $item) {
-            // Force delete ne touche pas au stock (déjà ajusté lors du soft delete)
+            // ✅ Force delete direct - pas de modification stock
             $item->forceDelete();
         }
         
-        // 2️⃣ Supprimer les mouvements de stock (optionnel, gardez l'historique si vous voulez)
-        // \App\Models\StockMovement::where('recu_ucg_id', $recu->id)->delete();
+        // 2️⃣ Supprimer les paiements définitivement
+        \App\Models\Paiement::onlyTrashed()
+            ->where('recu_ucg_id', $recu->id)
+            ->forceDelete();
         
-        // 3️⃣ Supprimer les paiements
-        \App\Models\Paiement::where('recu_ucg_id', $recu->id)->forceDelete();
+        // 3️⃣ (Optionnel) Supprimer mouvements de stock pour nettoyage
+        // ⚠️ Recommandé: GARDER les mouvements pour historique/audit
+        // \App\Models\StockMovement::where('recu_ucg_id', $recu->id)->delete();
         
         // 4️⃣ Supprimer définitivement le reçu
         $recu->forceDelete();
 
         DB::commit();
+        
+        \Log::info("🗑️ PERMANENT: Reçu #{$recu->numero_recu} supprimé définitivement (stock inchangé)");
         
         return redirect()
             ->route('recus.trash')
@@ -647,6 +655,7 @@ public function forceDelete($id)
             
     } catch (\Exception $e) {
         DB::rollBack();
+        \Log::error("❌ Erreur force delete: " . $e->getMessage());
         return back()->with('error', "Erreur lors de la suppression définitive: " . $e->getMessage());
     }
 }

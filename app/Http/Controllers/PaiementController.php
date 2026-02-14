@@ -106,33 +106,34 @@ class PaiementController extends Controller
         return view('paiements.show', compact('paiement'));
     }
 
-    public function destroy(Paiement $paiement)
-    {
-        if ($paiement->recuUcg->statut !== 'en_cours') {
-            return back()->with('error', 'Impossible de supprimer un paiement d\'un reçu livré/annulé');
-        }
-
-        DB::beginTransaction();
-        try {
-            $montant = $paiement->montant;
-            $recu = $paiement->recuUcg;
-
-            // Supprimer le paiement
-            $paiement->delete();
-
-            // ✅ Update avec recalcul du statut
-            $recu->montant_paye = $recu->montant_paye - $montant;
-            $recu->save(); // Le observer updating() va gérer le statut
-
-            DB::commit();
-
-            return back()->with('success', 'Paiement de ' . number_format($montant, 2) . ' DH supprimé avec succès!');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Erreur: ' . $e->getMessage());
-        }
+  // F destroy() method - khasso ikono haka:
+public function destroy(Paiement $paiement)
+{
+    if ($paiement->recuUcg->statut !== 'en_cours') {
+        return back()->with('error', 'Impossible de supprimer un paiement d\'un reçu livré/annulé');
     }
+
+    DB::beginTransaction();
+    try {
+        $montant = $paiement->montant;
+        $recu = $paiement->recuUcg;
+
+        // ✅ Soft delete li ghadi ims7 o i7tafed b historique
+        $paiement->delete();
+
+        // ✅ Update avec recalcul du statut (excluding deleted)
+        $recu->montant_paye = $recu->paiements()->sum('montant');
+        $recu->save();
+
+        DB::commit();
+
+        return back()->with('success', 'Paiement de ' . number_format($montant, 2) . ' DH supprimé avec succès!');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return back()->with('error', 'Erreur: ' . $e->getMessage());
+    }
+}
 
     public function rapport(Request $request)
     {

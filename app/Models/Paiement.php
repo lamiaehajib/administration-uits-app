@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Paiement extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'recu_ucg_id', 'user_id',
@@ -19,6 +20,18 @@ class Paiement extends Model
         'montant' => 'decimal:2',
         'date_paiement' => 'date',
     ];
+
+    // ✅ CASCADE DELETE - Ki tsupprimé reçu, ims7o paiements
+    protected static function boot()
+    {
+        parent::boot();
+        
+        // ✅ Ki reçu ims7 (soft delete), ims7o paiements
+        static::deleted(function ($paiement) {
+            // Hadi optional: logger li tsupprimé
+            \Log::info("🗑️ Paiement #{$paiement->id} supprimé (Reçu #{$paiement->recu_ucg_id})");
+        });
+    }
 
     // 🔗 Relations
     public function recuUcg()

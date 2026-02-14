@@ -125,26 +125,64 @@ class RecuUcg extends Model
             }
         });
 
-        static::deleting(function ($recu) {
-            if (!$recu->isForceDeleting()) {
-                $recu->load('items.produit');
-                
-                foreach ($recu->items->whereNotNull('produit') as $item) { 
-                    $item->produit->increment('quantite_stock', $item->quantite);
-                    
-                    \App\Models\StockMovement::create([
-                        'produit_id' => $item->produit_id,
-                        'recu_ucg_id' => $recu->id,
-                        'user_id' => auth()->id(),
-                        'type' => 'retour',
-                        'quantite' => $item->quantite,
-                        'stock_avant' => $item->produit->quantite_stock - $item->quantite, 
-                        'stock_apres' => $item->produit->quantite_stock,
-                        'motif' => "Annulation reçu {$recu->numero_recu}"
-                    ]);
-                }
-            }
-        });
+       static::deleting(function ($recu) {
+    if (!$recu->isForceDeleting()) {
+        // ✅ 1️⃣ Restaurer stock (code li kayn déjà)
+        $recu->load('items.produit');
+        
+        foreach ($recu->items->whereNotNull('produit') as $item) { 
+            $item->produit->increment('quantite_stock', $item->quantite);
+            
+            \App\Models\StockMovement::create([
+                'produit_id' => $item->produit_id,
+                'recu_ucg_id' => $recu->id,
+                'user_id' => auth()->id(),
+                'type' => 'retour',
+                'quantite' => $item->quantite,
+                'stock_avant' => $item->produit->quantite_stock - $item->quantite, 
+                'stock_apres' => $item->produit->quantite_stock,
+                'motif' => "Annulation reçu {$recu->numero_recu}"
+            ]);
+        }
+        
+        // ✅ 2️⃣ NOUVEAU - Supprimer paiements
+        $recu->paiements()->delete();
+        
+        \Log::info("🗑️ Reçu #{$recu->numero_recu} supprimé avec " . $recu->paiements()->count() . " paiements");
+    }
+});
+
+static::restored(function ($recu) {
+    \Log::info("🔄 Restauration reçu #{$recu->numero_recu}");
+    
+    // ✅ Restaurer paiements si existaient
+    $paiementsSupprimés = \App\Models\Paiement::onlyTrashed()
+        ->where('recu_ucg_id', $recu->id)
+        ->get();
+    
+    foreach ($paiementsSupprimés as $paiement) {
+        $paiement->restore();
+        \Log::info("✅ Paiement #{$paiement->id} restauré ({$paiement->montant} DH)");
+    }
+    
+    // ✅ Recalculer montant payé
+    $recu->montant_paye = $recu->paiements()->sum('montant');
+    $recu->reste = $recu->total - $recu->montant_paye;
+    
+    // Recalculer statut paiement
+    if ($recu->montant_paye >= $recu->total - 0.01) {
+        $recu->statut_paiement = self::STATUT_PAIEMENT_PAYE;
+        $recu->reste = 0.00;
+    } elseif ($recu->montant_paye > 0) {
+        $recu->statut_paiement = self::STATUT_PAIEMENT_PARTIEL;
+    } else {
+        $recu->statut_paiement = self::STATUT_PAIEMENT_IMPAYE;
+    }
+    
+    $recu->saveQuietly();
+    
+    \Log::info("✅ Reçu restauré - Montant payé: {$recu->montant_paye} DH, Reste: {$recu->reste} DH");
+});
     }
 
     // ================================= MUTATEURS ==============================
@@ -187,17 +225,30 @@ class RecuUcg extends Model
 
     // ================================= MÉTHODES ==============================
     
-    public static function generateNumeroRecu()
-    {
-        $year = date('Y');
-        $lastRecu = self::whereYear('created_at', $year)
-            ->latest()
-            ->lockForUpdate()
-            ->first();
-
-        $number = $lastRecu ? intval(substr($lastRecu->numero_recu, -4)) + 1 : 1;
-        return sprintf('UCGS-%s-%04d', $year, $number);
-    }
+   public static function generateNumeroRecu()
+{
+    $year = date('Y');
+    
+    // Khud dernier numéro (actif OU supprimé)
+    $lastRecuActif = self::whereYear('created_at', $year)
+        ->withoutTrashed()
+        ->latest()
+        ->lockForUpdate()
+        ->first();
+    
+    $lastRecuSupprime = self::whereYear('created_at', $year)
+        ->onlyTrashed()
+        ->latest('deleted_at')
+        ->first();
+    
+    // Khud l'max dial jouj
+    $numberActif = $lastRecuActif ? intval(substr($lastRecuActif->numero_recu, -4)) : 0;
+    $numberSupprime = $lastRecuSupprime ? intval(substr($lastRecuSupprime->numero_recu, -4)) : 0;
+    
+    $number = max($numberActif, $numberSupprime) + 1;
+    
+    return sprintf('UCGS-%s-%04d', $year, $number);
+}
 
     /**
      * ✅ CALCUL TOTAL MODIFIÉ - Prend en compte les remises par article

@@ -28,183 +28,274 @@ class ProduitController extends Controller
      * عرض جميع المنتجات مع معلومات المبيعات والمارج من RecuItem
      * ✅ AVEC FILTRES PERSISTANTS
      */
-    public function index(Request $request)
-{
-    $search = $request->input('search');
-    $category_id = $request->input('category_id');
-    $statut = $request->input('statut');
-    $sort_by = $request->input('sort_by', 'nom');
-    $sort_order = $request->input('sort_order', 'asc');
+   public function index(Request $request)
+    {
+        $search      = $request->input('search');
+        $category_id = $request->input('category_id');
+        $statut      = $request->input('statut');
+        $sort_by     = $request->input('sort_by', 'nom');
+        $sort_order  = $request->input('sort_order', 'asc');
 
-    $categories = Category::orderBy('nom')->get();
+        // ✅ Filtres date pour les statistiques
+        $stat_mois   = $request->input('stat_mois');   // ex: "2025-02"
+        $stat_annee  = $request->input('stat_annee');  // ex: "2025"
 
-    $query = Produit::with(['category']);
-
-    // Filtres
-    if ($search) {
-        $query->where(function($q) use ($search) {
-            $q->where('nom', 'like', '%' . $search . '%')
-              ->orWhere('reference', 'like', '%' . $search . '%');
-        });
-    }
-
-    if ($category_id) {
-        $query->where('category_id', $category_id);
-    }
-
-    if ($statut) {
-        switch ($statut) {
-            case 'actif':
-                $query->where('actif', true);
-                break;
-            case 'inactif':
-                $query->where('actif', false);
-                break;
-            case 'alerte_stock':
-                $query->whereColumn('quantite_stock', '<=', 'stock_alerte');
-                break;
-        }
-    }
-
-    // Tri
-    switch ($sort_by) {
-        case 'prix_vente':
-            $query->orderBy('prix_vente', $sort_order);
-            break;
-        case 'stock':
-            $query->orderBy('quantite_stock', $sort_order);
-            break;
-        case 'nom':
-        default:
-            $query->orderBy('nom', $sort_order);
-            break;
-    }
-
-    $produits = $query->paginate(10)->appends([
-        'search'      => $search,
-        'category_id' => $category_id,
-        'statut'      => $statut,
-        'sort_by'     => $sort_by,
-        'sort_order'  => $sort_order
-    ]);
-
-    foreach ($produits as $produit) {
-        // Quantité vendue
-        $produit->quantite_vendue = RecuItem::where('produit_id', $produit->id)
-            ->whereHas('recuUcg', function($q) {
-                $q->whereIn('statut', ['en_cours', 'livre']);
-            })
-            ->sum('quantite');
-
-        // Total ventes (CA brut)
-        $produit->total_vendu_montant = RecuItem::where('produit_id', $produit->id)
-            ->whereHas('recuUcg', function($q) {
-                $q->whereIn('statut', ['en_cours', 'livre']);
-            })
-            ->sum('sous_total');
-
-        // ✅ MARGE = profit réel (prix_vente - prix_achat * quantite), indépendant de la remise
-        $produit->marge_totale = RecuItem::where('produit_id', $produit->id)
-            ->whereHas('recuUcg', function($q) {
-                $q->whereIn('statut', ['en_cours', 'livre']);
-            })
-            ->sum('marge_totale');
-
-        // Dernier prix d'achat
-        $dernierAchat = Achat::where('produit_id', $produit->id)
-            ->latest('date_achat')
-            ->first();
-        $produit->dernier_prix_achat = $dernierAchat ? $dernierAchat->prix_achat : ($produit->prix_achat ?? 0);
-
-        // Catégorie
-        $produit->categorie_nom = $produit->category ? $produit->category->nom : 'N/A';
-
-        // Marge en pourcentage
-        if ($produit->prix_achat > 0 && $produit->prix_vente > 0) {
-            $produit->marge_pourcentage = (($produit->prix_vente - $produit->prix_achat) / $produit->prix_achat) * 100;
+        // Calcul de la période pour les stats
+        if ($stat_mois) {
+            $dateDebutStats = Carbon::parse($stat_mois . '-01')->startOfMonth();
+            $dateFinStats   = Carbon::parse($stat_mois . '-01')->endOfMonth();
+        } elseif ($stat_annee) {
+            $dateDebutStats = Carbon::create($stat_annee, 1, 1)->startOfYear();
+            $dateFinStats   = Carbon::create($stat_annee, 12, 31)->endOfYear();
         } else {
-            $produit->marge_pourcentage = 0;
+            $dateDebutStats = null;
+            $dateFinStats   = null;
         }
+
+        $categories = Category::orderBy('nom')->get();
+
+        $query = Produit::with(['category']);
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('nom', 'like', '%' . $search . '%')
+                  ->orWhere('reference', 'like', '%' . $search . '%');
+            });
+        }
+        if ($category_id) {
+            $query->where('category_id', $category_id);
+        }
+        if ($statut) {
+            switch ($statut) {
+                case 'actif':
+                    $query->where('actif', true);
+                    break;
+                case 'inactif':
+                    $query->where('actif', false);
+                    break;
+                case 'alerte_stock':
+                    $query->whereColumn('quantite_stock', '<=', 'stock_alerte');
+                    break;
+            }
+        }
+
+        switch ($sort_by) {
+            case 'prix_vente':
+                $query->orderBy('prix_vente', $sort_order);
+                break;
+            case 'stock':
+                $query->orderBy('quantite_stock', $sort_order);
+                break;
+            case 'nom':
+            default:
+                $query->orderBy('nom', $sort_order);
+                break;
+        }
+
+        $produits = $query->paginate(10)->appends([
+            'search'      => $search,
+            'category_id' => $category_id,
+            'statut'      => $statut,
+            'sort_by'     => $sort_by,
+            'sort_order'  => $sort_order,
+            'stat_mois'   => $stat_mois,
+            'stat_annee'  => $stat_annee,
+        ]);
+
+        foreach ($produits as $produit) {
+            // Quantité vendue (filtrée par période si applicable)
+            $qVendue = RecuItem::where('produit_id', $produit->id)
+                ->whereHas('recuUcg', function($q) use ($dateDebutStats, $dateFinStats) {
+                    $q->whereIn('statut', ['en_cours', 'livre']);
+                    if ($dateDebutStats && $dateFinStats) {
+                        $q->whereBetween('created_at', [$dateDebutStats, $dateFinStats]);
+                    }
+                });
+            $produit->quantite_vendue = $qVendue->sum('quantite');
+
+            // Total ventes CA brut (filtré)
+            $produit->total_vendu_montant = RecuItem::where('produit_id', $produit->id)
+                ->whereHas('recuUcg', function($q) use ($dateDebutStats, $dateFinStats) {
+                    $q->whereIn('statut', ['en_cours', 'livre']);
+                    if ($dateDebutStats && $dateFinStats) {
+                        $q->whereBetween('created_at', [$dateDebutStats, $dateFinStats]);
+                    }
+                })
+                ->sum('sous_total');
+
+            // ✅ MARGE = profit réel, indépendant de la remise (filtré par période)
+            $produit->marge_totale = RecuItem::where('produit_id', $produit->id)
+                ->whereHas('recuUcg', function($q) use ($dateDebutStats, $dateFinStats) {
+                    $q->whereIn('statut', ['en_cours', 'livre']);
+                    if ($dateDebutStats && $dateFinStats) {
+                        $q->whereBetween('created_at', [$dateDebutStats, $dateFinStats]);
+                    }
+                })
+                ->sum('marge_totale');
+
+            // Dernier prix d'achat
+            $dernierAchat = Achat::where('produit_id', $produit->id)
+                ->latest('date_achat')
+                ->first();
+            $produit->dernier_prix_achat = $dernierAchat ? $dernierAchat->prix_achat : ($produit->prix_achat ?? 0);
+
+            // Catégorie
+            $produit->categorie_nom = $produit->category ? $produit->category->nom : 'N/A';
+
+            // Marge en pourcentage
+            if ($produit->prix_achat > 0 && $produit->prix_vente > 0) {
+                $produit->marge_pourcentage = (($produit->prix_vente - $produit->prix_achat) / $produit->prix_achat) * 100;
+            } else {
+                $produit->marge_pourcentage = 0;
+            }
+        }
+
+        // ✅ STATISTIQUES GLOBALES (filtrées par période)
+        $statsGlobales = $this->getStatsGlobales($dateDebutStats, $dateFinStats);
+
+        // Années disponibles pour le filtre
+        $anneesDisponibles = RecuUcg::whereIn('statut', ['en_cours', 'livre'])
+            ->selectRaw('YEAR(created_at) as annee')
+            ->distinct()
+            ->orderByDesc('annee')
+            ->pluck('annee');
+
+        return view('produits.index', compact(
+            'produits',
+            'categories',
+            'search',
+            'category_id',
+            'statut',
+            'sort_by',
+            'sort_order',
+            'stat_mois',
+            'stat_annee',
+            'statsGlobales',
+            'anneesDisponibles'
+        ));
     }
 
-    return view('produits.index', compact(
-        'produits',
-        'categories',
-        'search',
-        'category_id',
-        'statut',
-        'sort_by',
-        'sort_order'
-    ));
-}
+    /**
+     * ✅ Calcul des statistiques globales filtrées par période
+     */
+    private function getStatsGlobales($dateDebut = null, $dateFin = null)
+    {
+        // Total produits actifs
+        $totalProduits = Produit::count();
+        $produitsActifs = Produit::where('actif', true)->count();
+        $alertesStock = Produit::whereColumn('quantite_stock', '<=', 'stock_alerte')->count();
 
-    
-    
-    public function getTotals(Request $request)
-{
-    $date = $request->input('date', now()->format('Y-m'));
-    
-    $dateDebut = Carbon::parse($date . '-01')->startOfMonth();
-    $dateFin = Carbon::parse($date . '-01')->endOfMonth();
+        // CA total (filtré)
+        $caQuery = RecuUcg::whereIn('statut', ['en_cours', 'livre']);
+        if ($dateDebut && $dateFin) {
+            $caQuery->whereBetween('created_at', [$dateDebut, $dateFin]);
+        }
+        $caTotalBrut = $caQuery->sum('total');
 
-    $totalAchat = Achat::whereBetween('date_achat', [$dateDebut, $dateFin])
-        ->sum('total_achat');
+        // Remises totales (filtrées)
+        $remiseQuery = RecuUcg::whereIn('statut', ['en_cours', 'livre']);
+        if ($dateDebut && $dateFin) {
+            $remiseQuery->whereBetween('created_at', [$dateDebut, $dateFin]);
+        }
+        $totalRemises = $remiseQuery->sum('remise');
 
-    $totalVente = RecuUcg::whereBetween('created_at', [$dateDebut, $dateFin])
-        ->whereIn('statut', ['en_cours', 'livre'])
-        ->sum('total');
+        $caNet = $caTotalBrut - $totalRemises;
 
-    $totalStock = Produit::sum('quantite_stock');
+        // Marge totale (filtrée)
+        $margeQuery = DB::table('recu_items')
+            ->join('recus_ucgs', 'recu_items.recu_ucg_id', '=', 'recus_ucgs.id')
+            ->whereIn('recus_ucgs.statut', ['en_cours', 'livre'])
+            ->whereNull('recus_ucgs.deleted_at');
+        if ($dateDebut && $dateFin) {
+            $margeQuery->whereBetween('recus_ucgs.created_at', [$dateDebut, $dateFin]);
+        }
+        $margeTotale = $margeQuery->sum('recu_items.marge_totale');
 
-    // ✅ CALCUL VALEUR STOCK GLOBALE (FIFO + Stock Non-Enregistré)
-    
-    // 1️⃣ Valeur FIFO (stock enregistré dans achats)
-    $valeurStockFifo = DB::table('achats')
-        ->whereNull('deleted_at')
-        ->where('quantite_restante', '>', 0)
-        ->selectRaw('SUM(quantite_restante * prix_achat) as total')
-        ->value('total') ?? 0;
-    
-    // 2️⃣ Pour chaque produit: calculer stock non-enregistré
-    $produits = Produit::whereNull('deleted_at')->get();
-    $valeurStockNonEnregistre = 0;
-    
-    foreach ($produits as $produit) {
-        $stockFifo = Achat::where('produit_id', $produit->id)
+        // Total ventes (nb de reçus filtrés)
+        $nbVentesQuery = RecuUcg::whereIn('statut', ['en_cours', 'livre']);
+        if ($dateDebut && $dateFin) {
+            $nbVentesQuery->whereBetween('created_at', [$dateDebut, $dateFin]);
+        }
+        $nbVentes = $nbVentesQuery->count();
+
+        // Total unités vendues (filtrées)
+        $unitesVenduesQuery = RecuItem::whereHas('recuUcg', function($q) use ($dateDebut, $dateFin) {
+            $q->whereIn('statut', ['en_cours', 'livre']);
+            if ($dateDebut && $dateFin) {
+                $q->whereBetween('created_at', [$dateDebut, $dateFin]);
+            }
+        });
+        $unitesVendues = $unitesVenduesQuery->sum('quantite');
+
+        // Valeur stock totale (toujours globale, pas filtrée par date)
+        $valeurStockFifo = DB::table('achats')
+            ->whereNull('deleted_at')
             ->where('quantite_restante', '>', 0)
-            ->sum('quantite_restante');
-        
-        $stockNonEnregistre = max(0, $produit->quantite_stock - $stockFifo);
-        $valeurStockNonEnregistre += $stockNonEnregistre * ($produit->prix_achat ?? 0);
+            ->selectRaw('SUM(quantite_restante * prix_achat) as total')
+            ->value('total') ?? 0;
+
+        $produitsTous = Produit::whereNull('deleted_at')->get();
+        $valeurStockNonEnregistre = 0;
+        foreach ($produitsTous as $p) {
+            $stockFifo = Achat::where('produit_id', $p->id)->where('quantite_restante', '>', 0)->sum('quantite_restante');
+            $stockNonEnregistre = max(0, $p->quantite_stock - $stockFifo);
+            $valeurStockNonEnregistre += $stockNonEnregistre * ($p->prix_achat ?? 0);
+        }
+        $valeurStock = $valeurStockFifo + $valeurStockNonEnregistre;
+
+        return [
+            'total_produits'  => $totalProduits,
+            'produits_actifs' => $produitsActifs,
+            'alertes_stock'   => $alertesStock,
+            'ca_net'          => $caNet,
+            'ca_brut'         => $caTotalBrut,
+            'total_remises'   => $totalRemises,
+            'marge_totale'    => $margeTotale,
+            'nb_ventes'       => $nbVentes,
+            'unites_vendues'  => $unitesVendues,
+            'valeur_stock'    => $valeurStock,
+        ];
     }
-    
-    // 3️⃣ TOTAL = FIFO + Non-Enregistré
-    $valeurStock = $valeurStockFifo + $valeurStockNonEnregistre;
 
-    $totalMarge = DB::table('recu_items')
-        ->join('recus_ucgs', 'recu_items.recu_ucg_id', '=', 'recus_ucgs.id')
-        ->whereBetween('recus_ucgs.created_at', [$dateDebut, $dateFin])
-        ->whereIn('recus_ucgs.statut', ['en_cours', 'livre'])
-        ->whereNull('recus_ucgs.deleted_at')
-        ->sum('recu_items.marge_totale');
+    // ===== MÉTHODES INCHANGÉES =====
 
-    $benefice = $totalMarge;
+    public function getTotals(Request $request)
+    {
+        $date = $request->input('date', now()->format('Y-m'));
+        $dateDebut = Carbon::parse($date . '-01')->startOfMonth();
+        $dateFin   = Carbon::parse($date . '-01')->endOfMonth();
 
-    return view('produits.totals', compact(
-        'totalAchat',
-        'totalVente',
-        'totalStock',
-        'valeurStock',
-        'benefice',
-        'totalMarge',
-        'date'
-    ));
-}
+        $totalAchat = Achat::whereBetween('date_achat', [$dateDebut, $dateFin])->sum('total_achat');
+        $totalVente = RecuUcg::whereBetween('created_at', [$dateDebut, $dateFin])->whereIn('statut', ['en_cours', 'livre'])->sum('total');
+        $totalStock = Produit::sum('quantite_stock');
 
+        $valeurStockFifo = DB::table('achats')->whereNull('deleted_at')->where('quantite_restante', '>', 0)
+            ->selectRaw('SUM(quantite_restante * prix_achat) as total')->value('total') ?? 0;
+
+        $produits = Produit::whereNull('deleted_at')->get();
+        $valeurStockNonEnregistre = 0;
+        foreach ($produits as $produit) {
+            $stockFifo = Achat::where('produit_id', $produit->id)->where('quantite_restante', '>', 0)->sum('quantite_restante');
+            $stockNonEnregistre = max(0, $produit->quantite_stock - $stockFifo);
+            $valeurStockNonEnregistre += $stockNonEnregistre * ($produit->prix_achat ?? 0);
+        }
+        $valeurStock = $valeurStockFifo + $valeurStockNonEnregistre;
+
+        $totalMarge = DB::table('recu_items')
+            ->join('recus_ucgs', 'recu_items.recu_ucg_id', '=', 'recus_ucgs.id')
+            ->whereBetween('recus_ucgs.created_at', [$dateDebut, $dateFin])
+            ->whereIn('recus_ucgs.statut', ['en_cours', 'livre'])
+            ->whereNull('recus_ucgs.deleted_at')
+            ->sum('recu_items.marge_totale');
+
+        $benefice = $totalMarge;
+
+        return view('produits.totals', compact('totalAchat', 'totalVente', 'totalStock', 'valeurStock', 'benefice', 'totalMarge', 'date'));
+    }
 
     public function exportPDF(Request $request)
     {
-        $dateFin = $request->input('date') ? Carbon::parse($request->input('date'))->endOfMonth() : Carbon::now()->endOfMonth();
+        $dateFin   = $request->input('date') ? Carbon::parse($request->input('date'))->endOfMonth() : Carbon::now()->endOfMonth();
         $dateDebut = $dateFin->copy()->startOfMonth();
 
         $produits = DB::table('produits')
@@ -219,10 +310,7 @@ class ProduitController extends Controller
             ->whereNull('produits.deleted_at')
             ->whereNotNull('recus_ucgs.id')
             ->select(
-                'produits.id',
-                'produits.nom',
-                'produits.reference',
-                'produits.prix_achat',
+                'produits.id', 'produits.nom', 'produits.reference', 'produits.prix_achat',
                 'categories.nom as categorie_nom',
                 DB::raw('SUM(recu_items.quantite) as quantite_vendue'),
                 DB::raw('SUM(recu_items.sous_total) as total_vendu_montant'),
@@ -234,9 +322,7 @@ class ProduitController extends Controller
             ->get();
 
         foreach ($produits as $produit) {
-            $dernierAchat = Achat::where('produit_id', $produit->id)
-                ->latest('date_achat')
-                ->first();
+            $dernierAchat = Achat::where('produit_id', $produit->id)->latest('date_achat')->first();
             $produit->prix_achat_moyen = $dernierAchat ? $dernierAchat->prix_achat : ($produit->prix_achat ?? 0);
             $produit->categorie_nom = $produit->categorie_nom ?? 'N/A';
         }

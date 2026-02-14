@@ -805,6 +805,140 @@
             .filters-grid { grid-template-columns: 1fr; }
             .quick-edit-grid { grid-template-columns: 1fr; }
         }
+        .stats-filter-bar {
+    background: white;
+    padding: 16px 24px;
+    border-radius: 14px;
+    margin-bottom: 16px;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.07);
+    border-left: 5px solid #C2185B;
+}
+
+.stats-filter-inner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.stats-filter-label {
+    font-weight: 700;
+    color: #555;
+    font-size: 0.95rem;
+    white-space: nowrap;
+}
+
+.stats-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stats-filter-group label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stats-filter-group input[type="month"],
+.stats-filter-group select {
+    padding: 8px 14px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: white;
+    cursor: pointer;
+}
+
+.stats-filter-group input[type="month"]:focus,
+.stats-filter-group select:focus {
+    outline: none;
+    border-color: #C2185B;
+    box-shadow: 0 0 0 3px rgba(194, 24, 91, 0.1);
+}
+
+.stats-filter-sep {
+    color: #ccc;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.btn-reset-stats {
+    padding: 8px 16px;
+    background: #FFEBEE;
+    color: #C62828;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-reset-stats:hover {
+    background: #C62828;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.stats-periode-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: linear-gradient(135deg, #C2185B, #D32F2F);
+    color: white;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    margin-left: auto;
+}
+
+.stats-periode-badge.all {
+    background: linear-gradient(135deg, #607D8B, #455A64);
+}
+
+.remise-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    background: #FFEBEE;
+    color: #C62828;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 4px;
+    font-weight: 600;
+}
+
+/* ===== STATS GRID ÉTENDU ===== */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 25px;
+}
+
+/* Nouvelles couleurs pour les nouvelles cartes */
+.stat-card.blue   { border-color: #2196F3; color: #2196F3; }
+.stat-card.teal   { border-color: #009688; color: #009688; }
+.stat-card.indigo { border-color: #3F51B5; color: #3F51B5; }
+.stat-card.purple { border-color: #9C27B0; color: #9C27B0; }
+
+@media (max-width: 768px) {
+    .stats-filter-inner { flex-direction: column; align-items: flex-start; }
+    .stats-periode-badge { margin-left: 0; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 480px) {
+    .stats-grid { grid-template-columns: 1fr; }
+}
     </style>
 
     <div class="container-fluid">
@@ -816,32 +950,63 @@
 
         <!-- Statistics Cards -->
         <div class="stats-grid">
-            <div class="stat-card primary">
-                <div class="stat-icon"><i class="fas fa-box"></i></div>
-                <div class="stat-value">{{ $produits->total() }}</div>
-                <div class="stat-label">Produits Total</div>
-            </div>
-            
-            <div class="stat-card success">
-                <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
-                <div class="stat-value">{{ $produits->where('actif', true)->count() }}</div>
-                <div class="stat-label">Produits Actifs</div>
-            </div>
-            
-            <div class="stat-card warning">
-                <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
-                <div class="stat-value">{{ $produits->filter(function($p) { return $p->quantite_stock <= $p->stock_alerte; })->count() }}</div>
-                <div class="stat-label">Alertes Stock</div>
-            </div>
-            
-            @can('produit-rapport')
-            <div class="stat-card info">
-                <div class="stat-icon"><i class="fas fa-coins"></i></div>
-                <div class="stat-value">{{ number_format($produits->sum('marge_totale'), 0) }} DH</div>
-                <div class="stat-label">Marge Totale</div>
-            </div>
-            @endcan
+    <div class="stat-card primary">
+        <div class="stat-icon"><i class="fas fa-box"></i></div>
+        <div class="stat-value">{{ number_format($statsGlobales['total_produits']) }}</div>
+        <div class="stat-label">Produits Total</div>
+    </div>
+
+    <div class="stat-card success">
+        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-value">{{ number_format($statsGlobales['produits_actifs']) }}</div>
+        <div class="stat-label">Produits Actifs</div>
+    </div>
+
+    <div class="stat-card warning">
+        <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="stat-value">{{ number_format($statsGlobales['alertes_stock']) }}</div>
+        <div class="stat-label">Alertes Stock</div>
+    </div>
+
+    <div class="stat-card blue">
+        <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
+        <div class="stat-value">{{ number_format($statsGlobales['nb_ventes']) }}</div>
+        <div class="stat-label">Nb Ventes</div>
+    </div>
+
+    <div class="stat-card teal">
+        <div class="stat-icon"><i class="fas fa-boxes"></i></div>
+        <div class="stat-value">{{ number_format($statsGlobales['unites_vendues']) }}</div>
+        <div class="stat-label">Unités Vendues</div>
+    </div>
+
+    @can('produit-rapport')
+    <div class="stat-card indigo">
+        <div class="stat-icon"><i class="fas fa-cash-register"></i></div>
+        <div class="stat-value">{{ number_format($statsGlobales['ca_net'], 0) }} DH</div>
+        <div class="stat-label">
+            CA Net
+            @if($statsGlobales['total_remises'] > 0)
+            <span class="remise-badge">-{{ number_format($statsGlobales['total_remises'], 0) }} DH remises</span>
+            @endif
         </div>
+    </div>
+
+    <div class="stat-card info">
+        <div class="stat-icon"><i class="fas fa-coins"></i></div>
+        <div class="stat-value">{{ number_format($statsGlobales['marge_totale'], 0) }} DH</div>
+        <div class="stat-label">Marge Totale</div>
+    </div>
+
+    <div class="stat-card purple">
+        <div class="stat-icon"><i class="fas fa-warehouse"></i></div>
+        <div class="stat-value">{{ number_format($statsGlobales['valeur_stock'], 0) }} DH</div>
+        <div class="stat-label">Valeur Stock</div>
+    </div>
+    @endcan
+</div>
+
+
 
         <!-- ✅ NOUVELLE SECTION FILTRES -->
         <div class="filters-bar">
@@ -887,6 +1052,74 @@
                         </select>
                     </div>
                 </div>
+
+                <!-- ✅ FILTRES STATISTIQUES PAR PÉRIODE -->
+<div class="stats-filter-bar">
+    <form action="{{ route('produits.index') }}" method="GET" id="statsFilterForm">
+        {{-- Conserver tous les filtres produits existants --}}
+        <input type="hidden" name="search"      value="{{ $search }}">
+        <input type="hidden" name="category_id" value="{{ $category_id }}">
+        <input type="hidden" name="statut"      value="{{ $statut }}">
+        <input type="hidden" name="sort_by"     value="{{ $sort_by }}">
+        <input type="hidden" name="sort_order"  value="{{ $sort_order }}">
+
+        <div class="stats-filter-inner">
+            <span class="stats-filter-label">
+                <i class="fas fa-calendar-alt"></i> Période des statistiques :
+            </span>
+
+            <div class="stats-filter-group">
+                <label>Par Mois</label>
+                <input type="month"
+                       name="stat_mois"
+                       value="{{ $stat_mois }}"
+                       max="{{ now()->format('Y-m') }}"
+                       onchange="clearAnnee(); this.form.submit()">
+            </div>
+
+            <span class="stats-filter-sep">ou</span>
+
+            <div class="stats-filter-group">
+                <label>Par Année</label>
+                <select name="stat_annee" id="stat_annee_select" onchange="clearMois(); this.form.submit()">
+                    <option value="">Toutes les années</option>
+                    @foreach($anneesDisponibles as $annee)
+                        <option value="{{ $annee }}" {{ $stat_annee == $annee ? 'selected' : '' }}>
+                            {{ $annee }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            @if($stat_mois || $stat_annee)
+            <a href="{{ route('produits.index', array_filter([
+                'search'      => $search,
+                'category_id' => $category_id,
+                'statut'      => $statut,
+                'sort_by'     => $sort_by,
+                'sort_order'  => $sort_order,
+            ])) }}" class="btn-reset-stats">
+                <i class="fas fa-times-circle"></i> Tout afficher
+            </a>
+            @endif
+
+            @if($stat_mois || $stat_annee)
+            <span class="stats-periode-badge">
+                <i class="fas fa-filter"></i>
+                @if($stat_mois)
+                    {{ \Carbon\Carbon::parse($stat_mois . '-01')->translatedFormat('F Y') }}
+                @else
+                    Année {{ $stat_annee }}
+                @endif
+            </span>
+            @else
+            <span class="stats-periode-badge all">
+                <i class="fas fa-infinity"></i> Toutes périodes
+            </span>
+            @endif
+        </div>
+    </form>
+</div>
 
                 <!-- Actions des Filtres -->
                 <div class="filter-actions">
@@ -1680,5 +1913,13 @@
                 showConfirmButton: false
             });
         @endif
+
+        function clearAnnee() {
+    document.getElementById('stat_annee_select').value = '';
+}
+function clearMois() {
+    const moisInput = document.querySelector('[name="stat_mois"]');
+    if (moisInput) moisInput.value = '';
+}
     </script>
 </x-app-layout>

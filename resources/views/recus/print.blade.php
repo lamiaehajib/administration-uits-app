@@ -5,9 +5,7 @@
     <title>Reçu {{ $recu->numero_recu }}</title>
     <style>
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             font-family: 'Arial', sans-serif;
@@ -15,21 +13,24 @@
             line-height: 1.3;
             color: #333;
             background: white;
-            /* ✅ Laisser de l'espace en bas pour le footer fixe */
             margin: 0;
             padding: 0;
         }
 
-        /* ✅ FOOTER FIXE - s'affiche sur chaque page en bas */
-        .footer {
+        /* ============================================================
+           FOOTER - position fixed = DomPDF le répète sur chaque page
+           Sur 1 page  → apparaît en bas de cette page ✅
+           Sur 2 pages → apparaît en bas de chaque page ✅
+        ============================================================ */
+        #footer-fixed {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            border-top: 2px solid #eee;
-            padding-top: 6px;
+            height: 110px;
             background: white;
-            /* ✅ Hauteur suffisante pour tout le contenu du footer */
+            border-top: 2px solid #eee;
+            padding-top: 5px;
         }
 
         .footer-content {
@@ -39,37 +40,67 @@
 
         .footer-left {
             display: table-cell;
-            width: 65%;
+            width: 63%;
             vertical-align: middle;
-            font-size: 7pt;
-            color: #666;
-            line-height: 1.5;
         }
 
         .footer-right {
             display: table-cell;
-            width: 35%;
+            width: 37%;
             text-align: center;
             vertical-align: middle;
         }
 
-        .footer-text {
-            font-size: 8px;
+        .signatures {
+            display: table;
+            width: 100%;
+            margin-top: 4px;
+        }
+
+        .signature-box {
+            display: table-cell;
+            width: 50%;
             text-align: center;
-            padding-top: 4px;
         }
 
-        .footer-text p {
-            margin: 1px 0;
+        .signature-line {
+            width: 120px;
+            border-top: 1px solid #333;
+            margin: 0 auto;
+            padding-top: 3px;
+            font-size: 7pt;
+            color: #666;
         }
 
-        /* ✅ HEADER FIXE - s'affiche sur chaque page en haut (sauf première) */
-        /* Pour DomPDF, on utilise position:fixed pour répéter sur chaque page */
+        .qr-code {
+            width: 65px;
+            height: 65px;
+            border: 2px solid #3498db;
+            border-radius: 4px;
+            padding: 2px;
+        }
 
-        /* ✅ ESPACEMENT CORPS - pour éviter chevauchement avec footer */
+        .qr-label {
+            font-size: 6pt;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .footer-text {
+            font-size: 7.5px;
+            text-align: center;
+            padding-top: 3px;
+            color: #555;
+        }
+
+        .footer-text p { margin: 1px 0; }
+
+        /* ============================================================
+           CONTENU PRINCIPAL
+           margin-bottom >= height du footer pour éviter le chevauchement
+        ============================================================ */
         .page-content {
-            /* Marge basse = hauteur du footer (~65px) */
-            margin-bottom: 80px;
+            margin-bottom: 120px;
         }
 
         /* HEADER */
@@ -91,7 +122,7 @@
         }
 
         .logo {
-            width: 300px;
+            width: 280px;
             height: auto;
             margin-bottom: 3px;
         }
@@ -116,21 +147,6 @@
             color: #333;
             margin-bottom: 4px;
         }
-
-        .status-badge {
-            display: inline-block;
-            padding: 3px 10px;
-            font-size: 7pt;
-            font-weight: bold;
-            border-radius: 3px;
-            margin-left: 4px;
-            text-transform: uppercase;
-        }
-
-        .status-success { background: #27ae60; color: white; }
-        .status-warning { background: #f39c12; color: white; }
-        .status-danger  { background: #e74c3c; color: white; }
-        .status-info    { background: #3498db; color: white; }
 
         /* CLIENT INFO */
         .info-row {
@@ -169,9 +185,7 @@
             font-weight: bold;
         }
 
-        .info-value {
-            color: #333;
-        }
+        .info-value { color: #333; }
 
         /* GARANTIE */
         .warranty-box {
@@ -182,6 +196,7 @@
             text-align: center;
             margin: 6px 0;
             width: 100%;
+            page-break-inside: avoid;
         }
 
         .warranty-title {
@@ -196,6 +211,34 @@
             color: #856404;
         }
 
+        /* CONFIGURATION BOX */
+        .config-box {
+            background: #f0f8ff;
+            border: 1px solid #3498db;
+            border-radius: 4px;
+            padding: 8px;
+            margin: 8px 0;
+            width: 100%;
+        }
+
+        .config-title {
+            font-size: 9pt;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+            padding-bottom: 3px;
+            border-bottom: 1px solid #bdc3c7;
+        }
+
+        .config-item {
+            font-size: 8pt;
+            color: #34495e;
+            margin-bottom: 4px;
+            padding: 3px 0;
+            border-bottom: 1px dashed #ecf0f1;
+            page-break-inside: avoid;
+        }
+
         /* ITEMS TABLE */
         .items-table {
             width: 100%;
@@ -205,6 +248,7 @@
         }
 
         .items-table thead {
+            display: table-header-group;
             background: #e74c3c;
             color: white;
         }
@@ -221,18 +265,12 @@
             border-bottom: 1px solid #eee;
         }
 
-        .items-table tbody tr:last-child td {
-            border-bottom: 2px solid #e74c3c;
-        }
-
-        /* ✅ Répéter l'en-tête du tableau sur chaque page */
-        .items-table thead {
-            display: table-header-group;
-        }
-
-        /* ✅ Éviter de couper une ligne de tableau en deux pages */
         .items-table tbody tr {
             page-break-inside: avoid;
+        }
+
+        .items-table tbody tr:last-child td {
+            border-bottom: 2px solid #e74c3c;
         }
 
         .text-center { text-align: center; }
@@ -240,11 +278,10 @@
 
         /* TOTALS */
         .totals {
-            width: 200px;
+            width: 210px;
             margin-left: auto;
             margin-top: 8px;
             font-size: 8pt;
-            /* ✅ Ne pas couper le bloc des totaux sur deux pages */
             page-break-inside: avoid;
         }
 
@@ -290,7 +327,6 @@
             border-radius: 4px;
             padding: 6px;
             margin: 8px 0;
-            /* ✅ Ne pas couper sur deux pages */
             page-break-inside: avoid;
         }
 
@@ -337,62 +373,6 @@
             margin-bottom: 3px;
         }
 
-        /* CONFIGURATION BOX */
-        .config-box {
-            background: #f0f8ff;
-            border: 1px solid #3498db;
-            border-radius: 4px;
-            padding: 8px;
-            margin: 8px 0;
-            width: 100%;
-            page-break-inside: avoid;
-        }
-
-        .config-title {
-            font-size: 9pt;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 5px;
-            padding-bottom: 3px;
-            border-bottom: 1px solid #bdc3c7;
-        }
-
-        /* SIGNATURES */
-        .signatures {
-            display: table;
-            width: 100%;
-            margin-top: 4px;
-        }
-
-        .signature-box {
-            display: table-cell;
-            width: 50%;
-            text-align: center;
-        }
-
-        .signature-line {
-            width: 120px;
-            border-top: 1px solid #333;
-            margin: 0 auto;
-            padding-top: 3px;
-            font-size: 7pt;
-            color: #666;
-        }
-
-        .qr-code {
-            width: 70px;
-            height: 70px;
-            border: 2px solid #3498db;
-            border-radius: 4px;
-            padding: 2px;
-        }
-
-        .qr-label {
-            font-size: 6pt;
-            color: #666;
-            margin-top: 2px;
-        }
-
         @media print {
             body { margin: 0; padding: 0; }
         }
@@ -401,17 +381,23 @@
 </head>
 <body>
 
-    <!-- ✅ FOOTER FIXE - apparaît sur TOUTES les pages en bas -->
-    <div class="footer">
+    <!-- ====================================================
+         FOOTER FIXE
+         position:fixed → DomPDF le place en bas de CHAQUE page
+         1 page  → bas de la page ✅
+         2 pages → bas de chaque page ✅
+    ==================================================== -->
+    <div id="footer-fixed">
         <div class="footer-content">
             <div class="footer-left">
                 <div class="signatures">
                     <div class="signature-box">
                         <img src="{{ public_path('images/signature-r.png') }}" alt="Stamp"
-                             style="width: 40px; height: 40px; margin-bottom: 2px;">
+                             style="width: 38px; height: 38px; margin-bottom: 2px;">
                         <div class="signature-line">Signature vendeur</div>
                     </div>
                     <div class="signature-box">
+                        <div style="height: 38px;"></div>
                         <div class="signature-line">Signature client</div>
                     </div>
                 </div>
@@ -428,7 +414,9 @@
         </div>
     </div>
 
-    <!-- ✅ CONTENU PRINCIPAL avec marge basse pour ne pas chevaucher le footer -->
+    <!-- ====================================================
+         CONTENU PRINCIPAL
+    ==================================================== -->
     <div class="page-content">
 
         <!-- HEADER -->
@@ -504,46 +492,26 @@
             <div class="config-title">CONFIGURATION</div>
             @foreach($recu->items as $item)
                 @php
-                    $description_brute = $item->produit && $item->produit->description ? $item->produit->description : null;
+                    $description_brute = $item->produit && $item->produit->description
+                        ? $item->produit->description
+                        : null;
 
                     if ($description_brute && $item->variant) {
                         $variant = $item->variant;
-
                         if ($variant->ram) {
-                            $description_brute = preg_replace(
-                                '/RAM\s*:\s*\d+\s*GB/i',
-                                'RAM: ' . $variant->ram,
-                                $description_brute
-                            );
+                            $description_brute = preg_replace('/RAM\s*:\s*\d+\s*GB/i', 'RAM: ' . $variant->ram, $description_brute);
                         }
                         if ($variant->ssd) {
-                            $description_brute = preg_replace(
-                                '/SSD\s*:\s*\d+\s*(?:GB|TB)(?:\s+NVMe)?/i',
-                                'SSD: ' . $variant->ssd,
-                                $description_brute
-                            );
+                            $description_brute = preg_replace('/SSD\s*:\s*\d+\s*(?:GB|TB)(?:\s+NVMe)?/i', 'SSD: ' . $variant->ssd, $description_brute);
                         }
                         if ($variant->cpu) {
-                            $description_brute = preg_replace(
-                                '/CPU\s*:\s*[^\n]+/i',
-                                'CPU: ' . $variant->cpu,
-                                $description_brute
-                            );
+                            $description_brute = preg_replace('/CPU\s*:\s*[^\n]+/i', 'CPU: ' . $variant->cpu, $description_brute);
                         }
                         if ($variant->gpu) {
-                            $description_brute = preg_replace(
-                                '/GPU\s*(?:1|2)?\s*:\s*[^\n]+/i',
-                                'GPU: ' . $variant->gpu,
-                                $description_brute,
-                                1
-                            );
+                            $description_brute = preg_replace('/GPU\s*(?:1|2)?\s*:\s*[^\n]+/i', 'GPU: ' . $variant->gpu, $description_brute, 1);
                         }
                         if ($variant->ecran) {
-                            $description_brute = preg_replace(
-                                '/Écran\s*:\s*[^\n]+/i',
-                                'Écran: ' . $variant->ecran,
-                                $description_brute
-                            );
+                            $description_brute = preg_replace('/Écran\s*:\s*[^\n]+/i', 'Écran: ' . $variant->ecran, $description_brute);
                         }
                     }
 
@@ -552,18 +520,20 @@
                         $replace = ['"', '"', '\'', '\"', '\"', '\'', ' ', '', '', '-'];
                         $description_clean = str_replace($search, $replace, $description_brute);
                         $description_final = htmlspecialchars($description_clean, ENT_QUOTES, 'UTF-8', false);
+                    } else {
+                        $description_final = null;
                     }
                 @endphp
 
-                @if(isset($description_final))
-                <div style="font-size: 8pt; color: #34495e; margin-bottom: 4px; padding: 3px 0; border-bottom: 1px dashed #ecf0f1; page-break-inside: avoid;">
+                @if($description_final)
+                <div class="config-item">
                     <strong style="color: #e74c3c;">
                         {{ $item->produit->nom }}
                         @if($item->variant)
                             <span style="color: #3498db; font-size: 7.5pt;">({{ $item->variant->variant_name }})</span>
-                        @endif:
+                        @endif :
                     </strong>
-                    <span style="margin-left: 5px;">{!! nl2br($description_final) !!}</span>
+                    <span style="margin-left: 4px;">{!! nl2br($description_final) !!}</span>
                 </div>
                 @endif
             @endforeach
@@ -575,14 +545,10 @@
         <div class="warranty-box">
             <div class="warranty-title">GARANTIE</div>
             <div class="warranty-text">
-                @if($recu->type_garantie === '30_jours')
-                    Garantie de 30 jours
-                @elseif($recu->type_garantie === '90_jours')
-                    Garantie de 90 jours
-                @elseif($recu->type_garantie === '180_jours')
-                    Garantie de 180 jours
-                @elseif($recu->type_garantie === '360_jours')
-                    Garantie de 360 jours
+                @if($recu->type_garantie === '30_jours')     Garantie de 30 jours
+                @elseif($recu->type_garantie === '90_jours')  Garantie de 90 jours
+                @elseif($recu->type_garantie === '180_jours') Garantie de 180 jours
+                @elseif($recu->type_garantie === '360_jours') Garantie de 360 jours
                 @endif
             </div>
         </div>
@@ -616,7 +582,9 @@
         <div class="totals">
             <div class="total-row">
                 <div class="total-label">Sous-total</div>
-                <div class="total-value">{{ number_format($recu->total + $recu->remise - ($recu->total * $recu->tva / 100), 2) }} DH</div>
+                <div class="total-value">
+                    {{ number_format($recu->total + $recu->remise - ($recu->total * $recu->tva / 100), 2) }} DH
+                </div>
             </div>
             @if($recu->remise > 0)
             <div class="total-row">
@@ -662,7 +630,7 @@
         </div>
         @endif
 
-    </div><!-- end page-content -->
+    </div><!-- end .page-content -->
 
 </body>
 </html>

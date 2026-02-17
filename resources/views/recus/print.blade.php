@@ -4,19 +4,75 @@
     <meta charset="UTF-8">
     <title>Reçu {{ $recu->numero_recu }}</title>
     <style>
-       
-       
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Arial', sans-serif;
             font-size: 9pt;
             line-height: 1.3;
             color: #333;
             background: white;
+            /* ✅ Laisser de l'espace en bas pour le footer fixe */
+            margin: 0;
+            padding: 0;
         }
 
-        
+        /* ✅ FOOTER FIXE - s'affiche sur chaque page en bas */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            border-top: 2px solid #eee;
+            padding-top: 6px;
+            background: white;
+            /* ✅ Hauteur suffisante pour tout le contenu du footer */
+        }
 
-        /* HEADER - M9ad */
+        .footer-content {
+            display: table;
+            width: 100%;
+        }
+
+        .footer-left {
+            display: table-cell;
+            width: 65%;
+            vertical-align: middle;
+            font-size: 7pt;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .footer-right {
+            display: table-cell;
+            width: 35%;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .footer-text {
+            font-size: 8px;
+            text-align: center;
+            padding-top: 4px;
+        }
+
+        .footer-text p {
+            margin: 1px 0;
+        }
+
+        /* ✅ HEADER FIXE - s'affiche sur chaque page en haut (sauf première) */
+        /* Pour DomPDF, on utilise position:fixed pour répéter sur chaque page */
+
+        /* ✅ ESPACEMENT CORPS - pour éviter chevauchement avec footer */
+        .page-content {
+            /* Marge basse = hauteur du footer (~65px) */
+            margin-bottom: 80px;
+        }
+
+        /* HEADER */
         .header {
             margin-bottom: 8px;
             padding-bottom: 6px;
@@ -40,19 +96,6 @@
             margin-bottom: 3px;
         }
 
-        .company-name {
-            font-size: 11pt;
-            font-weight: bold;
-            color: #e74c3c;
-            margin-bottom: 2px;
-        }
-
-        .company-details {
-            font-size: 7pt;
-            color: #666;
-            line-height: 1.4;
-        }
-
         .receipt-info {
             display: table-cell;
             width: 60%;
@@ -74,10 +117,6 @@
             margin-bottom: 4px;
         }
 
-        .status-row {
-            margin-top: 3px;
-        }
-
         .status-badge {
             display: inline-block;
             padding: 3px 10px;
@@ -90,10 +129,10 @@
 
         .status-success { background: #27ae60; color: white; }
         .status-warning { background: #f39c12; color: white; }
-        .status-danger { background: #e74c3c; color: white; }
-        .status-info { background: #3498db; color: white; }
+        .status-danger  { background: #e74c3c; color: white; }
+        .status-info    { background: #3498db; color: white; }
 
-        /* CLIENT INFO - M9ad */
+        /* CLIENT INFO */
         .info-row {
             display: table;
             width: 100%;
@@ -107,10 +146,6 @@
             padding: 8px;
             background: #f8f9fa;
             border-radius: 4px;
-        }
-
-        .info-box:first-child {
-            margin-right: 4%;
         }
 
         .info-box-title {
@@ -138,7 +173,7 @@
             color: #333;
         }
 
-        /* GARANTIE - M9ad */
+        /* GARANTIE */
         .warranty-box {
             background: #fff3cd;
             border: 2px solid #ffc107;
@@ -161,7 +196,7 @@
             color: #856404;
         }
 
-        /* ITEMS TABLE - M9ad */
+        /* ITEMS TABLE */
         .items-table {
             width: 100%;
             border-collapse: collapse;
@@ -190,15 +225,27 @@
             border-bottom: 2px solid #e74c3c;
         }
 
-        .text-center { text-align: center; }
-        .text-right { text-align: right; }
+        /* ✅ Répéter l'en-tête du tableau sur chaque page */
+        .items-table thead {
+            display: table-header-group;
+        }
 
-        /* TOTALS - M9ad */
+        /* ✅ Éviter de couper une ligne de tableau en deux pages */
+        .items-table tbody tr {
+            page-break-inside: avoid;
+        }
+
+        .text-center { text-align: center; }
+        .text-right  { text-align: right; }
+
+        /* TOTALS */
         .totals {
             width: 200px;
-            margin-left: 500px;
+            margin-left: auto;
             margin-top: 8px;
             font-size: 8pt;
+            /* ✅ Ne pas couper le bloc des totaux sur deux pages */
+            page-break-inside: avoid;
         }
 
         .total-row {
@@ -235,7 +282,7 @@
             font-size: 10pt;
         }
 
-        /* PAYMENTS - M9ad */
+        /* PAYMENTS */
         .payments {
             width: 100%;
             background: #d4edda;
@@ -243,6 +290,8 @@
             border-radius: 4px;
             padding: 6px;
             margin: 8px 0;
+            /* ✅ Ne pas couper sur deux pages */
+            page-break-inside: avoid;
         }
 
         .payments-title {
@@ -272,7 +321,7 @@
             font-weight: bold;
         }
 
-        /* NOTES - M9ad */
+        /* NOTES */
         .notes {
             background: #fff3cd;
             border-left: 3px solid #ffc107;
@@ -280,65 +329,39 @@
             margin: 8px 0;
             font-size: 8pt;
             color: #856404;
+            page-break-inside: avoid;
         }
 
         .notes-title {
             font-weight: bold;
             margin-bottom: 3px;
         }
- .footer-content {
-            display: table;
-            width: 100%;
-          
-              position: fixed;
-              position: relative;
-        }
-        /* FOOTER - M9ad o mndmaj */
-         .footer {
-            position: absolute;
-            bottom: 30mm;
-            left: 10mm;
-            right: 10mm;
-            border-top: 2px solid #eee;
-            padding-top: 6px;
-        }
 
-       
-
-        .footer-left {
-            display: table-cell;
-            width: 65%;
-            vertical-align: middle;
-            font-size: 7pt;
-            color: #666;
-            line-height: 1.5;
-        }
-
-        .footer-right {
-            display: table-cell;
-            width: 35%;
-            text-align: center;
-            vertical-align: middle;
-        }
-
-        .qr-code {
-            width: 70px;
-            height: 70px;
-            border: 2px solid #3498db;
+        /* CONFIGURATION BOX */
+        .config-box {
+            background: #f0f8ff;
+            border: 1px solid #3498db;
             border-radius: 4px;
-            padding: 2px;
+            padding: 8px;
+            margin: 8px 0;
+            width: 100%;
+            page-break-inside: avoid;
         }
 
-        .qr-label {
-            font-size: 6pt;
-            color: #666;
-            margin-top: 2px;
+        .config-title {
+            font-size: 9pt;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+            padding-bottom: 3px;
+            border-bottom: 1px solid #bdc3c7;
         }
 
+        /* SIGNATURES */
         .signatures {
             display: table;
             width: 100%;
-            margin-top: 8px;
+            margin-top: 4px;
         }
 
         .signature-box {
@@ -356,39 +379,68 @@
             color: #666;
         }
 
+        .qr-code {
+            width: 70px;
+            height: 70px;
+            border: 2px solid #3498db;
+            border-radius: 4px;
+            padding: 2px;
+        }
+
+        .qr-label {
+            font-size: 6pt;
+            color: #666;
+            margin-top: 2px;
+        }
+
         @media print {
-            .page {
-                margin: 0;
-                padding: 0mm;
-            }
+            body { margin: 0; padding: 0; }
         }
-         .footer-text {
-            font-size: 10px; /* Texte plus petit pour économiser de l'espace */
-            
-            margin-top: 90px;
-             position: fixed;
-            text-align: center;
-            margin-left: 180px;
-            
-            
-        }
+
     </style>
 </head>
 <body>
-    <div class="page">
+
+    <!-- ✅ FOOTER FIXE - apparaît sur TOUTES les pages en bas -->
+    <div class="footer">
+        <div class="footer-content">
+            <div class="footer-left">
+                <div class="signatures">
+                    <div class="signature-box">
+                        <img src="{{ public_path('images/signature-r.png') }}" alt="Stamp"
+                             style="width: 40px; height: 40px; margin-bottom: 2px;">
+                        <div class="signature-line">Signature vendeur</div>
+                    </div>
+                    <div class="signature-box">
+                        <div class="signature-line">Signature client</div>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-right">
+                <img src="{{ public_path('images/insta-scan.png') }}" alt="QR Code" class="qr-code">
+                <div class="qr-label">Scannez pour plus d'infos</div>
+            </div>
+        </div>
+        <div class="footer-text">
+            <p>NB: L'écran et le clavier et Circuit Alimentation ne font pas partie de la garantie</p>
+            <p>1er Étage, App 1, N° 68, Rue San Saëns, Belvédère, Casablanca 20300</p>
+            <p>06 55 79 44 42 | contact@uits.ma | www.uits.ma</p>
+        </div>
+    </div>
+
+    <!-- ✅ CONTENU PRINCIPAL avec marge basse pour ne pas chevaucher le footer -->
+    <div class="page-content">
+
         <!-- HEADER -->
         <div class="header">
             <div class="header-content">
                 <div class="logo-section">
                     <img src="{{ public_path('images/logo ugcs-09.png') }}" alt="Logo" class="logo">
-                    
-                    
                 </div>
                 <div class="receipt-info">
                     <div class="receipt-title">REÇU</div>
                     <div class="receipt-number">{{ $recu->numero_recu }}</div>
                     <div style="font-size: 8pt; color: #666;">{{ $recu->created_at->format('d/m/Y à H:i') }}</div>
-                    
                 </div>
             </div>
         </div>
@@ -445,110 +497,92 @@
                 </div>
             </div>
         </div>
-<!-- CONFIGURATION/DESCRIPTION DES PRODUITS -->
-@if($recu->items->count() > 0)
-<div style="background: #f0f8ff; border: 1px solid #3498db; border-radius: 4px; padding: 8px; margin: 8px 0; width: 100%;">
-    <div style="font-size: 9pt; font-weight: bold; color:#2c3e50; margin-bottom: 5px; padding-bottom: 3px; border-bottom: 1px solid #bdc3c7;">
-          CONFIGURATION
-    </div>
-    @foreach($recu->items as $item)
-        @php
-            $description_brute = $item->produit && $item->produit->description ? $item->produit->description : null;
-            
-            // ✅ Si item a un variant, remplacer SEULEMENT les valeurs des specs dans la description
-            if ($description_brute && $item->variant) {
-                $variant = $item->variant;
-                
-                // Remplacer RAM si le variant a une valeur
-                if ($variant->ram) {
-                    // Chercher "RAM: 16GB" ou "RAM : 16GB" ou "ram: 16gb" etc.
-                    $description_brute = preg_replace(
-                        '/RAM\s*:\s*\d+\s*GB/i',
-                        'RAM: ' . $variant->ram,
-                        $description_brute
-                    );
-                }
-                
-                // Remplacer SSD si le variant a une valeur
-                if ($variant->ssd) {
-                    // Chercher "SSD: 512GB" ou "SSD : 512GB NVMe" etc.
-                    $description_brute = preg_replace(
-                        '/SSD\s*:\s*\d+\s*(?:GB|TB)(?:\s+NVMe)?/i',
-                        'SSD: ' . $variant->ssd,
-                        $description_brute
-                    );
-                }
-                
-                // Remplacer CPU si le variant a une valeur
-                if ($variant->cpu) {
-                    // Chercher toute la ligne CPU
-                    $description_brute = preg_replace(
-                        '/CPU\s*:\s*[^\n]+/i',
-                        'CPU: ' . $variant->cpu,
-                        $description_brute
-                    );
-                }
-                
-                // Remplacer GPU si le variant a une valeur
-                if ($variant->gpu) {
-                    // Chercher "GPU 1:" ou "GPU:" 
-                    $description_brute = preg_replace(
-                        '/GPU\s*(?:1|2)?\s*:\s*[^\n]+/i',
-                        'GPU: ' . $variant->gpu,
-                        $description_brute,
-                        1 // Remplacer seulement le premier GPU trouvé
-                    );
-                }
-                
-                // Remplacer Écran si le variant a une valeur
-                if ($variant->ecran) {
-                    $description_brute = preg_replace(
-                        '/Écran\s*:\s*[^\n]+/i',
-                        'Écran: ' . $variant->ecran,
-                        $description_brute
-                    );
-                }
-            }
-            
-            // Nettoyer les caractères spéciaux
-            if ($description_brute) {
-                $search = ['«', '»', '', '«', '»', '', ' ', '‎', '‏', '—']; 
-                $replace = ['"', '"', '\'', '\"', '\"', '\'', ' ', '', '', '-'];
-                
-                $description_clean = str_replace($search, $replace, $description_brute);
-                $description_final = htmlspecialchars($description_clean, ENT_QUOTES, 'UTF-8', false);
-            }
-        @endphp
-        
-        @if(isset($description_final))
-        <div style="font-size: 8pt; color: #34495e; margin-bottom: 4px; padding: 3px 0; border-bottom: 1px dashed #ecf0f1;">
-            <strong style="color: #e74c3c;">
-                {{ $item->produit->nom }}
-                @if($item->variant)
-                    <span style="color: #3498db; font-size: 7.5pt;">({{ $item->variant->variant_name }})</span>
-                @endif:
-            </strong>
-            <span style="margin-left: 5px;">
-                {!! nl2br($description_final) !!}
-            </span>
+
+        <!-- CONFIGURATION/DESCRIPTION DES PRODUITS -->
+        @if($recu->items->count() > 0)
+        <div class="config-box">
+            <div class="config-title">CONFIGURATION</div>
+            @foreach($recu->items as $item)
+                @php
+                    $description_brute = $item->produit && $item->produit->description ? $item->produit->description : null;
+
+                    if ($description_brute && $item->variant) {
+                        $variant = $item->variant;
+
+                        if ($variant->ram) {
+                            $description_brute = preg_replace(
+                                '/RAM\s*:\s*\d+\s*GB/i',
+                                'RAM: ' . $variant->ram,
+                                $description_brute
+                            );
+                        }
+                        if ($variant->ssd) {
+                            $description_brute = preg_replace(
+                                '/SSD\s*:\s*\d+\s*(?:GB|TB)(?:\s+NVMe)?/i',
+                                'SSD: ' . $variant->ssd,
+                                $description_brute
+                            );
+                        }
+                        if ($variant->cpu) {
+                            $description_brute = preg_replace(
+                                '/CPU\s*:\s*[^\n]+/i',
+                                'CPU: ' . $variant->cpu,
+                                $description_brute
+                            );
+                        }
+                        if ($variant->gpu) {
+                            $description_brute = preg_replace(
+                                '/GPU\s*(?:1|2)?\s*:\s*[^\n]+/i',
+                                'GPU: ' . $variant->gpu,
+                                $description_brute,
+                                1
+                            );
+                        }
+                        if ($variant->ecran) {
+                            $description_brute = preg_replace(
+                                '/Écran\s*:\s*[^\n]+/i',
+                                'Écran: ' . $variant->ecran,
+                                $description_brute
+                            );
+                        }
+                    }
+
+                    if ($description_brute) {
+                        $search  = ['«', '»', '', '«', '»', '', ' ', '‎', '‏', '—'];
+                        $replace = ['"', '"', '\'', '\"', '\"', '\'', ' ', '', '', '-'];
+                        $description_clean = str_replace($search, $replace, $description_brute);
+                        $description_final = htmlspecialchars($description_clean, ENT_QUOTES, 'UTF-8', false);
+                    }
+                @endphp
+
+                @if(isset($description_final))
+                <div style="font-size: 8pt; color: #34495e; margin-bottom: 4px; padding: 3px 0; border-bottom: 1px dashed #ecf0f1; page-break-inside: avoid;">
+                    <strong style="color: #e74c3c;">
+                        {{ $item->produit->nom }}
+                        @if($item->variant)
+                            <span style="color: #3498db; font-size: 7.5pt;">({{ $item->variant->variant_name }})</span>
+                        @endif:
+                    </strong>
+                    <span style="margin-left: 5px;">{!! nl2br($description_final) !!}</span>
+                </div>
+                @endif
+            @endforeach
         </div>
         @endif
-    @endforeach
-</div>
-@endif
+
         <!-- GARANTIE -->
         @if($recu->type_garantie !== 'sans_garantie')
         <div class="warranty-box">
             <div class="warranty-title">GARANTIE</div>
             <div class="warranty-text">
-                @if($recu->type_garantie === '90_jours')
-                    Garantie de 90 jours 
+                @if($recu->type_garantie === '30_jours')
+                    Garantie de 30 jours
+                @elseif($recu->type_garantie === '90_jours')
+                    Garantie de 90 jours
                 @elseif($recu->type_garantie === '180_jours')
-                    Garantie de 180 jours 
+                    Garantie de 180 jours
                 @elseif($recu->type_garantie === '360_jours')
                     Garantie de 360 jours
-                    @elseif($recu->type_garantie === '30_jours')
-                    Garantie de 30 jours 
                 @endif
             </div>
         </div>
@@ -628,34 +662,7 @@
         </div>
         @endif
 
-        <!-- FOOTER -->
-        <div class="footer">
-            <div class="footer-content">
-                <div class="footer-left">
-                    
-                    
-                    <div class="signatures">
-                        <div class="signature-box">
-                            <img  src="{{ public_path('images/signature-r.png') }}" alt="Stamp" style="width: 40px; height: 40px; margin-top:-40px;position: absolute;margin-left: 80px;">
-                            <div class="signature-line">Signature vendeur</div>
+    </div><!-- end page-content -->
 
-                        </div>
-                        <div class="signature-box">
-                            <div class="signature-line">Signature client</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="footer-right">
-                    <img src="{{ public_path('images/insta-scan.png') }}" alt="QR Code" class="qr-code">
-                    <div class="qr-label">Scannez pour plus d'infos</div>
-                </div>
-            </div>
-            <div class="footer-text" >
-            <p style="margin: 2px;">NB: L'écran et le clavier et Circuit Alimentation ne font pas partie de la garantie</p>
-            <p style="margin: 2px;">1er Étage, App 1, N° 68, Rue San Saëns, Belvédère, Casablanca 20300</p>
-            <p style="margin: 2px;">06 55 79 44 42 | contact@uits.ma | www.uits.ma</p>
-        </div>
-        </div>
-    </div>
 </body>
 </html>

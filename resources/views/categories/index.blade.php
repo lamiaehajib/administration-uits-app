@@ -185,11 +185,52 @@
             color: #C2185B;
         }
 
-        /* ✅ Sous-catégories */
+        /* ✅ Bouton Toggle Sous-catégories */
+        .btn-toggle-children {
+            background: linear-gradient(135deg, #9C27B0, #7B1FA2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 15px;
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+
+        .btn-toggle-children:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(156, 39, 176, 0.45);
+        }
+
+        .btn-toggle-children .arrow-icon {
+            transition: transform 0.3s ease;
+            display: inline-block;
+            font-style: normal;
+            font-size: 0.8rem;
+        }
+
+        .btn-toggle-children.open .arrow-icon {
+            transform: rotate(90deg);
+        }
+
+        /* ✅ Sous-catégories container */
         .children-container {
             margin-top: 15px;
             padding-left: 30px;
             border-left: 3px dashed #e0e0e0;
+            display: none; /* Cachées par défaut */
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .child-category-card {
@@ -442,6 +483,7 @@
         <!-- ✅ Liste des Catégories Parent avec Enfants -->
         @forelse($categories as $parent)
             <div class="parent-category-card">
+
                 <!-- Header Parent -->
                 <div class="parent-header">
                     <div>
@@ -490,9 +532,19 @@
                     </div>
                 </div>
 
-                <!-- ✅ Sous-catégories -->
+                <!-- ✅ Bouton Toggle + Sous-catégories -->
                 @if($parent->children->count() > 0)
-                    <div class="children-container">
+
+                    <button 
+                        class="btn-toggle-children" 
+                        onclick="toggleChildren(this, 'children-{{ $parent->id }}')"
+                    >
+                        <span class="arrow-icon">▶</span>
+                        <i class="fas fa-sitemap"></i>
+                        <span class="toggle-label">Voir sous-catégories ({{ $parent->children->count() }})</span>
+                    </button>
+
+                    <div class="children-container" id="children-{{ $parent->id }}">
                         <h6 style="color: #666; font-weight: 600; margin-bottom: 15px;">
                             <i class="fas fa-sitemap"></i> Sous-catégories ({{ $parent->children->count() }})
                         </h6>
@@ -587,8 +639,9 @@
                             </div>
                         @endforeach
                     </div>
+
                 @else
-                    <div style="text-align: center; color: #999; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                    <div style="text-align: center; color: #999; padding: 20px; background: #f8f9fa; border-radius: 10px; margin-top: 15px;">
                         <i class="fas fa-info-circle"></i> Aucune sous-catégorie
                     </div>
                 @endif
@@ -713,5 +766,28 @@
                 bsAlert.close();
             });
         }, 5000);
+
+        // ✅ Toggle sous-catégories
+        function toggleChildren(btn, containerId) {
+            const container = document.getElementById(containerId);
+            const label = btn.querySelector('.toggle-label');
+            const arrow = btn.querySelector('.arrow-icon');
+            const isOpen = btn.classList.contains('open');
+            const count = label.textContent.match(/\d+/)[0];
+
+            if (isOpen) {
+                // Fermer
+                container.style.display = 'none';
+                btn.classList.remove('open');
+                arrow.textContent = '▶';
+                label.textContent = 'Voir sous-catégories (' + count + ')';
+            } else {
+                // Ouvrir
+                container.style.display = 'block';
+                btn.classList.add('open');
+                arrow.textContent = '▼';
+                label.textContent = 'Cacher sous-catégories (' + count + ')';
+            }
+        }
     </script>
 </x-app-layout>

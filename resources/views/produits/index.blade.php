@@ -1054,71 +1054,62 @@
                 </div>
 
                 <!-- ✅ FILTRES STATISTIQUES PAR PÉRIODE -->
+{{-- ✅ NOUVEAU : stats-filter-bar SANS form séparé --}}
 <div class="stats-filter-bar">
-    <form action="{{ route('produits.index') }}" method="GET" id="statsFilterForm">
-        {{-- Conserver tous les filtres produits existants --}}
-        <input type="hidden" name="search"      value="{{ $search }}">
-        <input type="hidden" name="category_id" value="{{ $category_id }}">
-        <input type="hidden" name="statut"      value="{{ $statut }}">
-        <input type="hidden" name="sort_by"     value="{{ $sort_by }}">
-        <input type="hidden" name="sort_order"  value="{{ $sort_order }}">
+    <div class="stats-filter-inner">
+        <span class="stats-filter-label">
+            <i class="fas fa-calendar-alt"></i> Période des statistiques :
+        </span>
 
-        <div class="stats-filter-inner">
-            <span class="stats-filter-label">
-                <i class="fas fa-calendar-alt"></i> Période des statistiques :
-            </span>
-
-            <div class="stats-filter-group">
-                <label>Par Mois</label>
-                <input type="month"
-                       name="stat_mois"
-                       value="{{ $stat_mois }}"
-                       max="{{ now()->format('Y-m') }}"
-                       onchange="clearAnnee(); this.form.submit()">
-            </div>
-
-            <span class="stats-filter-sep">ou</span>
-
-            <div class="stats-filter-group">
-                <label>Par Année</label>
-                <select name="stat_annee" id="stat_annee_select" onchange="clearMois(); this.form.submit()">
-                    <option value="">Toutes les années</option>
-                    @foreach($anneesDisponibles as $annee)
-                        <option value="{{ $annee }}" {{ $stat_annee == $annee ? 'selected' : '' }}>
-                            {{ $annee }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-            @if($stat_mois || $stat_annee)
-            <a href="{{ route('produits.index', array_filter([
-                'search'      => $search,
-                'category_id' => $category_id,
-                'statut'      => $statut,
-                'sort_by'     => $sort_by,
-                'sort_order'  => $sort_order,
-            ])) }}" class="btn-reset-stats">
-                <i class="fas fa-times-circle"></i> Tout afficher
-            </a>
-            @endif
-
-            @if($stat_mois || $stat_annee)
-            <span class="stats-periode-badge">
-                <i class="fas fa-filter"></i>
-                @if($stat_mois)
-                    {{ \Carbon\Carbon::parse($stat_mois . '-01')->translatedFormat('F Y') }}
-                @else
-                    Année {{ $stat_annee }}
-                @endif
-            </span>
-            @else
-            <span class="stats-periode-badge all">
-                <i class="fas fa-infinity"></i> Toutes périodes
-            </span>
-            @endif
+        <div class="stats-filter-group">
+            <label>Par Mois</label>
+            <input type="month"
+                   name="stat_mois"
+                   value="{{ $stat_mois }}"
+                   max="{{ now()->format('Y-m') }}">
         </div>
-    </form>
+
+        <span class="stats-filter-sep">ou</span>
+
+        <div class="stats-filter-group">
+            <label>Par Année</label>
+            <select name="stat_annee" id="stat_annee_select">
+                <option value="">Toutes les années</option>
+                @foreach($anneesDisponibles as $annee)
+                    <option value="{{ $annee }}" {{ $stat_annee == $annee ? 'selected' : '' }}>
+                        {{ $annee }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        @if($stat_mois || $stat_annee)
+        <a href="{{ route('produits.index', array_filter([
+            'search'      => $search,
+            'category_id' => $category_id,
+            'statut'      => $statut,
+            'sort_by'     => $sort_by,
+            'sort_order'  => $sort_order,
+        ])) }}" class="btn-reset-stats">
+            <i class="fas fa-times-circle"></i> Tout afficher
+        </a>
+        @endif
+
+        @if($stat_mois || $stat_annee)
+        <span class="stats-periode-badge">
+            <i class="fas fa-filter"></i>
+            @if($stat_mois)
+                {{ \Carbon\Carbon::parse($stat_mois . '-01')->translatedFormat('F Y') }}
+            @else
+                Année {{ $stat_annee }}
+            @endif
+        </span>
+        @else
+        <span class="stats-periode-badge all">
+            <i class="fas fa-infinity"></i> Toutes périodes
+        </span>
+        @endif
+    </div>
 </div>
 
                 <!-- Actions des Filtres -->
@@ -1937,7 +1928,7 @@
             });
         @endif
 
-        function clearAnnee() {
+       function clearAnnee() {
     document.getElementById('stat_annee_select').value = '';
 }
 function clearMois() {

@@ -643,7 +643,7 @@
                     },
                     @can('produit-rapport')
                     { 
-                        href: '{{ route('produits.totals') }}', 
+                        href: '{{ route('categories.hierarchy') }}', 
                         label: 'Totaux et Statistiques', 
                         icon: 'fas fa-chart-pie', 
                         color: '#F44336' 

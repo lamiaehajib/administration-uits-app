@@ -213,7 +213,7 @@ Route::get('facturefs/{id}/download', [FacturefController::class, 'downloadPDF']
 
 
 
-
+Route::get('/categories/hierarchy', [CategoryController::class, 'hierarchy'])->name('categories.hierarchy');
 // Route::resource('produits', ProduitController::class);
 Route::resource('categories', CategoryController::class);
 // Route::resource('achats', AchatController::class);
@@ -552,6 +552,10 @@ Route::prefix('benefice-marge')->name('benefice-marge.')->middleware(['verified'
     Route::get('/export-csv', [BeneficeMargeController::class, 'exportCSV'])->name('export.csv');
     Route::get('/export-excel', [BeneficeMargeController::class, 'exportExcel'])->name('export.excel');
 });
+
+
+
+
       });
 
 require __DIR__.'/auth.php';

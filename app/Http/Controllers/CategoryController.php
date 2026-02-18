@@ -308,4 +308,9 @@ class CategoryController extends Controller
             'message' => $moved . ' produit(s) déplacé(s) avec succès'
         ]);
     }
+
+    public function hierarchy()
+{
+    return view('categories.hierarchy');
+}
 }

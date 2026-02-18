@@ -108,6 +108,7 @@
         margin-bottom: 10px;
         border-left: 5px solid #e74c3c; /* شريط تزييني على اليسار */
         padding-left: 10px; /* مسافة بين الشريط والنص */
+        margin-top: -70px;
     }
 
 

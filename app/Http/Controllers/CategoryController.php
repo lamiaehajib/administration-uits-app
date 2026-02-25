@@ -48,7 +48,7 @@ class CategoryController extends Controller
             'valeur_stock_total' => Produit::sum(DB::raw('quantite_stock * COALESCE(prix_achat, 0)')),
             'ca_total' => RecuItem::whereHas('recuUcg', function($q) {
                 $q->whereIn('statut', ['en_cours', 'livre']);
-            })->sum('total_apres_remise'),
+            })->sum(DB::raw('COALESCE(total_apres_remise, sous_total)')),
         ];
 
         // Liste des catégories pour les selects (parent seulement)
@@ -90,7 +90,7 @@ class CategoryController extends Controller
             ->whereIn('recus_ucgs.statut', ['en_cours', 'livre'])
             ->whereNull('produits.deleted_at')
             ->whereNull('recus_ucgs.deleted_at')
-            ->sum('recu_items.total_apres_remise');
+            ->sum(DB::raw('COALESCE(recu_items.total_apres_remise, recu_items.sous_total)'));
 
         $category->marge_totale = DB::table('recu_items')
             ->join('produits', 'recu_items.produit_id', '=', 'produits.id')
@@ -136,7 +136,7 @@ class CategoryController extends Controller
                 'produits.nom',
                 'produits.reference',
                 DB::raw('SUM(recu_items.quantite) as quantite_vendue'),
-                DB::raw('SUM(recu_items.total_apres_remise) as ca_total'),
+                DB::raw('SUM(COALESCE(recu_items.total_apres_remise, recu_items.sous_total)) as ca_total'),
                 DB::raw('SUM(recu_items.marge_totale) as marge_totale')
             )
             ->groupBy('produits.id', 'produits.nom', 'produits.reference')
@@ -155,7 +155,7 @@ class CategoryController extends Controller
             ->where('recus_ucgs.created_at', '>=', Carbon::now()->subMonths(6))
             ->select(
                 DB::raw('DATE_FORMAT(recus_ucgs.created_at, "%Y-%m") as mois'),
-                DB::raw('SUM(recu_items.total_apres_remise) as ca'),
+                DB::raw('SUM(COALESCE(recu_items.total_apres_remise, recu_items.sous_total)) as ca'),
                 DB::raw('SUM(recu_items.marge_totale) as marge')
             )
             ->groupBy('mois')

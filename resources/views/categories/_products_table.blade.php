@@ -9,9 +9,9 @@
         ->whereHas('recuUcg', $applyDateFilter)
         ->select(
             'produit_id',
-            \Illuminate\Support\Facades\DB::raw('SUM(quantite)            as total_vendu'),
-            \Illuminate\Support\Facades\DB::raw('SUM(total_apres_remise)  as ca_total'),
-            \Illuminate\Support\Facades\DB::raw('SUM(marge_totale)        as marge_totale')
+            \Illuminate\Support\Facades\DB::raw('SUM(quantite) as total_vendu'),
+            \Illuminate\Support\Facades\DB::raw('SUM(COALESCE(total_apres_remise, sous_total)) as ca_total'),
+            \Illuminate\Support\Facades\DB::raw('SUM(marge_totale) as marge_totale')
         )
         ->groupBy('produit_id')
         ->get()

@@ -322,7 +322,7 @@ body { background: var(--surface); font-family: 'Sora', sans-serif; color: var(-
         $prodIds    = $allProds->pluck('id');
         $totalStock = $allProds->sum('quantite_stock');
         $totalVendu = App\Models\RecuItem::whereIn('produit_id', $prodIds)->whereHas('recuUcg', $applyDateFilter)->sum('quantite');
-        $totalCA    = App\Models\RecuItem::whereIn('produit_id', $prodIds)->whereHas('recuUcg', $applyDateFilter)->sum('total_apres_remise');
+        $totalCA    = App\Models\RecuItem::whereIn('produit_id', $prodIds)->whereHas('recuUcg', $applyDateFilter)->sum(DB::raw('COALESCE(total_apres_remise, sous_total)'));
         $totalMarge = App\Models\RecuItem::whereIn('produit_id', $prodIds)->whereHas('recuUcg', $applyDateFilter)->sum('marge_totale');
         $ruptures   = $allProds->where('quantite_stock', 0)->count();
     @endphp
@@ -369,7 +369,7 @@ body { background: var(--surface); font-family: 'Sora', sans-serif; color: var(-
                     $subIds   = $sub->produits->pluck('id');
                     $subStock = $sub->produits->sum('quantite_stock');
                     $subVendu = App\Models\RecuItem::whereIn('produit_id', $subIds)->whereHas('recuUcg', $applyDateFilter)->sum('quantite');
-                    $subCA    = App\Models\RecuItem::whereIn('produit_id', $subIds)->whereHas('recuUcg', $applyDateFilter)->sum('total_apres_remise');
+                    $subCA    = App\Models\RecuItem::whereIn('produit_id', $subIds)->whereHas('recuUcg', $applyDateFilter)->sum(DB::raw('COALESCE(total_apres_remise, sous_total)'));
                     $subMarge = App\Models\RecuItem::whereIn('produit_id', $subIds)->whereHas('recuUcg', $applyDateFilter)->sum('marge_totale');
                     $subRupt  = $sub->produits->where('quantite_stock', 0)->count();
                 @endphp

@@ -10,7 +10,7 @@
         ->select(
             'produit_id',
             \Illuminate\Support\Facades\DB::raw('SUM(quantite) as total_vendu'),
-            \Illuminate\Support\Facades\DB::raw('SUM(COALESCE(total_apres_remise, sous_total)) as ca_total'),
+            \Illuminate\Support\Facades\DB::raw('SUM(COALESCE(NULLIF(total_apres_remise, 0), sous_total)) as ca_total'),
             \Illuminate\Support\Facades\DB::raw('SUM(marge_totale) as marge_totale')
         )
         ->groupBy('produit_id')

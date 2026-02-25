@@ -23,37 +23,51 @@ class RecuUcgController extends Controller
     $this->middleware('permission:recu-statistiques', ['only' => ['statistiques']]);
 }
     public function index(Request $request)
-    {
-        $query = RecuUcg::with(['user', 'items.produit']);
+{
+    $query = RecuUcg::with(['user', 'items.produit']);
 
-        if ($request->filled('statut')) {
-            $query->where('statut', $request->statut);
-        }
-
-        if ($request->filled('statut_paiement')) {
-            $query->where('statut_paiement', $request->statut_paiement);
-        }
-
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('numero_recu', 'like', "%{$search}%")
-                  ->orWhere('client_nom', 'like', "%{$search}%")
-                  ->orWhere('client_telephone', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->filled('date_debut') && $request->filled('date_fin')) {
-            $query->whereBetween('created_at', [
-                $request->date_debut,
-                $request->date_fin . ' 23:59:59'
-            ]);
-        }
-
-        $recus = $query->latest()->paginate(20);
-
-        return view('recus.index', compact('recus'));
+    if ($request->filled('statut')) {
+        $query->where('statut', $request->statut);
     }
+    if ($request->filled('statut_paiement')) {
+        $query->where('statut_paiement', $request->statut_paiement);
+    }
+    if ($request->filled('search')) {
+        $search = $request->search;
+        $query->where(function($q) use ($search) {
+            $q->where('numero_recu', 'like', "%{$search}%")
+              ->orWhere('client_nom', 'like', "%{$search}%")
+              ->orWhere('client_telephone', 'like', "%{$search}%");
+        });
+    }
+    if ($request->filled('date_debut') && $request->filled('date_fin')) {
+        $query->whereBetween('created_at', [
+            $request->date_debut,
+            $request->date_fin . ' 23:59:59'
+        ]);
+    }
+
+    // ✅ Filtre par catégorie
+    if ($request->filled('category_id')) {
+        $query->whereHas('items.produit', function($q) use ($request) {
+            $q->where('category_id', $request->category_id);
+        });
+    }
+
+    // ✅ Filtre par produit
+    if ($request->filled('produit_id')) {
+        $query->whereHas('items', function($q) use ($request) {
+            $q->where('produit_id', $request->produit_id);
+        });
+    }
+
+    $recus = $query->latest()->paginate(20);
+
+    $categories = \App\Models\Category::orderBy('nom')->get();
+    $produits = \App\Models\Produit::where('actif', true)->orderBy('nom')->get();
+
+    return view('recus.index', compact('recus', 'categories', 'produits'));
+}
 
 public function create()
 {

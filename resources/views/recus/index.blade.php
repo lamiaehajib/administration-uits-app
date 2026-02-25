@@ -303,6 +303,11 @@
             color: #adb5bd;
         }
 
+        /* Filter produit disabled state */
+        #filter-produit option[style*="display: none"] {
+            display: none !important;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .page-header h1 {
@@ -327,22 +332,14 @@
                 <h1><i class="fas fa-receipt"></i> Gestion des Reçus UCG</h1>
                 <p>Gérez et suivez tous vos reçus de vente</p>
             </div>
-            {{-- NOUVELLE PARTIE : Bouton Corbeille et Nouveau Reçu --}}
-        <div class="d-flex gap-2">
-            
-            {{-- 1. Bouton pour aller à la corbeille (Trash) --}}
-            <a href="{{ route('recus.trash') }}" class="btn btn-outline-light btn-lg border-2" style="color: white; border-color: white;">
-                <i class="fas fa-trash-alt"></i> Corbeille
-            </a>
-
-            {{-- 2. Bouton Nouveau Reçu (li kan 3ndek déjà) --}}
-            <a href="{{ route('recus.create') }}" class="btn btn-light btn-lg">
-                <i class="fas fa-plus-circle"></i> Nouveau Reçu
-            </a>
-            
-        </div>
-        {{-- FIN NOUVELLE PARTIE --}}
-           
+            <div class="d-flex gap-2">
+                <a href="{{ route('recus.trash') }}" class="btn btn-outline-light btn-lg border-2" style="color: white; border-color: white;">
+                    <i class="fas fa-trash-alt"></i> Corbeille
+                </a>
+                <a href="{{ route('recus.create') }}" class="btn btn-light btn-lg">
+                    <i class="fas fa-plus-circle"></i> Nouveau Reçu
+                </a>
+            </div>
         </div>
     </div>
 
@@ -390,11 +387,12 @@
     <div class="filters-card">
         <h5><i class="fas fa-filter"></i> Filtres de Recherche</h5>
         <form method="GET" action="{{ route('recus.index') }}">
-            <div class="row g-3">
+            {{-- Ligne 1: Recherche, Statut, Paiement, Date Début, Date Fin, Bouton Chercher --}}
+            <div class="row g-3 mb-3">
                 <div class="col-md-3">
                     <label class="form-label fw-bold">Recherche</label>
-                    <input type="text" name="search" class="form-control" 
-                           placeholder="N° reçu, client, téléphone..." 
+                    <input type="text" name="search" class="form-control"
+                           placeholder="N° reçu, client, téléphone..."
                            value="{{ request('search') }}">
                 </div>
                 <div class="col-md-2">
@@ -402,18 +400,18 @@
                     <select name="statut" class="form-select">
                         <option value="">Tous</option>
                         <option value="en_cours" {{ request('statut') == 'en_cours' ? 'selected' : '' }}>En cours</option>
-                        <option value="livre" {{ request('statut') == 'livre' ? 'selected' : '' }}>Livré</option>
-                        <option value="annule" {{ request('statut') == 'annule' ? 'selected' : '' }}>Annulé</option>
-                        <option value="retour" {{ request('statut') == 'retour' ? 'selected' : '' }}>Retour</option>
+                        <option value="livre"    {{ request('statut') == 'livre'    ? 'selected' : '' }}>Livré</option>
+                        <option value="annule"   {{ request('statut') == 'annule'   ? 'selected' : '' }}>Annulé</option>
+                        <option value="retour"   {{ request('statut') == 'retour'   ? 'selected' : '' }}>Retour</option>
                     </select>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label fw-bold">Paiement</label>
                     <select name="statut_paiement" class="form-select">
                         <option value="">Tous</option>
-                        <option value="paye" {{ request('statut_paiement') == 'paye' ? 'selected' : '' }}>Payé</option>
+                        <option value="paye"    {{ request('statut_paiement') == 'paye'    ? 'selected' : '' }}>Payé</option>
                         <option value="partiel" {{ request('statut_paiement') == 'partiel' ? 'selected' : '' }}>Partiel</option>
-                        <option value="impaye" {{ request('statut_paiement') == 'impaye' ? 'selected' : '' }}>Impayé</option>
+                        <option value="impaye"  {{ request('statut_paiement') == 'impaye'  ? 'selected' : '' }}>Impayé</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -430,13 +428,45 @@
                     </button>
                 </div>
             </div>
-            @if(request()->hasAny(['search', 'statut', 'statut_paiement', 'date_debut', 'date_fin']))
-                <div class="mt-3">
-                    <a href="{{ route('recus.index') }}" class="btn btn-outline-gradient">
-                        <i class="fas fa-times"></i> Réinitialiser
-                    </a>
+
+            {{-- Ligne 2: Catégorie + Produit --}}
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">
+                        <i class="fas fa-tags me-1" style="color:#D32F2F;"></i> Catégorie
+                    </label>
+                    <select name="category_id" class="form-select" id="filter-category">
+                        <option value="">Toutes les catégories</option>
+                        @foreach($categories as $cat)
+                            <option value="{{ $cat->id }}" {{ request('category_id') == $cat->id ? 'selected' : '' }}>
+                                {{ $cat->nom }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
-            @endif
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">
+                        <i class="fas fa-box me-1" style="color:#D32F2F;"></i> Produit
+                    </label>
+                    <select name="produit_id" class="form-select" id="filter-produit">
+                        <option value="">Tous les produits</option>
+                        @foreach($produits as $prod)
+                            <option value="{{ $prod->id }}"
+                                {{ request('produit_id') == $prod->id ? 'selected' : '' }}
+                                data-category="{{ $prod->category_id }}">
+                                {{ $prod->nom }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                    @if(request()->hasAny(['search', 'statut', 'statut_paiement', 'date_debut', 'date_fin', 'category_id', 'produit_id']))
+                        <a href="{{ route('recus.index') }}" class="btn btn-outline-gradient">
+                            <i class="fas fa-times"></i> Réinitialiser les filtres
+                        </a>
+                    @endif
+                </div>
+            </div>
         </form>
     </div>
 
@@ -507,16 +537,14 @@
                                     <a href="{{ route('recus.show', $recu) }}" class="btn btn-action btn-info" title="Détails">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                  
-                                        <a href="{{ route('recus.edit', $recu) }}" class="btn btn-action btn-warning" title="Modifier">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                    
+                                    <a href="{{ route('recus.edit', $recu) }}" class="btn btn-action btn-warning" title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
                                     <form action="{{ route('recus.destroy', $recu) }}" method="POST" class="d-inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-action btn-danger" 
-                                                onclick="return confirm('Confirmer la suppression ?')" 
+                                        <button type="submit" class="btn btn-action btn-danger"
+                                                onclick="return confirm('Confirmer la suppression ?')"
                                                 title="Supprimer">
                                             <i class="fas fa-trash"></i>
                                         </button>
@@ -531,7 +559,7 @@
 
             <!-- Pagination -->
             <div class="d-flex justify-content-center p-4">
-                {{ $recus->links() }}
+                {{ $recus->appends(request()->query())->links() }}
             </div>
         @else
             <div class="empty-state">
@@ -569,4 +597,35 @@
         });
     </script>
     @endif
+
+    {{-- ✅ JS: Filtrage dynamique des produits par catégorie --}}
+    <script>
+        const filterCategory = document.getElementById('filter-category');
+        const filterProduit  = document.getElementById('filter-produit');
+        const allOptions     = Array.from(filterProduit.querySelectorAll('option[data-category]'));
+
+        function filterProduits() {
+            const selectedCat = filterCategory.value;
+
+            allOptions.forEach(option => {
+                if (!selectedCat || option.dataset.category == selectedCat) {
+                    option.style.display = '';
+                } else {
+                    option.style.display = 'none';
+                }
+            });
+
+            // Si le produit sélectionné n'appartient plus à la catégorie → reset
+            const selectedProd = filterProduit.querySelector('option[value="' + filterProduit.value + '"]');
+            if (selectedProd && selectedProd.style.display === 'none') {
+                filterProduit.value = '';
+            }
+        }
+
+        filterCategory.addEventListener('change', filterProduits);
+
+        // Init au chargement (utile si filtres déjà appliqués via URL)
+        document.addEventListener('DOMContentLoaded', filterProduits);
+    </script>
+
 </x-app-layout>

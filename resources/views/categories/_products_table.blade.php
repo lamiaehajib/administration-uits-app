@@ -4,16 +4,28 @@
     $produitIds  = $produits->pluck('id');
     $maxStock    = $produits->max('quantite_stock') ?: 1;
 
-    // Stats de ventes groupées par produit (filtrées par période)
-    $ventesStats = \App\Models\RecuItem::whereIn('produit_id', $produitIds)
+    // ✅ Stats de ventes groupées par produit (filtrées par période)
+    // CA = sous_total - part proportionnelle de la remise (cohérent avec produit show)
+    $ventesStats = \App\Models\RecuItem::whereIn('recu_items.produit_id', $produitIds)
         ->whereHas('recuUcg', $applyDateFilter)
+        ->join('recus_ucgs', 'recu_items.recu_ucg_id', '=', 'recus_ucgs.id')
         ->select(
-            'produit_id',
-            \Illuminate\Support\Facades\DB::raw('SUM(quantite) as total_vendu'),
-            \Illuminate\Support\Facades\DB::raw('SUM(COALESCE(NULLIF(total_apres_remise, 0), sous_total)) as ca_total'),
-            \Illuminate\Support\Facades\DB::raw('SUM(marge_totale) as marge_totale')
+            'recu_items.produit_id',
+            \Illuminate\Support\Facades\DB::raw('SUM(recu_items.quantite) as total_vendu'),
+            // ✅ CA réel = sous_total - remise proportionnelle (même logique que produit show)
+            \Illuminate\Support\Facades\DB::raw('
+                SUM(
+                    recu_items.sous_total -
+                    CASE
+                        WHEN recus_ucgs.total > 0
+                        THEN (recu_items.sous_total / recus_ucgs.total) * COALESCE(recus_ucgs.remise, 0)
+                        ELSE 0
+                    END
+                ) as ca_total
+            '),
+            \Illuminate\Support\Facades\DB::raw('SUM(recu_items.marge_totale) as marge_totale')
         )
-        ->groupBy('produit_id')
+        ->groupBy('recu_items.produit_id')
         ->get()
         ->keyBy('produit_id');
 @endphp

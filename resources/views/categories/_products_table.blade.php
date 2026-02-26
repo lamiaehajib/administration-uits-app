@@ -4,42 +4,60 @@
     $produitIds  = $produits->pluck('id');
     $maxStock    = $produits->max('quantite_stock') ?: 1;
 
-    // ✅ Même logique exacte que ProduitController::show()
-    // proportion = item.sous_total / SUM(tous les sous_totals du même reçu)
-    // Cela garantit que la remise est répartie proportionnellement sur tous les produits du reçu
-    $ventesStats = \App\Models\RecuItem::whereIn('recu_items.produit_id', $produitIds)
-        ->whereHas('recuUcg', $applyDateFilter)
-        ->join('recus_ucgs', 'recu_items.recu_ucg_id', '=', 'recus_ucgs.id')
-        ->join(
-            \Illuminate\Support\Facades\DB::raw('(
-                SELECT recu_ucg_id, SUM(sous_total) as total_brut_recu
-                FROM recu_items
-                GROUP BY recu_ucg_id
-            ) as totaux_par_recu'),
-            'totaux_par_recu.recu_ucg_id', '=', 'recu_items.recu_ucg_id'
-        )
-        ->whereIn('recus_ucgs.statut', ['en_cours', 'livre'])
-        ->whereNull('recus_ucgs.deleted_at')
-        ->select(
-            'recu_items.produit_id',
-            \Illuminate\Support\Facades\DB::raw('SUM(recu_items.quantite) as total_vendu'),
-            // ✅ CA = sous_total - remise proportionnelle
-            // proportion basée sur total réel de TOUS les items du reçu
-            \Illuminate\Support\Facades\DB::raw('
-                SUM(
-                    recu_items.sous_total -
-                    CASE
-                        WHEN totaux_par_recu.total_brut_recu > 0
-                        THEN (recu_items.sous_total / totaux_par_recu.total_brut_recu) * COALESCE(recus_ucgs.remise, 0)
-                        ELSE 0
-                    END
-                ) as ca_total
-            '),
-            \Illuminate\Support\Facades\DB::raw('SUM(recu_items.marge_totale) as marge_totale')
-        )
-        ->groupBy('recu_items.produit_id')
-        ->get()
-        ->keyBy('produit_id');
+    // ✅ LOGIQUE IDENTIQUE à ProduitController::show()
+    // Pour chaque reçu: proportion = item.sous_total / SUM(TOUS les items du reçu)
+    // remise_produit = proportion × remise_reçu
+    // CA_produit = sous_total - remise_produit
+    //
+    // Exemple: produit A = 200 DH, reçu avec remise 100 DH sur produit A seulement
+    //   → reçu 1: A=200, remise=0   → CA = 200
+    //   → reçu 2: A=200, remise=100 → CA = 100  (remise totale du reçu)
+    //   → Total CA = 300 DH ✅
+
+    // 1️⃣ Récupérer tous les reçus qui contiennent nos produits (avec TOUS leurs items)
+    $recusAvecTousItems = \App\Models\RecuUcg::with(['items'])
+        ->whereHas('items', function($q) use ($produitIds) {
+            $q->whereIn('produit_id', $produitIds);
+        })
+        ->where(function($q) use ($applyDateFilter) {
+            $applyDateFilter($q);
+        })
+        ->get();
+
+    // 2️⃣ Calculer CA et marge par produit (loop PHP = identique à show())
+    $ventesStatsRaw = [];
+
+    foreach ($recusAvecTousItems as $recu) {
+        // Total brut de TOUS les items du reçu (pour calculer la proportion)
+        $totalBrutRecu = $recu->items->sum('sous_total');
+
+        foreach ($recu->items as $item) {
+            if (!in_array($item->produit_id, $produitIds->toArray())) continue;
+
+            $pid = $item->produit_id;
+
+            if (!isset($ventesStatsRaw[$pid])) {
+                $ventesStatsRaw[$pid] = [
+                    'total_vendu'   => 0,
+                    'ca_total'      => 0,
+                    'marge_totale'  => 0,
+                ];
+            }
+
+            // Remise proportionnelle sur cet item
+            $proportion    = $totalBrutRecu > 0 ? ($item->sous_total / $totalBrutRecu) : 0;
+            $remiseProduit = $proportion * ($recu->remise ?? 0);
+
+            $ventesStatsRaw[$pid]['total_vendu']  += $item->quantite;
+            $ventesStatsRaw[$pid]['ca_total']     += $item->sous_total - $remiseProduit;
+            $ventesStatsRaw[$pid]['marge_totale'] += $item->marge_totale;
+        }
+    }
+
+    // 3️⃣ Convertir en collection keyBy produit_id
+    $ventesStats = collect($ventesStatsRaw)->map(function($data, $pid) {
+        return (object) array_merge($data, ['produit_id' => $pid]);
+    });
 @endphp
 
 @if($produits->isEmpty())

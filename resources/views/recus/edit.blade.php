@@ -273,8 +273,11 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Date de Paiement</label>
-                            <input type="date" name="date_paiement" class="form-control" 
-                                   value="{{ old('date_paiement', $recu->date_paiement ? $recu->date_paiement->format('Y-m-d') : date('Y-m-d')) }}">
+                            <!-- Déjà correct dans ton code, mais vérifie la valeur par défaut -->
+<input type="date" name="date_paiement" class="form-control" 
+       value="{{ old('date_paiement', $recu->date_paiement 
+           ? $recu->date_paiement->format('Y-m-d') 
+           : $recu->created_at->format('Y-m-d')) }}">
                         </div>
                         <div class="col-12">
                             <label class="form-label">Notes</label>

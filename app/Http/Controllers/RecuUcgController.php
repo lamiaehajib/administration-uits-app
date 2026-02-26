@@ -330,21 +330,30 @@ public function store(Request $request)
             }
 
             // 3️⃣ Mettre à jour les informations du reçu
-            $recu->update([
-                'client_nom' => $validated['client_nom'],
-                'client_prenom' => $validated['client_prenom'] ?? null,
-                'client_telephone' => $validated['client_telephone'] ?? null,
-                'client_email' => $validated['client_email'] ?? null,
-                'client_adresse' => $validated['client_adresse'] ?? null,
-                'equipement' => $validated['equipement'] ?? null,
-                'details' => $validated['details'] ?? null,
-                'type_garantie' => $validated['type_garantie'],
-                'remise' => $validated['remise'] ?? 0,
-                'tva' => $validated['tva'] ?? 0,
-                'mode_paiement' => $validated['mode_paiement'],
-                'date_paiement' => $validated['date_paiement'] ?? now(),
-                'notes' => $validated['notes'] ?? null,
-            ]);
+           // 3️⃣ Mettre à jour les informations du reçu
+$recu->update([
+    'client_nom' => $validated['client_nom'],
+    'client_prenom' => $validated['client_prenom'] ?? null,
+    'client_telephone' => $validated['client_telephone'] ?? null,
+    'client_email' => $validated['client_email'] ?? null,
+    'client_adresse' => $validated['client_adresse'] ?? null,
+    'equipement' => $validated['equipement'] ?? null,
+    'details' => $validated['details'] ?? null,
+    'type_garantie' => $validated['type_garantie'],
+    'remise' => $validated['remise'] ?? 0,
+    'tva' => $validated['tva'] ?? 0,
+    'mode_paiement' => $validated['mode_paiement'],
+    'date_paiement' => $validated['date_paiement'] ?? now(),
+    'notes' => $validated['notes'] ?? null,
+]);
+
+// ✅ NOUVEAU - Mettre à jour created_at avec la date de paiement
+$datePaiement = $validated['date_paiement'] ?? now();
+$recu->timestamps = false; // Désactiver l'auto-update de updated_at
+DB::table('recus_ucgs')
+    ->where('id', $recu->id)
+    ->update(['created_at' => $datePaiement]);
+$recu->timestamps = true;
 
             // 4️⃣ Créer les nouveaux items AVEC VÉRIFICATION DU STOCK
             foreach ($validated['items'] as $itemData) {

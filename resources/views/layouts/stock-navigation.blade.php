@@ -291,7 +291,7 @@
             {{-- ✅ Statistiques Produits - Gérant, Comptable --}}
            
             <button type="button">
-                <a href="{{ route('produits.totals') }}">
+                <a href="{{ route('categories.hierarchy') }}">
                     <i class="fas fa-chart-pie"></i>
                     <span>Statistiques</span>
                 </a>

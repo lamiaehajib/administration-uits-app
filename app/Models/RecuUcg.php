@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Carbon\Carbon;
-
+use Illuminate\Support\Facades\DB;
 class RecuUcg extends Model
 {
     use HasFactory, SoftDeletes;
@@ -228,24 +228,16 @@ static::restored(function ($recu) {
    public static function generateNumeroRecu()
 {
     $year = date('Y');
+    $prefix = "UCGS-{$year}-";
     
-    // Khud dernier numéro (actif OU supprimé)
-    $lastRecuActif = self::whereYear('created_at', $year)
-        ->withoutTrashed()
-        ->latest()
+    // Khud l-kbir numero mn TOUS les recus (actifs + supprimés)
+    $last = DB::table('recus_ucgs')
+        ->whereYear('created_at', $year)
+        ->orderByRaw('CAST(SUBSTRING(numero_recu, -4) AS UNSIGNED) DESC')
         ->lockForUpdate()
-        ->first();
+        ->value('numero_recu');
     
-    $lastRecuSupprime = self::whereYear('created_at', $year)
-        ->onlyTrashed()
-        ->latest('deleted_at')
-        ->first();
-    
-    // Khud l'max dial jouj
-    $numberActif = $lastRecuActif ? intval(substr($lastRecuActif->numero_recu, -4)) : 0;
-    $numberSupprime = $lastRecuSupprime ? intval(substr($lastRecuSupprime->numero_recu, -4)) : 0;
-    
-    $number = max($numberActif, $numberSupprime) + 1;
+    $number = $last ? intval(substr($last, -4)) + 1 : 1;
     
     return sprintf('UCGS-%s-%04d', $year, $number);
 }

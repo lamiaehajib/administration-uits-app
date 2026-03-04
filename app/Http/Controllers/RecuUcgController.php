@@ -159,6 +159,10 @@ public function getProduitsByCategory($categoryId)
      */
    // ✅ MÉTHODE STORE MODIFIÉE
 
+
+
+// ✅ MÉTHODE STORE CORRIGÉE - Remise appliquée sur produits simples ET variants
+
 public function store(Request $request)
 {
     $validated = $request->validate([
@@ -178,8 +182,11 @@ public function store(Request $request)
         'notes' => 'nullable|string',
         'items' => 'required|array|min:1',
         'items.*.produit_id' => 'required|exists:produits,id',
-        'items.*.product_variant_id' => 'nullable|exists:product_variants,id', 
+        'items.*.product_variant_id' => 'nullable|exists:product_variants,id',
         'items.*.quantite' => 'required|integer|min:1',
+        'items.*.remise_appliquee' => 'nullable',
+        'items.*.remise_pourcentage' => 'nullable|numeric|min:0|max:100',
+        'items.*.remise_montant' => 'nullable|numeric|min:0',
     ]);
 
     DB::beginTransaction();
@@ -202,36 +209,43 @@ public function store(Request $request)
         ]);
 
         foreach ($validated['items'] as $itemData) {
-            
+
+            // ✅ Helper: extraire les champs remise
+            $remiseData = [
+                'remise_appliquee' => !empty($itemData['remise_appliquee']) && $itemData['remise_appliquee'] == '1',
+                'remise_pourcentage' => $itemData['remise_pourcentage'] ?? 0,
+                'remise_montant' => $itemData['remise_montant'] ?? 0,
+            ];
+
             if (!empty($itemData['product_variant_id'])) {
+                // ✅ Produit avec variant
                 $variant = ProductVariant::findOrFail($itemData['product_variant_id']);
-                
+
                 if ($variant->quantite_stock < $itemData['quantite']) {
                     throw new \Exception("Stock insuffisant pour {$variant->full_name}. Stock: {$variant->quantite_stock}");
                 }
 
-                // Créer item avec variant
-                $recu->items()->create([
+                $recu->items()->create(array_merge([
                     'produit_id' => $itemData['produit_id'],
-                    'product_variant_id' => $itemData['product_variant_id'], 
+                    'product_variant_id' => $itemData['product_variant_id'],
                     'quantite' => $itemData['quantite'],
-                ]);
+                ], $remiseData));
 
             } else {
-                // Produit simple (sans variant)
+                // ✅ Produit simple (sans variant)
                 $produit = Produit::findOrFail($itemData['produit_id']);
-                
+
                 if ($produit->quantite_stock < $itemData['quantite']) {
                     throw new \Exception("Stock insuffisant pour {$produit->nom}. Stock: {$produit->quantite_stock}");
                 }
 
-                $recu->items()->create([
+                $recu->items()->create(array_merge([
                     'produit_id' => $itemData['produit_id'],
                     'quantite' => $itemData['quantite'],
-                ]);
+                ], $remiseData));
             }
         }
-        
+
         $recu->refresh();
 
         // Ajouter paiement
@@ -292,7 +306,7 @@ public function store(Request $request)
     /**
      * ✅ MÉTHODE UPDATE CORRIGÉE - Fix paiement en double
      */
-    public function update(Request $request, RecuUcg $recu)
+   public function update(Request $request, RecuUcg $recu)
     {
         if (!in_array($recu->statut, ['en_cours', 'livre'])) {
             return back()->with('error', 'Ce reçu ne peut pas être modifié');
@@ -317,6 +331,10 @@ public function store(Request $request)
             'items.*.produit_id' => 'required|exists:produits,id',
             'items.*.product_variant_id' => 'nullable|exists:product_variants,id',
             'items.*.quantite' => 'required|integer|min:1',
+            // ✅ Validation remise
+            'items.*.remise_appliquee' => 'nullable',
+            'items.*.remise_pourcentage' => 'nullable|numeric|min:0|max:100',
+            'items.*.remise_montant' => 'nullable|numeric|min:0',
         ]);
 
         DB::beginTransaction();
@@ -324,107 +342,101 @@ public function store(Request $request)
             // 1️⃣ Sauvegarder les anciens items AVANT de les supprimer
             $oldItems = $recu->items()->get();
 
-            // 2️⃣ Restaurer le stock des anciens items (le soft delete le fera automatiquement)
+            // 2️⃣ Soft delete anciens items (stock restauré automatiquement via event)
             foreach ($oldItems as $item) {
-                $item->delete(); // Le stock sera restauré via l'événement 'deleted' dans RecuItem
+                $item->delete();
             }
 
             // 3️⃣ Mettre à jour les informations du reçu
-           // 3️⃣ Mettre à jour les informations du reçu
-$recu->update([
-    'client_nom' => $validated['client_nom'],
-    'client_prenom' => $validated['client_prenom'] ?? null,
-    'client_telephone' => $validated['client_telephone'] ?? null,
-    'client_email' => $validated['client_email'] ?? null,
-    'client_adresse' => $validated['client_adresse'] ?? null,
-    'equipement' => $validated['equipement'] ?? null,
-    'details' => $validated['details'] ?? null,
-    'type_garantie' => $validated['type_garantie'],
-    'remise' => $validated['remise'] ?? 0,
-    'tva' => $validated['tva'] ?? 0,
-    'mode_paiement' => $validated['mode_paiement'],
-    'date_paiement' => $validated['date_paiement'] ?? now(),
-    'notes' => $validated['notes'] ?? null,
-]);
+            $recu->update([
+                'client_nom' => $validated['client_nom'],
+                'client_prenom' => $validated['client_prenom'] ?? null,
+                'client_telephone' => $validated['client_telephone'] ?? null,
+                'client_email' => $validated['client_email'] ?? null,
+                'client_adresse' => $validated['client_adresse'] ?? null,
+                'equipement' => $validated['equipement'] ?? null,
+                'details' => $validated['details'] ?? null,
+                'type_garantie' => $validated['type_garantie'],
+                'remise' => $validated['remise'] ?? 0,
+                'tva' => $validated['tva'] ?? 0,
+                'mode_paiement' => $validated['mode_paiement'],
+                'date_paiement' => $validated['date_paiement'] ?? now(),
+                'notes' => $validated['notes'] ?? null,
+            ]);
 
-// ✅ NOUVEAU - Mettre à jour created_at avec la date de paiement
-$datePaiement = $validated['date_paiement'] ?? now();
-$recu->timestamps = false; // Désactiver l'auto-update de updated_at
-DB::table('recus_ucgs')
-    ->where('id', $recu->id)
-    ->update(['created_at' => $datePaiement]);
-$recu->timestamps = true;
+            // ✅ Mettre à jour created_at avec la date de paiement
+            $datePaiement = $validated['date_paiement'] ?? now();
+            $recu->timestamps = false;
+            DB::table('recus_ucgs')
+                ->where('id', $recu->id)
+                ->update(['created_at' => $datePaiement]);
+            $recu->timestamps = true;
 
-            // 4️⃣ Créer les nouveaux items AVEC VÉRIFICATION DU STOCK
+            // 4️⃣ Créer les nouveaux items avec remise + vérification stock
             foreach ($validated['items'] as $itemData) {
-                
+
+                // ✅ Champs remise communs
+                $remiseData = [
+                    'remise_appliquee' => !empty($itemData['remise_appliquee']) && $itemData['remise_appliquee'] == '1',
+                    'remise_pourcentage' => $itemData['remise_pourcentage'] ?? 0,
+                    'remise_montant' => $itemData['remise_montant'] ?? 0,
+                ];
+
                 if (!empty($itemData['product_variant_id'])) {
-                    // Produit avec variant
+                    // ✅ Produit avec variant
                     $variant = ProductVariant::findOrFail($itemData['product_variant_id']);
-                    
-                    // ✅ CORRECTION: Ajout du stock restauré de l'ancien item (si même variant)
+
                     $stockDisponible = $variant->quantite_stock;
-                    
-                    // Vérifier si l'ancien reçu contenait ce même variant
                     $oldSameVariantItem = $oldItems->where('product_variant_id', $itemData['product_variant_id'])->first();
                     if ($oldSameVariantItem) {
-                        // Ajouter la quantité de l'ancien item au stock disponible
                         $stockDisponible += $oldSameVariantItem->quantite;
                     }
-                    
+
                     if ($stockDisponible < $itemData['quantite']) {
                         throw new \Exception("Stock insuffisant pour {$variant->full_name}. Stock disponible: {$stockDisponible}");
                     }
 
-                    $recu->items()->create([
+                    $recu->items()->create(array_merge([
                         'produit_id' => $itemData['produit_id'],
                         'product_variant_id' => $itemData['product_variant_id'],
                         'quantite' => $itemData['quantite'],
-                    ]);
+                    ], $remiseData));
 
                 } else {
-                    // Produit simple (sans variant)
+                    // ✅ Produit simple (sans variant)
                     $produit = Produit::findOrFail($itemData['produit_id']);
-                    
-                    // ✅ CORRECTION: Ajout du stock restauré de l'ancien item (si même produit)
+
                     $stockDisponible = $produit->quantite_stock;
-                    
-                    // Vérifier si l'ancien reçu contenait ce même produit (sans variant)
                     $oldSameProductItem = $oldItems->where('produit_id', $itemData['produit_id'])
                                                    ->whereNull('product_variant_id')
                                                    ->first();
                     if ($oldSameProductItem) {
-                        // Ajouter la quantité de l'ancien item au stock disponible
                         $stockDisponible += $oldSameProductItem->quantite;
                     }
-                    
+
                     if ($stockDisponible < $itemData['quantite']) {
                         throw new \Exception("Stock insuffisant pour {$produit->nom}. Stock disponible: {$stockDisponible}");
                     }
 
-                    $recu->items()->create([
+                    $recu->items()->create(array_merge([
                         'produit_id' => $itemData['produit_id'],
                         'quantite' => $itemData['quantite'],
-                    ]);
+                    ], $remiseData));
                 }
             }
 
-            // 5️⃣ Recalculer le total APRÈS avoir créé tous les items
+            // 5️⃣ Recalculer le total
             $recu->refresh();
             $recu->calculerTotal();
 
-            // ✅ 6️⃣ CORRECTION IMPORTANTE - Gérer le paiement SANS DOUBLER
+            // 6️⃣ Gérer le paiement SANS DOUBLER
             $montantPaye = $validated['montant_paye'] ?? 0;
             $montantDejaPayé = $recu->paiements->sum('montant');
 
             if ($montantPaye != $montantDejaPayé) {
-                // Supprimer tous les anciens paiements
                 $recu->paiements()->delete();
-
-                // ✅ RESET montant_paye à 0 AVANT d'ajouter nouveau paiement
                 $recu->updateQuietly(['montant_paye' => 0]);
 
-                // Ajouter le nouveau paiement si montant > 0
                 if ($montantPaye > 0) {
                     $recu->ajouterPaiement(
                         $montantPaye,
@@ -432,7 +444,6 @@ $recu->timestamps = true;
                         null
                     );
                 } else {
-                    // ✅ Si montant = 0, update directement
                     $recu->update([
                         'montant_paye' => 0,
                         'reste' => $recu->total,

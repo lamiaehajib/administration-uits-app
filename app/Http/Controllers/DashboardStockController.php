@@ -64,12 +64,10 @@ class DashboardStockController extends Controller
                 ->sum('total_achat') : null,
             
             // Marge totale (visible uniquement pour Gérant)
-            'marge_totale' => $isGerant ? DB::table('recu_items')
-                ->join('recus_ucgs', 'recu_items.recu_ucg_id', '=', 'recus_ucgs.id')
-                ->whereBetween('recus_ucgs.created_at', [$dateDebut, $dateFin])
-                ->whereIn('recus_ucgs.statut', ['en_cours', 'livre'])
-                ->whereNull('recus_ucgs.deleted_at')
-                ->sum('recu_items.marge_totale') : null,
+            'marge_totale' => $isGerant ? RecuUcg::whereBetween('created_at', [$dateDebut, $dateFin])
+    ->whereIn('statut', ['en_cours', 'livre'])
+    ->get()
+    ->sum(fn($recu) => $recu->margeGlobale()) : null,
             
             // Nombre de ventes
             'nombre_ventes' => (clone $ventesQuery)->count(),

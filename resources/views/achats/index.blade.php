@@ -587,9 +587,10 @@
                 </table>
             </div>
 
-            <div class="pagination-achats">
-                {{ $achats->links() }}
-            </div>
+           
+            <div>
+                    {{ $achats->links('pagination.custom') }}
+                </div>
         </div>
 
     </div>

@@ -72,6 +72,7 @@
         <tr>
             <th style="width:34%">Produit</th>
             <th>Stock actuel</th>
+            <th>Valeur stock</th>
             <th>Qté vendue</th>
             <th>CA (MAD)</th>
             <th>Marge (MAD)</th>
@@ -81,31 +82,43 @@
     </thead>
     <tbody>
     @foreach($produits as $produit)
-    @php
-        $s         = $ventesStats[$produit->id] ?? null;
-        $vendu     = $s ? (int)$s->total_vendu   : 0;
-        $ca        = $s ? (float)$s->ca_total     : 0;
-        $marge     = $s ? (float)$s->marge_totale : 0;
-        $tauxMarge = $ca > 0 ? ($marge / $ca * 100) : 0;
-        $stockPct  = min(100, ($produit->quantite_stock / $maxStock) * 100);
+   @php
+    $s         = $ventesStats[$produit->id] ?? null;
+    $vendu     = $s ? (int)$s->total_vendu   : 0;
+    $ca        = $s ? (float)$s->ca_total     : 0;
+    $marge     = $s ? (float)$s->marge_totale : 0;
+    $tauxMarge = $ca > 0 ? ($marge / $ca * 100) : 0;
+    $stockPct  = min(100, ($produit->quantite_stock / $maxStock) * 100);
 
-        if ($produit->quantite_stock == 0) {
-            $dotClass    = 'out';
-            $barClass    = 'bar-empty';
-            $statusLabel = 'Rupture';
-            $statusStyle = 'color:#c62828;background:#ffebee;';
-        } elseif ($produit->stock_alerte && $produit->quantite_stock <= $produit->stock_alerte) {
-            $dotClass    = 'low';
-            $barClass    = 'bar-low';
-            $statusLabel = 'Alerte';
-            $statusStyle = 'color:#e65100;background:#fff3e0;';
-        } else {
-            $dotClass    = 'ok';
-            $barClass    = 'bar-good';
-            $statusLabel = 'OK';
-            $statusStyle = 'color:#1b5e20;background:#e8f5e9;';
-        }
-    @endphp
+    // ✅ Valeur stock hybride FIFO + manuel
+    $stockFifoQty = \App\Models\Achat::where('produit_id', $produit->id)
+        ->where('quantite_restante', '>', 0)
+        ->sum('quantite_restante');
+    $valeurFifo = \App\Models\Achat::where('produit_id', $produit->id)
+        ->where('quantite_restante', '>', 0)
+        ->selectRaw('SUM(quantite_restante * prix_achat) as total')
+        ->value('total') ?? 0;
+    $stockManuel     = max(0, $produit->quantite_stock - $stockFifoQty);
+    $valeurManuel    = $stockManuel * ($produit->prix_achat ?? 0);
+    $valeurStockProd = $valeurFifo + $valeurManuel;
+
+    if ($produit->quantite_stock == 0) {
+        $dotClass    = 'out';
+        $barClass    = 'bar-empty';
+        $statusLabel = 'Rupture';
+        $statusStyle = 'color:#c62828;background:#ffebee;';
+    } elseif ($produit->stock_alerte && $produit->quantite_stock <= $produit->stock_alerte) {
+        $dotClass    = 'low';
+        $barClass    = 'bar-low';
+        $statusLabel = 'Alerte';
+        $statusStyle = 'color:#e65100;background:#fff3e0;';
+    } else {
+        $dotClass    = 'ok';
+        $barClass    = 'bar-good';
+        $statusLabel = 'OK';
+        $statusStyle = 'color:#1b5e20;background:#e8f5e9;';
+    }
+@endphp
     <tr>
         {{-- Produit --}}
         <td data-label="Produit">
@@ -129,7 +142,9 @@
                 </div>
             </div>
         </td>
-
+<td data-label="Valeur stock" class="num-cell" style="color:#7e22ce;font-weight:600;">
+    {{ $produit->quantite_stock > 0 ? number_format($valeurStockProd, 2, ',', ' ') . ' MAD' : '—' }}
+</td>
         {{-- Qté vendue --}}
         <td data-label="Qté vendue" class="num-cell">
             {{ $vendu > 0 ? number_format($vendu) : '—' }}
@@ -161,19 +176,31 @@
     </tbody>
 
     {{-- Ligne totaux --}}
-    @php
-        $totStock = $produits->sum('quantite_stock');
-        $totVendu = $ventesStats->sum('total_vendu');
-        $totCA    = $ventesStats->sum('ca_total');
-        $totMarge = $ventesStats->sum('marge_totale');
-        $totTaux  = $totCA > 0 ? ($totMarge / $totCA * 100) : 0;
-    @endphp
+   @php
+    $totStock      = $produits->sum('quantite_stock');
+    $totVendu      = $ventesStats->sum('total_vendu');
+    $totCA         = $ventesStats->sum('ca_total');
+    $totMarge      = $ventesStats->sum('marge_totale');
+    $totTaux       = $totCA > 0 ? ($totMarge / $totCA * 100) : 0;
+
+    // ✅ Total valeur stock de tous les produits de cette table
+    $totValeurStock = 0;
+    foreach ($produits as $_p) {
+        $_fifoQty = \App\Models\Achat::where('produit_id', $_p->id)->where('quantite_restante', '>', 0)->sum('quantite_restante');
+        $_fifoVal = \App\Models\Achat::where('produit_id', $_p->id)->where('quantite_restante', '>', 0)->selectRaw('SUM(quantite_restante * prix_achat) as total')->value('total') ?? 0;
+        $_manuelQty = max(0, $_p->quantite_stock - $_fifoQty);
+        $totValeurStock += $_fifoVal + ($_manuelQty * ($_p->prix_achat ?? 0));
+    }
+@endphp
     <tfoot>
         <tr style="background:#f5f3f0;border-top:2px solid var(--border);">
             <td style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:9px 13px;">
                 Totaux — {{ $produits->count() }} produit{{ $produits->count() != 1 ? 's' : '' }}
             </td>
-            <td class="num-cell" style="font-weight:700;">{{ number_format($totStock) }}</td>
+<td class="num-cell" style="font-weight:700;">{{ number_format($totStock) }}</td>
+<td class="num-cell" style="font-weight:700;color:#7e22ce;">
+    {{ $totValeurStock > 0 ? number_format($totValeurStock, 2, ',', ' ') . ' MAD' : '—' }}
+</td>            
             <td class="num-cell" style="font-weight:700;">{{ $totVendu > 0 ? number_format($totVendu) : '—' }}</td>
             <td class="num-cell num-neutral" style="font-weight:700;">{{ $totCA > 0 ? number_format($totCA, 2, ',', ' ') : '—' }}</td>
             <td class="num-cell num-positive" style="font-weight:700;">{{ $totMarge > 0 ? number_format($totMarge, 2, ',', ' ') : '—' }}</td>

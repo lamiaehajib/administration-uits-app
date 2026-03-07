@@ -21,20 +21,65 @@ class AchatController extends Controller
     }
 
     public function index(Request $request)
-    {
-        $search = $request->input('search');
-    
-        $achats = Achat::with('produit')
-            ->when($search, function ($query) use ($search) {
-                return $query->whereHas('produit', function ($q) use ($search) {
-                    $q->where('nom', 'like', '%' . $search . '%');
-                });
-            })
-            ->latest()
-            ->paginate(10);
-    
-        return view('achats.index', compact('achats'));
-    }
+{
+    $search      = $request->input('search');
+    $fournisseur = $request->input('fournisseur');
+    $category_id = $request->input('category_id');
+    $produit_id  = $request->input('produit_id');
+    $mois        = $request->input('mois');
+    $annee       = $request->input('annee');
+
+    $achats = Achat::with(['produit.category'])
+        ->when($search, fn($q) => $q->whereHas('produit', fn($q2) =>
+            $q2->where('nom', 'like', "%$search%")
+               ->orWhere('reference', 'like', "%$search%")
+        ))
+        ->when($fournisseur, fn($q) => $q->where('fournisseur', 'like', "%$fournisseur%"))
+        ->when($category_id, fn($q) => $q->whereHas('produit', fn($q2) =>
+            $q2->where('category_id', $category_id)
+        ))
+        ->when($produit_id, fn($q) => $q->where('produit_id', $produit_id))
+        ->when($mois, fn($q) => $q->whereRaw('DATE_FORMAT(date_achat, "%Y-%m") = ?', [$mois]))
+        ->when($annee, fn($q) => $q->whereYear('date_achat', $annee))
+        ->latest('date_achat')
+        ->paginate(10)
+        ->appends($request->all());
+
+    $categories          = \App\Models\Category::orderBy('nom')->get();
+    $fournisseursListe   = Achat::whereNotNull('fournisseur')->distinct()->pluck('fournisseur')->sort()->values();
+    $produitsListe       = \App\Models\Produit::orderBy('nom')->get(['id', 'nom']);
+    $anneesDisponibles   = Achat::selectRaw('YEAR(date_achat) as annee')->distinct()->orderByDesc('annee')->pluck('annee');
+
+
+    // ✅ Stats filtrées (basées sur la même query SANS pagination)
+$statsQuery = Achat::with(['produit.category'])
+    ->when($search, fn($q) => $q->whereHas('produit', fn($q2) =>
+        $q2->where('nom', 'like', "%$search%")
+           ->orWhere('reference', 'like', "%$search%")
+    ))
+    ->when($fournisseur, fn($q) => $q->where('fournisseur', 'like', "%$fournisseur%"))
+    ->when($category_id, fn($q) => $q->whereHas('produit', fn($q2) =>
+        $q2->where('category_id', $category_id)
+    ))
+    ->when($produit_id, fn($q) => $q->where('produit_id', $produit_id))
+    ->when($mois, fn($q) => $q->whereRaw('DATE_FORMAT(date_achat, "%Y-%m") = ?', [$mois]))
+    ->when($annee, fn($q) => $q->whereYear('date_achat', $annee));
+
+$statsFilters = [
+    'total_achats'     => $statsQuery->count(),
+    'total_quantite'   => $statsQuery->sum('quantite'),
+    'total_montant'    => $statsQuery->sum('total_achat'),
+    'total_restant'    => $statsQuery->sum('quantite_restante'),
+    'valeur_restante'  => $statsQuery->get()->sum(fn($a) => $a->quantite_restante * $a->prix_achat),
+];
+
+return view('achats.index', compact(
+    'achats', 'categories', 'fournisseursListe',
+    'produitsListe', 'anneesDisponibles', 'statsFilters',
+    'search', 'fournisseur', 'category_id', 'produit_id', 'mois', 'annee'
+));
+   
+}
 
     public function create()
     {

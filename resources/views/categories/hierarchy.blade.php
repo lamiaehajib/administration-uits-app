@@ -291,24 +291,109 @@ body { background: var(--surface); font-family: 'Sora', sans-serif; color: var(-
     </form>
 
     {{-- ── STAT PILLS ── --}}
-    <div class="stat-pills">
-        <div class="stat-pill pill-red">
-            <div class="pill-dot"></div>
-            {{ \App\Models\Category::whereNull('parent_id')->count() }} catégories parentes
-        </div>
-        <div class="stat-pill pill-blue">
-            <div class="pill-dot"></div>
-            {{ \App\Models\Category::whereNotNull('parent_id')->count() }} sous-catégories
-        </div>
-        <div class="stat-pill pill-green">
-            <div class="pill-dot"></div>
-            {{ \App\Models\Produit::where('actif', true)->sum('quantite_stock') }} unités en stock
-        </div>
-        <div class="stat-pill pill-orange">
-            <div class="pill-dot"></div>
-            {{ \App\Models\Produit::whereColumn('quantite_stock', '<=', 'stock_alerte')->count() }} alertes stock
-        </div>
+   {{-- ── STAT PILLS ── --}}
+@php
+    // Calcul des stats globales filtrées par période
+    $allProduits = \App\Models\Produit::where('actif', true)->get();
+    $allProduitIds = $allProduits->pluck('id');
+
+    // Valeur stock restante = quantite_stock × prix_achat (hybride FIFO + manuel)
+    $valeurStockTotal = 0;
+    foreach ($allProduits as $_p) {
+        $stockFifoVal = \App\Models\Achat::where('produit_id', $_p->id)
+            ->where('quantite_restante', '>', 0)
+            ->selectRaw('SUM(quantite_restante * prix_achat) as total')
+            ->value('total') ?? 0;
+        $stockFifoQty = \App\Models\Achat::where('produit_id', $_p->id)
+            ->where('quantite_restante', '>', 0)
+            ->sum('quantite_restante');
+        $stockManuelQty = max(0, $_p->quantite_stock - $stockFifoQty);
+        $valeurStockTotal += $stockFifoVal + ($stockManuelQty * ($_p->prix_achat ?? 0));
+    }
+
+    // Quantité vendue filtrée
+    $qteVendueGlobal = \App\Models\RecuItem::whereIn('produit_id', $allProduitIds)
+        ->whereHas('recuUcg', $applyDateFilter)
+        ->sum('quantite');
+
+    // CA filtré (avec remise proportionnelle via PHP loop)
+    $recusGlobal = \App\Models\RecuUcg::with('items')
+        ->where(function($q) use ($applyDateFilter) { $applyDateFilter($q); })
+        ->get();
+
+    $caGlobal = 0;
+    $margeGlobal = 0;
+    foreach ($recusGlobal as $_recu) {
+        $totalBrut = $_recu->items->sum('sous_total');
+        foreach ($_recu->items as $_item) {
+            if (!$allProduitIds->contains($_item->produit_id)) continue;
+            $prop = $totalBrut > 0 ? ($_item->sous_total / $totalBrut) : 0;
+            $caGlobal    += $_item->sous_total - ($prop * ($_recu->remise ?? 0));
+            $margeGlobal += $_item->marge_totale;
+        }
+    }
+
+    $tauxMargeGlobal = $caGlobal > 0 ? ($margeGlobal / $caGlobal * 100) : 0;
+@endphp
+
+<div class="stat-pills">
+    {{-- Existants --}}
+    <div class="stat-pill pill-red">
+        <div class="pill-dot"></div>
+        {{ \App\Models\Category::whereNull('parent_id')->count() }} catégories parentes
     </div>
+    <div class="stat-pill pill-blue">
+        <div class="pill-dot"></div>
+        {{ \App\Models\Category::whereNotNull('parent_id')->count() }} sous-catégories
+    </div>
+    <div class="stat-pill pill-green">
+        <div class="pill-dot"></div>
+        {{ \App\Models\Produit::where('actif', true)->sum('quantite_stock') }} unités en stock
+    </div>
+    {{-- <div class="stat-pill pill-orange">
+        <div class="pill-dot"></div>
+        {{ \App\Models\Produit::whereColumn('quantite_stock', '<=', 'stock_alerte')->count() }} alertes stock
+    </div> --}}
+
+    {{-- Séparateur visuel --}}
+    <div style="width:1px;height:26px;background:var(--border);margin:0 4px;align-self:center;"></div>
+
+    {{-- Nouveaux stats filtrés --}}
+    <div class="stat-pill" style="border-color:#c084fc33;">
+        <div class="pill-dot" style="background:#a855f7;"></div>
+        <span style="color:#7e22ce;">Valeur stock :</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:.82rem;font-weight:700;color:#7e22ce;">
+            {{ number_format($valeurStockTotal, 2, ',', ' ') }} MAD
+        </span>
+    </div>
+
+    <div class="stat-pill" style="border-color:#6366f133;">
+        <div class="pill-dot" style="background:#6366f1;"></div>
+        <span style="color:#3730a3;">Qté vendue :</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:.82rem;font-weight:700;color:#3730a3;">
+            {{ number_format($qteVendueGlobal) }}
+        </span>
+    </div>
+
+    <div class="stat-pill" style="border-color:#0ea5e933;">
+        <div class="pill-dot" style="background:#0ea5e9;"></div>
+        <span style="color:#0369a1;">CA net :</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:.82rem;font-weight:700;color:#0369a1;">
+            {{ number_format($caGlobal, 2, ',', ' ') }} MAD
+        </span>
+    </div>
+
+    <div class="stat-pill" style="border-color:#22c55e33;">
+        <div class="pill-dot" style="background:#22c55e;"></div>
+        <span style="color:#15803d;">Marge :</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:.82rem;font-weight:700;color:#15803d;">
+            {{ number_format($margeGlobal, 2, ',', ' ') }} MAD
+            @if($tauxMargeGlobal > 0)
+            <span style="font-size:.68rem;opacity:.8;">({{ number_format($tauxMargeGlobal, 1) }}%)</span>
+            @endif
+        </span>
+    </div>
+</div>
 
     {{-- ── CATÉGORIES ── --}}
     @php

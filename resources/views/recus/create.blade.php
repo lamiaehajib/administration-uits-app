@@ -244,6 +244,10 @@
                     <button type="button" class="btn btn-success" id="add-item">
                         <i class="fas fa-plus me-2"></i>Ajouter un produit
                     </button>
+
+                    <button type="button" class="btn btn-success ms-2" id="btn-open-gift-modal">
+    <i class="fas fa-gift me-2"></i>Ajouter un Gift
+</button>
                 </div>
             </div>
 
@@ -352,13 +356,366 @@
         </div>
     </div>
 
-    @push('scripts')
-    <script>
-       let itemIndex = 1;
+
+    <div class="modal fade" id="giftModal" tabindex="-1" aria-labelledby="giftModalLabel">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="giftModalLabel">
+                    <i class="fas fa-gift me-2"></i>Choisir un Accessoire à Offrir
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+ 
+            <div class="modal-body">
+                {{-- Loading --}}
+                <div id="gift-loading" class="text-center py-4">
+                    <div class="spinner-border text-success" role="status"></div>
+                    <p class="mt-2 text-muted">Chargement des accessoires...</p>
+                </div>
+ 
+                {{-- Liste produits accessoires --}}
+                <div id="gift-produits-list" style="display:none;">
+                    <div class="alert alert-info py-2 mb-3">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Sélectionnez l'accessoire à offrir gratuitement au client.
+                        Le coût sera enregistré comme <strong>charge variable</strong>.
+                    </div>
+ 
+                    {{-- Recherche --}}
+                    <div class="mb-3">
+                        <input type="text" id="gift-search" class="form-control"
+                               placeholder="🔍 Rechercher un accessoire...">
+                    </div>
+ 
+                    {{-- Grille produits --}}
+                    <div class="row g-3" id="gift-produits-grid">
+                        {{-- Rempli dynamiquement par JS --}}
+                    </div>
+                </div>
+ 
+                {{-- Empty state --}}
+                <div id="gift-empty" style="display:none;" class="text-center py-4">
+                    <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Aucun accessoire disponible en stock</p>
+                </div>
+            </div>
+ 
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-success" id="btn-confirm-gift" disabled>
+                    <i class="fas fa-check me-2"></i>
+                    Confirmer le Gift
+                    <span id="gift-confirm-info" class="ms-1"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+   @push('scripts')
+<script>
+
+let itemIndex = 1;
 let currentRemiseRow = null;
 let currentRemiseSousTotal = 0;
 
-// ===== TEMPLATE OPTIONS PRODUITS =====
+// ================================================================
+// GIFT SYSTEM
+// ================================================================
+let selectedGiftProduit = null;
+let giftModal = null;
+
+// ----------------------------------------------------------------
+// Ouvrir le modal Gift → charger les accessoires
+// ----------------------------------------------------------------
+$('#btn-open-gift-modal').on('click', function () {
+    giftModal = new bootstrap.Modal(document.getElementById('giftModal'));
+
+    selectedGiftProduit = null;
+    $('#btn-confirm-gift').prop('disabled', true);
+    $('#gift-confirm-info').text('');
+    $('#gift-search').val('');
+    $('#gift-produits-list').hide();
+    $('#gift-empty').hide();
+    $('#gift-loading').show();
+    $('#gift-produits-grid').empty();
+
+    giftModal.show();
+
+    $.ajax({
+        url: '/api/produits/accessoires',
+        method: 'GET',
+        success: function (response) {
+            $('#gift-loading').hide();
+            if (response.success && response.produits.length > 0) {
+                renderGiftProduits(response.produits);
+                $('#gift-produits-list').show();
+            } else {
+                $('#gift-empty').show();
+            }
+        },
+        error: function () {
+            $('#gift-loading').hide();
+            $('#gift-produits-grid').html(`
+                <div class="col-12">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Erreur lors du chargement des accessoires.
+                    </div>
+                </div>
+            `);
+            $('#gift-produits-list').show();
+        }
+    });
+});
+
+// ----------------------------------------------------------------
+// Afficher les produits accessoires en grille
+// ----------------------------------------------------------------
+function renderGiftProduits(produits) {
+    const grid = $('#gift-produits-grid');
+    grid.empty();
+
+    produits.forEach(function (p) {
+        const stockBadge = p.quantite_stock > 5
+            ? `<span class="badge bg-success">Stock: ${p.quantite_stock}</span>`
+            : p.quantite_stock > 0
+                ? `<span class="badge bg-warning text-dark">Stock: ${p.quantite_stock}</span>`
+                : `<span class="badge bg-danger">Rupture</span>`;
+
+        const disabled = p.quantite_stock <= 0 ? 'opacity-50 pe-none' : '';
+
+        grid.append(`
+            <div class="col-md-4 col-sm-6 gift-produit-card-wrapper" data-nom="${p.nom.toLowerCase()}">
+                <div class="card h-100 border-2 gift-produit-card ${disabled}"
+                     data-id="${p.id}"
+                     data-nom="${p.nom}"
+                     data-prix-achat="${p.prix_achat}"
+                     data-prix-vente="${p.prix_vente}"
+                     data-stock="${p.quantite_stock}"
+                     data-lots='${JSON.stringify(p.lots || [])}'
+                     style="cursor:${p.quantite_stock > 0 ? 'pointer' : 'not-allowed'}; transition: all 0.2s; position:relative;">
+                    <div class="card-body p-3">
+                        <h6 class="card-title mb-1 fw-bold">${p.nom}</h6>
+                        <p class="text-muted small mb-2">${p.reference || ''}</p>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            ${stockBadge}
+                            <span class="text-primary fw-bold">${parseFloat(p.prix_vente).toFixed(2)} DH</span>
+                        </div>
+                        <small class="text-muted">
+                            <i class="fas fa-tag me-1"></i>
+                            Coût: <strong>${parseFloat(p.prix_achat).toFixed(2)} DH</strong>
+                        </small>
+                    </div>
+                    <div class="card-footer bg-light p-2 gift-qty-container" style="display:none;">
+                        <label class="form-label small mb-1 fw-bold text-success">
+                            <i class="fas fa-sort-numeric-up me-1"></i>Quantité
+                        </label>
+                        <div class="input-group input-group-sm">
+                            <button type="button" class="btn btn-outline-secondary btn-qty-minus">−</button>
+                            <input type="number" class="form-control text-center gift-qty-input"
+                                   value="1" min="1" max="${p.quantite_stock}">
+                            <button type="button" class="btn btn-outline-secondary btn-qty-plus">+</button>
+                        </div>
+                    </div>
+                    <div class="position-absolute top-0 end-0 p-2 gift-check" style="display:none;">
+                        <span class="badge bg-success fs-6">
+                            <i class="fas fa-check-circle"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        `);
+    });
+
+    window._allGiftProduits = produits;
+}
+
+// ----------------------------------------------------------------
+// Cliquer sur une carte produit
+// ----------------------------------------------------------------
+$(document).on('click', '.gift-produit-card', function () {
+    if ($(this).hasClass('pe-none')) return;
+
+    $('.gift-produit-card').removeClass('border-success bg-success bg-opacity-10');
+    $('.gift-produit-card .gift-check').hide();
+    $('.gift-produit-card .gift-qty-container').hide();
+
+    $(this).addClass('border-success bg-success bg-opacity-10');
+    $(this).find('.gift-check').show();
+    $(this).find('.gift-qty-container').show();
+
+    selectedGiftProduit = {
+        id        : $(this).data('id'),
+        nom       : $(this).data('nom'),
+        prix_achat: parseFloat($(this).data('prix-achat')),
+        prix_vente: parseFloat($(this).data('prix-vente')),
+        stock     : parseInt($(this).data('stock')),
+        lots      : $(this).data('lots') || [],
+    };
+
+    updateGiftConfirmButton();
+});
+
+// ----------------------------------------------------------------
+// Quantité ± dans la carte
+// ----------------------------------------------------------------
+$(document).on('click', '.btn-qty-minus', function (e) {
+    e.stopPropagation();
+    const input = $(this).closest('.card-footer').find('.gift-qty-input');
+    input.val(Math.max(1, parseInt(input.val()) - 1));
+    updateGiftConfirmButton();
+});
+
+$(document).on('click', '.btn-qty-plus', function (e) {
+    e.stopPropagation();
+    const input = $(this).closest('.card-footer').find('.gift-qty-input');
+    input.val(Math.min(parseInt(input.attr('max')), parseInt(input.val()) + 1));
+    updateGiftConfirmButton();
+});
+
+$(document).on('input', '.gift-qty-input', function (e) {
+    e.stopPropagation();
+    updateGiftConfirmButton();
+});
+
+// ----------------------------------------------------------------
+// Mettre à jour le bouton Confirmer
+// ----------------------------------------------------------------
+function updateGiftConfirmButton() {
+    if (!selectedGiftProduit) {
+        $('#btn-confirm-gift').prop('disabled', true);
+        $('#gift-confirm-info').text('');
+        return;
+    }
+    const qty  = getSelectedGiftQty();
+    const cout = (selectedGiftProduit.prix_achat * qty).toFixed(2);
+    $('#btn-confirm-gift').prop('disabled', false);
+    $('#gift-confirm-info').html(`— ${selectedGiftProduit.nom} x${qty} (coût: ${cout} DH)`);
+}
+
+function getSelectedGiftQty() {
+    const activeCard = $('.gift-produit-card.border-success');
+    if (!activeCard.length) return 1;
+    return parseInt(activeCard.find('.gift-qty-input').val()) || 1;
+}
+
+// ----------------------------------------------------------------
+// Confirmer et ajouter la ligne Gift dans le form
+// ----------------------------------------------------------------
+$('#btn-confirm-gift').on('click', function () {
+    if (!selectedGiftProduit) return;
+
+    const qty      = getSelectedGiftQty();
+    const cout     = (selectedGiftProduit.prix_achat * qty).toFixed(2);
+    const lots     = selectedGiftProduit.lots || [];
+    const firstLot = lots.length > 0 ? lots[0] : null;
+
+    $('#items-container').append(buildGiftRow(itemIndex, selectedGiftProduit, qty, firstLot));
+    itemIndex++;
+
+    updateRemoveButtons();
+    calculateTotal();
+
+    bootstrap.Modal.getInstance(document.getElementById('giftModal')).hide();
+
+    Swal.fire({
+        icon : 'success',
+        title: '🎁 Gift ajouté !',
+        html : `<strong>${selectedGiftProduit.nom}</strong> x${qty}<br>
+                Coût enregistré: <strong>${cout} DH</strong> comme charge variable.`,
+        timer: 2500,
+        showConfirmButton: false,
+    });
+});
+
+// ----------------------------------------------------------------
+// Construire la ligne Gift HTML
+// ----------------------------------------------------------------
+function buildGiftRow(idx, produit, qty, firstLot) {
+    const prixAchat  = firstLot ? firstLot.prix_achat : produit.prix_achat;
+    const stockDispo = firstLot ? firstLot.quantite_restante : produit.stock;
+    const achatId    = firstLot ? firstLot.id : '';
+    const cout       = (prixAchat * qty).toFixed(2);
+
+    return `
+        <div class="item-row gift-row mb-3 p-3 border border-success rounded bg-success bg-opacity-10"
+             data-index="${idx}" data-is-gift="1">
+            <div class="d-flex align-items-center mb-2">
+                <span class="badge bg-success fs-6 me-2">
+                    <i class="fas fa-gift me-1"></i> GIFT
+                </span>
+                <strong>${produit.nom}</strong>
+                <span class="ms-auto text-muted small">
+                    Coût: ${cout} DH → charge variable automatique
+                </span>
+            </div>
+            <div class="row g-2">
+                <input type="hidden" name="items[${idx}][produit_id]"        value="${produit.id}">
+                <input type="hidden" name="items[${idx}][is_gift]"            value="1">
+                <input type="hidden" name="items[${idx}][prix_unitaire]"      value="0">
+                <input type="hidden" name="items[${idx}][prix_achat]"         value="${prixAchat}">
+                <input type="hidden" name="items[${idx}][achat_id]"           value="${achatId}">
+                <input type="hidden" name="items[${idx}][remise_appliquee]"   value="0">
+                <input type="hidden" name="items[${idx}][remise_pourcentage]" value="0">
+                <input type="hidden" name="items[${idx}][remise_montant]"     value="0">
+                <input type="hidden" class="is-gift-input"                    value="1">
+                <input type="hidden" class="lot-prix-achat"                   value="${prixAchat}">
+
+                <div class="col-md-4">
+                    <label class="form-label small text-success fw-bold">Accessoire offert</label>
+                    <input type="text" class="form-control form-control-sm bg-white"
+                           value="${produit.nom}" readonly>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-success fw-bold">Quantité</label>
+                    <input type="number" name="items[${idx}][quantite]"
+                           class="form-control form-control-sm quantite-input"
+                           value="${qty}" min="1" max="${stockDispo}" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-success fw-bold">Prix client</label>
+                    <input type="text" class="form-control form-control-sm bg-white text-success fw-bold"
+                           value="0.00 DH (GIFT)" readonly>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">Coût interne</label>
+                    <input type="text" class="form-control form-control-sm bg-light gift-cout-display"
+                           value="${cout} DH" readonly>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label small text-success fw-bold">Total</label>
+                    <input type="text" class="form-control form-control-sm bg-white text-success fw-bold total-ligne-display"
+                           value="0.00 DH" readonly>
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm remove-item">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <small class="text-muted mt-1 d-block">
+                <i class="fas fa-info-circle me-1 text-warning"></i>
+                Une charge variable de <strong>${cout} DH</strong> sera créée automatiquement.
+            </small>
+        </div>
+    `;
+}
+
+// ----------------------------------------------------------------
+// Recherche dans le modal Gift
+// ----------------------------------------------------------------
+$('#gift-search').on('input', function () {
+    const q = $(this).val().toLowerCase().trim();
+    $('.gift-produit-card-wrapper').each(function () {
+        $(this).toggle($(this).data('nom').includes(q));
+    });
+});
+
+// ================================================================
+// TEMPLATE OPTIONS PRODUITS
+// ================================================================
 const produitsOptions = `
     <option value="">-- Sélectionner un produit --</option>
     @foreach($produits as $produit)
@@ -372,7 +729,9 @@ const produitsOptions = `
     @endforeach
 `;
 
-// ===== TEMPLATE ITEM ROW =====
+// ================================================================
+// TEMPLATE ITEM ROW (produit normal)
+// ================================================================
 function buildItemRow(idx) {
     return `
         <div class="item-row mb-3 p-3 border rounded" data-index="${idx}">
@@ -384,7 +743,6 @@ function buildItemRow(idx) {
                     </select>
                 </div>
 
-                <!-- ✅ Lots disponibles -->
                 <div class="col-12 lots-container" style="display:none;">
                     <label class="form-label fw-bold text-primary">
                         <i class="fas fa-boxes me-1"></i> Choisir le lot à vendre
@@ -410,7 +768,6 @@ function buildItemRow(idx) {
                     <input type="hidden" name="items[${idx}][prix_unitaire]" class="lot-prix-vente">
                 </div>
 
-                <!-- Variant -->
                 <div class="col-md-3 variant-container" style="display:none;">
                     <label class="form-label">Variant (optionnel)</label>
                     <select name="items[${idx}][product_variant_id]" class="form-select variant-select">
@@ -419,19 +776,17 @@ function buildItemRow(idx) {
                     <small class="text-muted variant-info"></small>
                 </div>
 
-                <!-- Quantité -->
                 <div class="col-md-1">
                     <label class="form-label">Qté <span class="text-danger">*</span></label>
-                    <input type="number" name="items[${idx}][quantite]" class="form-control quantite-input" min="1" value="1" required>
+                    <input type="number" name="items[${idx}][quantite]"
+                           class="form-control quantite-input" min="1" value="1" required>
                 </div>
 
-                <!-- Prix unitaire -->
                 <div class="col-md-2">
                     <label class="form-label">Prix Unit.</label>
                     <input type="text" class="form-control prix-display" readonly>
                 </div>
 
-                <!-- Remise -->
                 <div class="col-md-2">
                     <label class="form-label">Remise</label>
                     <div class="input-group input-group-sm">
@@ -445,13 +800,12 @@ function buildItemRow(idx) {
                     </div>
                 </div>
 
-                <!-- Total ligne -->
                 <div class="col-md-2">
                     <label class="form-label">Total ligne</label>
-                    <input type="text" class="form-control total-ligne-display bg-light fw-bold" readonly value="0.00 DH">
+                    <input type="text" class="form-control total-ligne-display bg-light fw-bold"
+                           readonly value="0.00 DH">
                 </div>
 
-                <!-- Supprimer -->
                 <div class="col-md-1 d-flex align-items-end">
                     <button type="button" class="btn btn-danger remove-item">
                         <i class="fas fa-trash"></i>
@@ -477,9 +831,12 @@ function buildItemRow(idx) {
     `;
 }
 
+// ================================================================
+// DOCUMENT READY
+// ================================================================
 $(document).ready(function() {
 
-    // ===== FILTRE CATÉGORIE =====
+    // FILTRE CATÉGORIE
     $('#category-filter').on('change', function() {
         const categoryId = $(this).val();
         if (!categoryId) {
@@ -490,30 +847,34 @@ $(document).ready(function() {
         $.ajax({
             url: `/api/produits/category/${categoryId}`,
             method: 'GET',
-            beforeSend: function() { $('#filter-info').html('<span class="text-info">🔄 Chargement...</span>'); },
-           success: function(response) {
-    if (response.success && response.produits.length > 0) {
-        let options = '<option value="">-- Sélectionner un produit --</option>';
-        response.produits.forEach(p => {
-            options += `<option value="${p.id}" 
-                data-lots='${JSON.stringify(p.lots)}'
-                data-stock="${p.quantite_stock}" 
-                data-has-variants="${p.has_variants}">
-                ${p.nom} (Stock: ${p.quantite_stock})
-            </option>`;
-        });
-        $('.produit-select').each(function() {
-            const v = $(this).val();
-            $(this).html(options);
-            $(this).val(v);
-        });
-        $('#filter-info').html(`<span class="text-success">✅ ${response.produits.length} produit(s)</span>`);
-    } else {
-        $('.produit-select').html('<option value="">Aucun produit dans cette catégorie</option>');
-        $('#filter-info').html('<span class="text-warning">⚠️ Aucun produit disponible</span>');
-    }
-},
-            error: function() { $('#filter-info').html('<span class="text-danger">❌ Erreur</span>'); }
+            beforeSend: function() {
+                $('#filter-info').html('<span class="text-info">🔄 Chargement...</span>');
+            },
+            success: function(response) {
+                if (response.success && response.produits.length > 0) {
+                    let options = '<option value="">-- Sélectionner un produit --</option>';
+                    response.produits.forEach(p => {
+                        options += `<option value="${p.id}"
+                            data-lots='${JSON.stringify(p.lots)}'
+                            data-stock="${p.quantite_stock}"
+                            data-has-variants="${p.has_variants}">
+                            ${p.nom} (Stock: ${p.quantite_stock})
+                        </option>`;
+                    });
+                    $('.produit-select').each(function() {
+                        const v = $(this).val();
+                        $(this).html(options);
+                        $(this).val(v);
+                    });
+                    $('#filter-info').html(`<span class="text-success">✅ ${response.produits.length} produit(s)</span>`);
+                } else {
+                    $('.produit-select').html('<option value="">Aucun produit dans cette catégorie</option>');
+                    $('#filter-info').html('<span class="text-warning">⚠️ Aucun produit disponible</span>');
+                }
+            },
+            error: function() {
+                $('#filter-info').html('<span class="text-danger">❌ Erreur</span>');
+            }
         });
     });
 
@@ -521,15 +882,16 @@ $(document).ready(function() {
         $('#category-filter').val('').trigger('change');
     });
 
-    // ===== CHANGEMENT PRODUIT - UNIQUE EVENT =====
+    // CHANGEMENT PRODUIT
     $(document).on('change', '.produit-select', function() {
-        const row = $(this).closest('.item-row');
+        const row            = $(this).closest('.item-row');
         const selectedOption = $(this).find(':selected');
-        const produitId = $(this).val();
-        const lots = selectedOption.data('lots') || [];
-        const hasVariants = selectedOption.data('has-variants') === true || selectedOption.data('has-variants') === 'true';
+        const produitId      = $(this).val();
+        const lots           = selectedOption.data('lots') || [];
+        const hasVariants    = selectedOption.data('has-variants') === true
+                            || selectedOption.data('has-variants') === 'true';
 
-        // Reset tout
+        // Reset
         row.find('.lots-container').hide();
         row.find('.lots-tbody').empty();
         row.find('.lot-achat-id').val('');
@@ -543,7 +905,7 @@ $(document).ready(function() {
 
         if (!produitId) { calculateTotal(); return; }
 
-        // ✅ Afficher les lots si disponibles
+        // Lots disponibles
         if (lots.length > 0) {
             let tbodyHtml = '';
             lots.forEach((lot, idx) => {
@@ -576,12 +938,11 @@ $(document).ready(function() {
             row.find('.lots-tbody').html(tbodyHtml);
             row.find('.lots-container').show();
 
-            // Auto-select premier lot
             const first = lots[0];
             selectLot(row, first.id, first.prix_achat, first.prix_vente_suggere, first.quantite_restante);
         }
 
-        // ✅ Charger variants si disponibles
+        // Variants
         if (hasVariants) {
             $.ajax({
                 url: `/api/variants/produit/${produitId}`,
@@ -591,7 +952,10 @@ $(document).ready(function() {
                         row.find('.variant-container').show();
                         let variantOptions = '<option value="">-- Produit de base --</option>';
                         response.variants.forEach(v => {
-                            variantOptions += `<option value="${v.id}" data-prix="${v.prix_vente_final}" data-stock="${v.stock}" data-specs="${v.variant_name}">
+                            variantOptions += `<option value="${v.id}"
+                                data-prix="${v.prix_vente_final}"
+                                data-stock="${v.stock}"
+                                data-specs="${v.variant_name}">
                                 ${v.variant_name} - ${v.prix_vente_final} DH (Stock: ${v.stock})
                             </option>`;
                         });
@@ -604,13 +968,12 @@ $(document).ready(function() {
         calculateTotal();
     });
 
-    // ===== CLIC SUR LIGNE LOT =====
+    // CLIC SUR LIGNE LOT
     $(document).on('click', '.lot-row', function() {
         const row = $(this).closest('.item-row');
         row.find('.lot-row').removeClass('table-primary');
         $(this).addClass('table-primary');
         $(this).find('.lot-radio').prop('checked', true);
-
         selectLot(
             row,
             $(this).data('achat-id'),
@@ -621,9 +984,9 @@ $(document).ready(function() {
         calculateTotal();
     });
 
-    // ===== CHANGEMENT VARIANT =====
+    // CHANGEMENT VARIANT
     $(document).on('change', '.variant-select', function() {
-        const row = $(this).closest('.item-row');
+        const row       = $(this).closest('.item-row');
         const variantId = $(this).val();
         resetRemiseRow(row);
 
@@ -635,12 +998,10 @@ $(document).ready(function() {
             row.find('.quantite-input').attr('max', stock);
             row.find('.variant-specs').show();
             row.find('.specs-text').html(`<strong>Specs:</strong> ${specs}`);
-            // ✅ Reset lot si variant choisi
             row.find('.lot-achat-id').val('');
             row.find('.lot-prix-achat').val('');
             row.find('.lot-prix-vente').val('');
         } else {
-            // Revenir au prix du lot sélectionné
             const lotPrix = parseFloat(row.find('.lot-prix-vente').val()) || 0;
             if (lotPrix > 0) {
                 row.find('.prix-display').val(lotPrix.toFixed(2) + ' DH');
@@ -650,26 +1011,26 @@ $(document).ready(function() {
         calculateTotal();
     });
 
-    // ===== AJOUTER ITEM =====
+    // AJOUTER ITEM
     $('#add-item').click(function() {
         $('#items-container').append(buildItemRow(itemIndex));
         itemIndex++;
         updateRemoveButtons();
     });
 
-    // ===== SUPPRIMER ITEM =====
+    // SUPPRIMER ITEM
     $(document).on('click', '.remove-item', function() {
         $(this).closest('.item-row').remove();
         updateRemoveButtons();
         calculateTotal();
     });
 
-    // ===== BOUTON REMISE =====
+    // BOUTON REMISE
     $(document).on('click', '.btn-remise', function() {
-        currentRemiseRow = $(this).closest('.item-row');
-        const produitNom = currentRemiseRow.find('.produit-select option:selected').text().trim();
-        const prix = getPrixUnitaire(currentRemiseRow);
-        const quantite = parseInt(currentRemiseRow.find('.quantite-input').val()) || 0;
+        currentRemiseRow      = $(this).closest('.item-row');
+        const produitNom      = currentRemiseRow.find('.produit-select option:selected').text().trim();
+        const prix            = getPrixUnitaire(currentRemiseRow);
+        const quantite        = parseInt(currentRemiseRow.find('.quantite-input').val()) || 0;
         currentRemiseSousTotal = prix * quantite;
 
         if (!currentRemiseRow.find('.produit-select').val() || currentRemiseSousTotal <= 0) {
@@ -697,17 +1058,17 @@ $(document).ready(function() {
         new bootstrap.Modal(document.getElementById('remiseModal')).show();
     });
 
-    // ===== SUPPRIMER REMISE =====
+    // SUPPRIMER REMISE
     $(document).on('click', '.btn-supprimer-remise', function() {
         resetRemiseRow($(this).closest('.item-row'));
         calculateTotal();
     });
 
-    // ===== RECALCUL QUANTITÉ/TVA =====
+    // RECALCUL QUANTITÉ / TVA
     $(document).on('input', '.quantite-input, #tva', function() {
         if ($(this).hasClass('quantite-input')) {
-            const row = $(this).closest('.item-row');
-            const remiseAppliquee  = row.find('.remise-appliquee-input').val() === '1';
+            const row               = $(this).closest('.item-row');
+            const remiseAppliquee   = row.find('.remise-appliquee-input').val() === '1';
             const remisePourcentage = parseFloat(row.find('.remise-pourcentage-input').val()) || 0;
 
             if (remiseAppliquee && remisePourcentage > 0) {
@@ -720,14 +1081,16 @@ $(document).ready(function() {
         calculateTotal();
     });
 
-    // ===== SUBMIT VALIDATION =====
+    // SUBMIT VALIDATION
     $('#recuForm').on('submit', function(e) {
         let valid  = true;
         let errors = [];
 
         $('.item-row').each(function() {
-            const row      = $(this);
-            const produitId = row.find('.produit-select').val();
+            const row       = $(this);
+            const isGift    = row.data('is-gift') == '1';
+            const produitId = isGift ? row.find('input[name*="produit_id"]').val()
+                                     : row.find('.produit-select').val();
             const quantite  = parseInt(row.find('.quantite-input').val());
             const maxStock  = parseInt(row.find('.quantite-input').attr('max'));
 
@@ -737,7 +1100,10 @@ $(document).ready(function() {
             }
             if (maxStock && quantite > maxStock) {
                 valid = false;
-                errors.push(`Stock insuffisant pour "${row.find('.produit-select option:selected').text().trim()}"`);
+                const nom = isGift
+                    ? row.find('input[type="text"]').first().val()
+                    : row.find('.produit-select option:selected').text().trim();
+                errors.push(`Stock insuffisant pour "${nom}"`);
             }
         });
 
@@ -748,7 +1114,9 @@ $(document).ready(function() {
     });
 });
 
-// ===== HELPERS =====
+// ================================================================
+// HELPERS
+// ================================================================
 
 function selectLot(row, achatId, prixAchat, prixVente, stock) {
     row.find('.lot-achat-id').val(achatId);
@@ -786,12 +1154,12 @@ function toggleRemiseType() {
 
     if (type === 'pourcentage') {
         unite.textContent = '%';
-        input.max = 100;
-        hint.textContent = 'Maximum: 100%';
+        input.max         = 100;
+        hint.textContent  = 'Maximum: 100%';
     } else {
         unite.textContent = 'DH';
-        input.max = currentRemiseSousTotal;
-        hint.textContent = `Maximum: ${currentRemiseSousTotal.toFixed(2)} DH`;
+        input.max         = currentRemiseSousTotal;
+        hint.textContent  = `Maximum: ${currentRemiseSousTotal.toFixed(2)} DH`;
     }
 }
 
@@ -830,9 +1198,19 @@ function calculateTotal() {
     let totalRemises = 0;
 
     $('.item-row').each(function() {
-        const row       = $(this);
-        const prix      = getPrixUnitaire(row);
-        const quantite  = parseInt(row.find('.quantite-input').val()) || 0;
+        const row    = $(this);
+        const isGift = row.find('.is-gift-input').val() === '1'
+                    || row.data('is-gift') == '1';
+        const quantite = parseInt(row.find('.quantite-input').val()) || 0;
+
+        if (isGift) {
+            row.find('.total-ligne-display').val('0.00 DH');
+            const prixAchat = parseFloat(row.find('.lot-prix-achat').val()) || 0;
+            row.find('.gift-cout-display').val((prixAchat * quantite).toFixed(2) + ' DH');
+            return; // continue .each()
+        }
+
+        const prix           = getPrixUnitaire(row);
         const ligneSousTotal = prix * quantite;
 
         const remiseAppliquee   = row.find('.remise-appliquee-input').val() === '1';
@@ -850,10 +1228,10 @@ function calculateTotal() {
         sousTotal    += ligneSousTotal;
         totalRemises += montantRemise;
 
-        row.find('.total-ligne-display').val(ligneTotal.toFixed(2) + ' DH');
         row.find('.total-ligne-display')
+            .val(ligneTotal.toFixed(2) + ' DH')
             .toggleClass('text-success', montantRemise > 0)
-            .toggleClass('text-dark', montantRemise === 0);
+            .toggleClass('text-dark',    montantRemise === 0);
     });
 
     const tva   = parseFloat($('#tva').val()) || 0;
@@ -866,9 +1244,12 @@ function calculateTotal() {
 }
 
 function updateRemoveButtons() {
-    const count = $('.item-row').length;
-    $('.remove-item').prop('disabled', count <= 1);
+    // Gift rows + normal rows — désactiver supprimer si 1 seule ligne normale reste
+    const normalRows = $('.item-row:not(.gift-row)').length;
+    $('.item-row:not(.gift-row) .remove-item').prop('disabled', normalRows <= 1);
+    $('.gift-row .remove-item').prop('disabled', false); // Gift toujours supprimable
 }
-    </script>
-    @endpush
+
+</script>
+@endpush
 </x-app-layout>

@@ -52,6 +52,7 @@ class Charge extends Model
         'facture_path',
         'notes',
         'user_id',
+        'recu_item_id_gift',
     ];
 
     protected $casts = [

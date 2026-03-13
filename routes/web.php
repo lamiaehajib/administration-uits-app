@@ -355,6 +355,7 @@ Route::controller(App\Http\Controllers\RecuUcgController::class)->prefix('recus'
 });Route::get('/api/produits/category/{categoryId}', [RecuUcgController::class, 'getProduitsByCategory'])
     ->name('api.produits.by-category');
 
+Route::get('/api/produits/accessoires', [RecuUcgController::class, 'getAccessoires']);
 
   
     Route::post('recus/{recu}/items/{item}/remise', [RecuUcgController::class, 'appliquerRemiseItem'])

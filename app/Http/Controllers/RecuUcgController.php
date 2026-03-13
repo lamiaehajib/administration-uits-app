@@ -207,129 +207,226 @@ public function getProduitsByCategory($categoryId)
 
 // ✅ MÉTHODE STORE CORRIGÉE - Remise appliquée sur produits simples ET variants
 
-public function store(Request $request)
-{
-    $validated = $request->validate([
-        'client_nom'                    => 'required|string|max:255',
-        'client_prenom'                 => 'nullable|string|max:255',
-        'client_telephone'              => 'nullable|string|max:20',
-        'client_email'                  => 'nullable|email|max:255',
-        'client_adresse'                => 'nullable|string',
-        'equipement'                    => 'nullable|string|max:255',
-        'details'                       => 'nullable|string',
-        'type_garantie'                 => 'required|in:30_jours,90_jours,180_jours,360_jours,sans_garantie',
-        'remise'                        => 'nullable|numeric|min:0',
-        'tva'                           => 'nullable|numeric|min:0',
-        'mode_paiement'                 => 'required|in:especes,carte,cheque,virement,credit',
-        'montant_paye'                  => 'nullable|numeric|min:0',
-        'date_paiement'                 => 'nullable|date',
-        'notes'                         => 'nullable|string',
-        'items'                         => 'required|array|min:1',
-        'items.*.produit_id'            => 'required|exists:produits,id',
-        'items.*.product_variant_id'    => 'nullable|exists:product_variants,id',
-        'items.*.quantite'              => 'required|integer|min:1',
-        'items.*.remise_appliquee'      => 'nullable',
-        'items.*.remise_pourcentage'    => 'nullable|numeric|min:0|max:100',
-        'items.*.remise_montant'        => 'nullable|numeric|min:0',
-        'items.*.achat_id'              => 'nullable',
-        'items.*.prix_unitaire'         => 'nullable|numeric|min:0',
-        'items.*.prix_achat'            => 'nullable|numeric|min:0',
-    ]);
-
-    DB::beginTransaction();
-    try {
-        $recu = RecuUcg::create([
-            'user_id'          => auth()->id(),
-            'client_nom'       => $validated['client_nom'],
-            'client_prenom'    => $validated['client_prenom'] ?? null,
-            'client_telephone' => $validated['client_telephone'] ?? null,
-            'client_email'     => $validated['client_email'] ?? null,
-            'client_adresse'   => $validated['client_adresse'] ?? null,
-            'equipement'       => $validated['equipement'] ?? null,
-            'details'          => $validated['details'] ?? null,
-            'type_garantie'    => $validated['type_garantie'],
-            'remise'           => $validated['remise'] ?? 0,
-            'tva'              => $validated['tva'] ?? 0,
-            'mode_paiement'    => $validated['mode_paiement'],
-            'date_paiement'    => $validated['date_paiement'] ?? now(),
-            'notes'            => $validated['notes'] ?? null,
+ public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'client_nom'                    => 'required|string|max:255',
+            'client_prenom'                 => 'nullable|string|max:255',
+            'client_telephone'              => 'nullable|string|max:20',
+            'client_email'                  => 'nullable|email|max:255',
+            'client_adresse'                => 'nullable|string',
+            'equipement'                    => 'nullable|string|max:255',
+            'details'                       => 'nullable|string',
+            'type_garantie'                 => 'required|in:30_jours,90_jours,180_jours,360_jours,sans_garantie',
+            'remise'                        => 'nullable|numeric|min:0',
+            'tva'                           => 'nullable|numeric|min:0',
+            'mode_paiement'                 => 'required|in:especes,carte,cheque,virement,credit',
+            'montant_paye'                  => 'nullable|numeric|min:0',
+            'date_paiement'                 => 'nullable|date',
+            'notes'                         => 'nullable|string',
+            'items'                         => 'required|array|min:1',
+            'items.*.produit_id'            => 'required|exists:produits,id',
+            'items.*.product_variant_id'    => 'nullable|exists:product_variants,id',
+            'items.*.quantite'              => 'required|integer|min:1',
+            'items.*.is_gift'               => 'nullable|boolean',          // ✅ NOUVEAU
+            'items.*.remise_appliquee'      => 'nullable',
+            'items.*.remise_pourcentage'    => 'nullable|numeric|min:0|max:100',
+            'items.*.remise_montant'        => 'nullable|numeric|min:0',
+            'items.*.achat_id'              => 'nullable',
+            'items.*.prix_unitaire'         => 'nullable|numeric|min:0',
+            'items.*.prix_achat'            => 'nullable|numeric|min:0',
         ]);
-
-        foreach ($validated['items'] as $itemData) {
-
-            $remiseData = [
-                'remise_appliquee'   => !empty($itemData['remise_appliquee']) && $itemData['remise_appliquee'] == '1',
-                'remise_pourcentage' => $itemData['remise_pourcentage'] ?? 0,
-                'remise_montant'     => $itemData['remise_montant'] ?? 0,
-            ];
-
-            if (!empty($itemData['product_variant_id'])) {
-                // ✅ Produit avec variant
-                $variant = ProductVariant::findOrFail($itemData['product_variant_id']);
-
-                if ($variant->quantite_stock < $itemData['quantite']) {
-                    throw new \Exception("Stock insuffisant pour {$variant->full_name}. Stock: {$variant->quantite_stock}");
-                }
-
-                $recu->items()->create(array_merge([
-                    'produit_id'         => $itemData['produit_id'],
-                    'product_variant_id' => $itemData['product_variant_id'],
-                    'quantite'           => $itemData['quantite'],
-                ], $remiseData));
-
-            } else {
-                // ✅ Produit simple
-                $produit = Produit::findOrFail($itemData['produit_id']);
-
-                // ✅ Vérification stock selon lot choisi
-                $achatId = $itemData['achat_id'] ?? null;
-
-                if ($achatId && $achatId !== 'manuel') {
-                    // Vérifier stock du lot spécifique
-                    $achat = \App\Models\Achat::findOrFail($achatId);
-                    if ($achat->quantite_restante < $itemData['quantite']) {
-                        throw new \Exception("Stock insuffisant dans ce lot pour {$produit->nom}. Stock lot: {$achat->quantite_restante}");
+ 
+        DB::beginTransaction();
+        try {
+            $recu = RecuUcg::create([
+                'user_id'          => auth()->id(),
+                'client_nom'       => $validated['client_nom'],
+                'client_prenom'    => $validated['client_prenom'] ?? null,
+                'client_telephone' => $validated['client_telephone'] ?? null,
+                'client_email'     => $validated['client_email'] ?? null,
+                'client_adresse'   => $validated['client_adresse'] ?? null,
+                'equipement'       => $validated['equipement'] ?? null,
+                'details'          => $validated['details'] ?? null,
+                'type_garantie'    => $validated['type_garantie'],
+                'remise'           => $validated['remise'] ?? 0,
+                'tva'              => $validated['tva'] ?? 0,
+                'mode_paiement'    => $validated['mode_paiement'],
+                'date_paiement'    => $validated['date_paiement'] ?? now(),
+                'notes'            => $validated['notes'] ?? null,
+            ]);
+ 
+            foreach ($validated['items'] as $itemData) {
+ 
+                // ✅ Détecter si c'est un gift
+                $isGift = !empty($itemData['is_gift']) && $itemData['is_gift'] == '1';
+ 
+                // ✅ Si gift → pas de remise (le prix est déjà 0)
+                $remiseData = [
+                    'remise_appliquee'   => !$isGift && !empty($itemData['remise_appliquee']) && $itemData['remise_appliquee'] == '1',
+                    'remise_pourcentage' => $isGift ? 0 : ($itemData['remise_pourcentage'] ?? 0),
+                    'remise_montant'     => $isGift ? 0 : ($itemData['remise_montant'] ?? 0),
+                    'is_gift'            => $isGift,
+                ];
+ 
+                if (!empty($itemData['product_variant_id'])) {
+                    // ✅ Produit avec variant
+                    $variant = ProductVariant::findOrFail($itemData['product_variant_id']);
+ 
+                    if ($variant->quantite_stock < $itemData['quantite']) {
+                        throw new \Exception("Stock insuffisant pour {$variant->full_name}. Stock: {$variant->quantite_stock}");
                     }
+ 
+                    $recu->items()->create(array_merge([
+                        'produit_id'         => $itemData['produit_id'],
+                        'product_variant_id' => $itemData['product_variant_id'],
+                        'quantite'           => $itemData['quantite'],
+                    ], $remiseData));
+ 
                 } else {
-                    // Vérifier stock global
-                    if ($produit->quantite_stock < $itemData['quantite']) {
-                        throw new \Exception("Stock insuffisant pour {$produit->nom}. Stock: {$produit->quantite_stock}");
+                    // ✅ Produit simple
+                    $produit = Produit::findOrFail($itemData['produit_id']);
+                    $achatId = $itemData['achat_id'] ?? null;
+ 
+                    if ($achatId && $achatId !== 'manuel') {
+                        $achat = \App\Models\Achat::findOrFail($achatId);
+                        if ($achat->quantite_restante < $itemData['quantite']) {
+                            throw new \Exception("Stock insuffisant dans ce lot pour {$produit->nom}. Stock lot: {$achat->quantite_restante}");
+                        }
+                    } else {
+                        if ($produit->quantite_stock < $itemData['quantite']) {
+                            throw new \Exception("Stock insuffisant pour {$produit->nom}. Stock: {$produit->quantite_stock}");
+                        }
                     }
+ 
+                    $recu->items()->create(array_merge([
+                        'produit_id'    => $itemData['produit_id'],
+                        'quantite'      => $itemData['quantite'],
+                        'achat_id'      => ($achatId && $achatId !== 'manuel') ? $achatId : null,
+                        'prix_unitaire' => !$isGift && !empty($itemData['prix_unitaire']) ? $itemData['prix_unitaire'] : null,
+                        'prix_achat'    => !empty($itemData['prix_achat']) ? $itemData['prix_achat'] : null,
+                    ], $remiseData));
                 }
-
-                $recu->items()->create(array_merge([
-                    'produit_id'    => $itemData['produit_id'],
-                    'quantite'      => $itemData['quantite'],
-                    'achat_id'      => ($achatId && $achatId !== 'manuel') ? $achatId : null,
-                    'prix_unitaire' => !empty($itemData['prix_unitaire']) ? $itemData['prix_unitaire'] : null,
-                    'prix_achat'    => !empty($itemData['prix_achat']) ? $itemData['prix_achat'] : null,
-                ], $remiseData));
             }
+ 
+            $recu->refresh();
+            $montantPaye = $validated['montant_paye'] ?? $recu->total;
+ 
+            if ($montantPaye > 0) {
+                $recu->ajouterPaiement($montantPaye, $validated['mode_paiement'], null);
+            }
+ 
+            DB::commit();
+ 
+            return redirect()
+                ->route('recus.show', $recu)
+                ->with('success', "Reçu {$recu->numero_recu} créé avec succès!");
+ 
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()->with('error', "Erreur: " . $e->getMessage());
         }
+    }
 
-        $recu->refresh();
+    
 
-        $montantPaye = $validated['montant_paye'] ?? $recu->total;
-
-        if ($montantPaye > 0) {
-            $recu->ajouterPaiement(
-                $montantPaye,
-                $validated['mode_paiement'],
-                null
-            );
+    public function getAccessoires()
+{
+    try {
+        // ✅ ÉTAPE 1: Trouver la catégorie parent "Accessoires"
+        $accessoireParents = \App\Models\Category::where('nom', 'like', '%ccessoire%')
+            ->get();
+ 
+        if ($accessoireParents->isEmpty()) {
+            return response()->json([
+                'success'  => true,
+                'produits' => [],
+                'message'  => 'Aucune catégorie Accessoires trouvée',
+            ]);
         }
-
-        DB::commit();
-
-        return redirect()
-            ->route('recus.show', $recu)
-            ->with('success', "Reçu {$recu->numero_recu} créé avec succès!");
-
+ 
+        // ✅ ÉTAPE 2: Collecter TOUS les IDs (parent + sous-catégories)
+        $allCategoryIds = collect();
+ 
+        foreach ($accessoireParents as $parent) {
+            // Ajouter l'ID du parent
+            $allCategoryIds->push($parent->id);
+ 
+            // Ajouter les IDs de tous les enfants
+            $childIds = \App\Models\Category::where('parent_id', $parent->id)
+                ->pluck('id');
+            $allCategoryIds = $allCategoryIds->merge($childIds);
+ 
+            // Si tu as des sous-sous-catégories (3 niveaux), décommente:
+            // foreach ($childIds as $childId) {
+            //     $grandChildIds = \App\Models\Category::where('parent_id', $childId)->pluck('id');
+            //     $allCategoryIds = $allCategoryIds->merge($grandChildIds);
+            // }
+        }
+ 
+        $allCategoryIds = $allCategoryIds->unique()->values()->toArray();
+ 
+        // ✅ ÉTAPE 3: Récupérer les produits de ces catégories avec stock > 0
+        $produits = \App\Models\Produit::where('actif', true)
+            ->whereIn('category_id', $allCategoryIds)
+            ->where('quantite_stock', '>', 0)
+            ->orderBy('nom')
+            ->get()
+            ->map(function ($produit) {
+                // Calculer les lots disponibles (même logique que create())
+                $lots = \App\Models\Achat::where('produit_id', $produit->id)
+                    ->where('quantite_restante', '>', 0)
+                    ->orderBy('date_achat', 'asc')
+                    ->get()
+                    ->map(fn($lot) => [
+                        'id'                => $lot->id,
+                        'date_achat'        => $lot->date_achat->format('d/m/Y'),
+                        'fournisseur'       => $lot->fournisseur ?? 'N/A',
+                        'quantite_restante' => $lot->quantite_restante,
+                        'prix_achat'        => $lot->prix_achat,
+                        'prix_vente_suggere'=> $lot->prix_vente_suggere ?? $produit->prix_vente,
+                    ]);
+ 
+                // Stock manuel (hors lots)
+                $stockFifo   = $lots->sum('quantite_restante');
+                $stockManuel = max(0, $produit->quantite_stock - $stockFifo);
+ 
+                if ($stockManuel > 0) {
+                    $lots->prepend([
+                        'id'                => 'manuel',
+                        'date_achat'        => 'Stock initial',
+                        'fournisseur'       => 'Stock manuel',
+                        'quantite_restante' => $stockManuel,
+                        'prix_achat'        => $produit->prix_achat ?? 0,
+                        'prix_vente_suggere'=> $produit->prix_vente ?? 0,
+                    ]);
+                }
+ 
+                return [
+                    'id'             => $produit->id,
+                    'nom'            => $produit->nom,
+                    'reference'      => $produit->reference ?? '',
+                    'prix_achat'     => $produit->prix_achat ?? 0,
+                    'prix_vente'     => $produit->prix_vente ?? 0,
+                    'quantite_stock' => $produit->quantite_stock,
+                    'category'       => $produit->category?->nom ?? '',
+                    'lots'           => $lots->values()->toArray(),
+                ];
+            });
+ 
+        return response()->json([
+            'success'      => true,
+            'produits'     => $produits,
+            'total'        => $produits->count(),
+            'category_ids' => $allCategoryIds, // pour debug
+        ]);
+ 
     } catch (\Exception $e) {
-        DB::rollBack();
-        return back()
-            ->withInput()
-            ->with('error', "Erreur: " . $e->getMessage());
+        \Log::error('❌ getAccessoires error: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur: ' . $e->getMessage(),
+        ], 500);
     }
 }
     public function show(RecuUcg $recu)
@@ -373,29 +470,32 @@ public function store(Request $request)
         }
 
         $validated = $request->validate([
-            'client_nom' => 'required|string|max:255',
-            'client_prenom' => 'nullable|string|max:255',
-            'client_telephone' => 'nullable|string|max:20',
-            'client_email' => 'nullable|email|max:255',
-            'client_adresse' => 'nullable|string',
-            'equipement' => 'nullable|string|max:255',
-            'details' => 'nullable|string',
-            'type_garantie' => 'required|in:30_jours,90_jours,180_jours,360_jours,sans_garantie',
-            'remise' => 'nullable|numeric|min:0',
-            'tva' => 'nullable|numeric|min:0',
-            'mode_paiement' => 'required|in:especes,carte,cheque,virement,credit',
-            'montant_paye' => 'nullable|numeric|min:0',
-            'date_paiement' => 'nullable|date',
-            'notes' => 'nullable|string',
-            'items' => 'required|array|min:1',
-            'items.*.produit_id' => 'required|exists:produits,id',
-            'items.*.product_variant_id' => 'nullable|exists:product_variants,id',
-            'items.*.quantite' => 'required|integer|min:1',
-            // ✅ Validation remise
-            'items.*.remise_appliquee' => 'nullable',
-            'items.*.remise_pourcentage' => 'nullable|numeric|min:0|max:100',
-            'items.*.remise_montant' => 'nullable|numeric|min:0',
-        ]);
+    'client_nom'                    => 'required|string|max:255',
+    'client_prenom'                 => 'nullable|string|max:255',
+    'client_telephone'              => 'nullable|string|max:20',
+    'client_email'                  => 'nullable|email|max:255',
+    'client_adresse'                => 'nullable|string',
+    'equipement'                    => 'nullable|string|max:255',
+    'details'                       => 'nullable|string',
+    'type_garantie'                 => 'required|in:30_jours,90_jours,180_jours,360_jours,sans_garantie',
+    'remise'                        => 'nullable|numeric|min:0',
+    'tva'                           => 'nullable|numeric|min:0',
+    'mode_paiement'                 => 'required|in:especes,carte,cheque,virement,credit',
+    'montant_paye'                  => 'nullable|numeric|min:0',
+    'date_paiement'                 => 'nullable|date',
+    'notes'                         => 'nullable|string',
+    'items'                         => 'required|array|min:1',
+    'items.*.produit_id'            => 'required|exists:produits,id',
+    'items.*.product_variant_id'    => 'nullable|exists:product_variants,id',
+    'items.*.quantite'              => 'required|integer|min:1',
+    'items.*.is_gift'               => 'nullable|boolean',          // ✅ GIFT
+    'items.*.remise_appliquee'      => 'nullable',
+    'items.*.remise_pourcentage'    => 'nullable|numeric|min:0|max:100',
+    'items.*.remise_montant'        => 'nullable|numeric|min:0',
+    'items.*.achat_id'              => 'nullable',                  // ✅ LOT
+    'items.*.prix_unitaire'         => 'nullable|numeric|min:0',    // ✅ LOT
+    'items.*.prix_achat'            => 'nullable|numeric|min:0',    // ✅ LOT
+]);
 
         DB::beginTransaction();
         try {
@@ -434,56 +534,59 @@ public function store(Request $request)
 
             // 4️⃣ Créer les nouveaux items avec remise + vérification stock
             foreach ($validated['items'] as $itemData) {
-
-                // ✅ Champs remise communs
-                $remiseData = [
-                    'remise_appliquee' => !empty($itemData['remise_appliquee']) && $itemData['remise_appliquee'] == '1',
-                    'remise_pourcentage' => $itemData['remise_pourcentage'] ?? 0,
-                    'remise_montant' => $itemData['remise_montant'] ?? 0,
-                ];
-
-                if (!empty($itemData['product_variant_id'])) {
-                    // ✅ Produit avec variant
-                    $variant = ProductVariant::findOrFail($itemData['product_variant_id']);
-
-                    $stockDisponible = $variant->quantite_stock;
-                    $oldSameVariantItem = $oldItems->where('product_variant_id', $itemData['product_variant_id'])->first();
-                    if ($oldSameVariantItem) {
-                        $stockDisponible += $oldSameVariantItem->quantite;
-                    }
-
-                    if ($stockDisponible < $itemData['quantite']) {
-                        throw new \Exception("Stock insuffisant pour {$variant->full_name}. Stock disponible: {$stockDisponible}");
-                    }
-
-                    $recu->items()->create(array_merge([
-                        'produit_id' => $itemData['produit_id'],
-                        'product_variant_id' => $itemData['product_variant_id'],
-                        'quantite' => $itemData['quantite'],
-                    ], $remiseData));
-
-                } else {
-                    // ✅ Produit simple (sans variant)
-                    $produit = Produit::findOrFail($itemData['produit_id']);
-
-                    $stockDisponible = $produit->quantite_stock;
-                    $oldSameProductItem = $oldItems->where('produit_id', $itemData['produit_id'])
-                                                   ->whereNull('product_variant_id')
-                                                   ->first();
-                    if ($oldSameProductItem) {
-                        $stockDisponible += $oldSameProductItem->quantite;
-                    }
-
-                    if ($stockDisponible < $itemData['quantite']) {
-                        throw new \Exception("Stock insuffisant pour {$produit->nom}. Stock disponible: {$stockDisponible}");
-                    }
-
-                    $recu->items()->create(array_merge([
-                        'produit_id' => $itemData['produit_id'],
-                        'quantite' => $itemData['quantite'],
-                    ], $remiseData));
-                }
-            }
+ 
+    // ✅ Détecter si c'est un gift
+    $isGift = !empty($itemData['is_gift']) && $itemData['is_gift'] == '1';
+ 
+    // ✅ Remise: gift = pas de remise
+    $remiseData = [
+        'remise_appliquee'   => !$isGift && !empty($itemData['remise_appliquee']) && $itemData['remise_appliquee'] == '1',
+        'remise_pourcentage' => $isGift ? 0 : ($itemData['remise_pourcentage'] ?? 0),
+        'remise_montant'     => $isGift ? 0 : ($itemData['remise_montant'] ?? 0),
+        'is_gift'            => $isGift,
+    ];
+ 
+    if (!empty($itemData['product_variant_id'])) {
+        // ✅ Produit avec variant
+        $variant = ProductVariant::findOrFail($itemData['product_variant_id']);
+ 
+        $stockDisponible    = $variant->quantite_stock;
+        $oldSameVariantItem = $oldItems->where('product_variant_id', $itemData['product_variant_id'])->first();
+        if ($oldSameVariantItem) $stockDisponible += $oldSameVariantItem->quantite;
+ 
+        if ($stockDisponible < $itemData['quantite']) {
+            throw new \Exception("Stock insuffisant pour {$variant->full_name}. Stock disponible: {$stockDisponible}");
+        }
+ 
+        $recu->items()->create(array_merge([
+            'produit_id'         => $itemData['produit_id'],
+            'product_variant_id' => $itemData['product_variant_id'],
+            'quantite'           => $itemData['quantite'],
+        ], $remiseData));
+ 
+    } else {
+        // ✅ Produit simple
+        $produit = Produit::findOrFail($itemData['produit_id']);
+        $achatId = $itemData['achat_id'] ?? null;
+ 
+        $stockDisponible      = $produit->quantite_stock;
+        $oldSameProductItem   = $oldItems->where('produit_id', $itemData['produit_id'])
+                                         ->whereNull('product_variant_id')->first();
+        if ($oldSameProductItem) $stockDisponible += $oldSameProductItem->quantite;
+ 
+        if ($stockDisponible < $itemData['quantite']) {
+            throw new \Exception("Stock insuffisant pour {$produit->nom}. Stock disponible: {$stockDisponible}");
+        }
+ 
+        $recu->items()->create(array_merge([
+            'produit_id'    => $itemData['produit_id'],
+            'quantite'      => $itemData['quantite'],
+            'achat_id'      => ($achatId && $achatId !== 'manuel') ? $achatId : null,   // ✅ LOT
+            'prix_unitaire' => !$isGift && !empty($itemData['prix_unitaire']) ? $itemData['prix_unitaire'] : null, // ✅
+            'prix_achat'    => !empty($itemData['prix_achat']) ? $itemData['prix_achat'] : null,                   // ✅
+        ], $remiseData));
+    }
+}
 
             // 5️⃣ Recalculer le total
             $recu->refresh();

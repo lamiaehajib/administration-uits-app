@@ -395,6 +395,32 @@ body { background: var(--surface); font-family: 'Sora', sans-serif; color: var(-
     </div>
 </div>
 
+
+
+@php
+$giftsCountGlobal  = 0;
+$giftsValeurGlobal = 0;
+foreach ($recusGlobal as $_recu) {
+    foreach ($_recu->items as $_item) {
+        if ($_item->is_gift) {
+            $giftsCountGlobal  += $_item->quantite;
+            $giftsValeurGlobal += $_item->prix_achat * $_item->quantite;
+        }
+    }
+}
+@endphp
+
+@if($giftsCountGlobal > 0)
+<div class="stat-pill" style="border-color:#bbf7d0;">
+    <span style="font-size:13px;">🎁</span>
+    <span style="color:#15803d;">Gifts :</span>
+    <span style="font-family:'JetBrains Mono',monospace;font-size:.82rem;font-weight:700;color:#15803d;">
+        {{ number_format($giftsCountGlobal) }} unités
+        <span style="font-size:.7rem;opacity:.8;">({{ number_format($giftsValeurGlobal, 2, ',', ' ') }} MAD)</span>
+    </span>
+</div>
+@endif
+
     {{-- ── CATÉGORIES ── --}}
     @php
         $categories = \App\Models\Category::with(['children.produits', 'produits'])

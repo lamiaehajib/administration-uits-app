@@ -566,15 +566,32 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($recu->items as $index => $item)
-                <tr>
-                    <td class="text-center">{{ $index + 1 }}</td>
-                    <td>{{ $item->produit->nom }}</td>
-                    <td class="text-center">{{ $item->quantite }}</td>
-                    <td class="text-right">{{ number_format($item->prix_unitaire, 2) }} DH</td>
-                    <td class="text-right">{{ number_format($item->sous_total, 2) }} DH</td>
-                </tr>
-                @endforeach
+               @foreach($recu->items as $index => $item)
+<tr>
+    <td class="text-center">{{ $index + 1 }}</td>
+    <td>
+        {{ $item->produit->nom }}
+        @if($item->is_gift)
+            <span style="background:#28a745;color:white;font-size:6.5pt;font-weight:bold;padding:1px 5px;border-radius:3px;margin-left:4px;">GIFT</span>
+        @endif
+    </td>
+    <td class="text-center">{{ $item->quantite }}</td>
+    <td class="text-right">
+        @if($item->is_gift)
+            <span style="color:#28a745;font-weight:bold;">Offert</span>
+        @else
+            {{ number_format($item->prix_unitaire, 2) }} DH
+        @endif
+    </td>
+    <td class="text-right">
+        @if($item->is_gift)
+            <span style="color:#28a745;font-weight:bold;">Offert</span>
+        @else
+            {{ number_format($item->sous_total, 2) }} DH
+        @endif
+    </td>
+</tr>
+@endforeach
             </tbody>
         </table>
 

@@ -12,46 +12,53 @@ class RecuItem extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'recu_ucg_id', 
-        'produit_id', 
+        'recu_ucg_id',
+        'produit_id',
         'product_variant_id',
-        'produit_nom', 
+        'produit_nom',
         'produit_reference',
         'designation',
-        'quantite', 
-        'prix_unitaire', 
+        'quantite',
+        'prix_unitaire',
         'prix_achat',
-        'sous_total', 
-        'marge_unitaire', 
+        'sous_total',
+        'marge_unitaire',
         'marge_totale',
         'remise_appliquee',
-        'remise_montant',          // ✅ Nouveau: Montant fixe de remise
-        'remise_pourcentage',      // ✅ Nouveau: Pourcentage de remise
-        'total_apres_remise',      // ✅ Nouveau: Total après remise
+        'remise_montant',
+        'remise_pourcentage',
+        'total_apres_remise',
         'notes',
         'achat_id',
+        // ✅ Gift
+        'is_gift',
+        'prix_original',
     ];
 
     protected $casts = [
-        'quantite' => 'integer',
-        'prix_unitaire' => 'decimal:2',
-        'prix_achat' => 'decimal:2',
-        'sous_total' => 'decimal:2',
-        'marge_unitaire' => 'decimal:2',
-        'marge_totale' => 'decimal:2',
-        'remise_appliquee' => 'boolean',
-        'remise_montant' => 'decimal:2',         // ✅ Nouveau
-        'remise_pourcentage' => 'decimal:2',     // ✅ Nouveau
-        'total_apres_remise' => 'decimal:2',     // ✅ Nouveau
-        'achat_id' => 'integer',
+        'quantite'           => 'integer',
+        'prix_unitaire'      => 'decimal:2',
+        'prix_achat'         => 'decimal:2',
+        'sous_total'         => 'decimal:2',
+        'marge_unitaire'     => 'decimal:2',
+        'marge_totale'       => 'decimal:2',
+        'remise_appliquee'   => 'boolean',
+        'remise_montant'     => 'decimal:2',
+        'remise_pourcentage' => 'decimal:2',
+        'total_apres_remise' => 'decimal:2',
+        'achat_id'           => 'integer',
+        // ✅ Gift
+        'is_gift'            => 'boolean',
+        'prix_original'      => 'decimal:2',
     ];
 
     // ================================= RELATIONS ==============================
-    
+
     public function achat()
-{
-    return $this->belongsTo(\App\Models\Achat::class);
-}
+    {
+        return $this->belongsTo(\App\Models\Achat::class);
+    }
+
     public function recuUcg()
     {
         return $this->belongsTo(RecuUcg::class);
@@ -68,532 +75,485 @@ class RecuItem extends Model
     }
 
     // ================================= BOOT EVENTS ==============================
-    
+
     protected static function boot()
     {
         parent::boot();
 
         static::creating(function ($item) {
-    if ($item->product_variant_id) {
-        // === VARIANT ===
-        $variant = ProductVariant::find($item->product_variant_id);
-        if ($variant) {
-            $item->produit_id         = $variant->produit_id;
-            $item->produit_nom        = $variant->produit->nom;
-            $item->produit_reference  = $variant->produit->reference;
-            $item->designation        = $variant->variant_name;
 
-            if (empty($item->prix_unitaire)) {
-                $item->prix_unitaire = $variant->prix_vente_final;
-            }
-            if (empty($item->prix_achat)) {
-                $achatActif = Achat::where('produit_id', $variant->produit_id)
-                    ->where('quantite_restante', '>', 0)
-                    ->orderBy('date_achat', 'asc')
-                    ->first();
-                $item->prix_achat = $achatActif ? $achatActif->prix_achat : ($variant->prix_achat ?? 0);
-            }
-        }
-    } else {
-        // === PRODUIT SIMPLE ===
-        $produit = $item->produit;
-        if ($produit) {
-            $item->produit_nom       = $produit->nom;
-            $item->produit_reference = $produit->reference;
+            if ($item->product_variant_id) {
+                // === VARIANT ===
+                $variant = ProductVariant::find($item->product_variant_id);
+                if ($variant) {
+                    $item->produit_id        = $variant->produit_id;
+                    $item->produit_nom       = $variant->produit->nom;
+                    $item->produit_reference = $variant->produit->reference;
+                    $item->designation       = $variant->variant_name;
 
-            // ✅ CAS 1: Lot spécifique choisi (achat_id fourni)
-            if (!empty($item->achat_id) && $item->achat_id !== 'manuel') {
-                $achat = Achat::find($item->achat_id);
-                if ($achat) {
-                    $item->prix_achat    = $achat->prix_achat;
-                    $item->prix_unitaire = $achat->prix_vente_suggere ?? $produit->prix_vente;
-                    Log::info("✅ LOT CHOISI: Achat #{$achat->id} - PA: {$item->prix_achat} DH, PV: {$item->prix_unitaire} DH");
+                    if (empty($item->prix_unitaire)) {
+                        $item->prix_unitaire = $variant->prix_vente_final;
+                    }
+                    if (empty($item->prix_achat)) {
+                        $achatActif = Achat::where('produit_id', $variant->produit_id)
+                            ->where('quantite_restante', '>', 0)
+                            ->orderBy('date_achat', 'asc')
+                            ->first();
+                        $item->prix_achat = $achatActif ? $achatActif->prix_achat : ($variant->prix_achat ?? 0);
+                    }
                 }
-            }
-            // ✅ CAS 2: Stock manuel choisi
-            elseif ($item->achat_id === 'manuel') {
-                $item->prix_achat    = $produit->prix_achat ?? 0;
-                $item->prix_unitaire = $produit->prix_vente ?? 0;
-                $item->achat_id      = null; // reset - machi foreign key valide
-                Log::info("✅ STOCK MANUEL CHOISI: PA: {$item->prix_achat} DH, PV: {$item->prix_unitaire} DH");
-            }
-            // ✅ CAS 3: Prix déjà fournis (depuis le form)
-            elseif (!empty($item->prix_unitaire) && !empty($item->prix_achat)) {
-                Log::info("✅ PRIX FOURNIS: PA: {$item->prix_achat} DH, PV: {$item->prix_unitaire} DH");
-                // Ne rien changer, garder les prix fournis
-            }
-            // ✅ CAS 4: Fallback FIFO automatique
-            else {
-                $stockFifo   = Achat::where('produit_id', $produit->id)->where('quantite_restante', '>', 0)->sum('quantite_restante');
-                $stockManuel = max(0, $produit->quantite_stock - $stockFifo);
+            } else {
+                // === PRODUIT SIMPLE ===
+                $produit = $item->produit;
+                if ($produit) {
+                    $item->produit_nom       = $produit->nom;
+                    $item->produit_reference = $produit->reference;
 
-                if ($stockManuel > 0) {
-                    $item->prix_achat    = $produit->prix_achat ?? 0;
-                    $item->prix_unitaire = $produit->prix_vente ?? 0;
-                    Log::info("✅ FALLBACK MANUEL: PA: {$item->prix_achat} DH");
-                } else {
-                    $achatActif = Achat::where('produit_id', $produit->id)
-                        ->where('quantite_restante', '>', 0)
-                        ->orderBy('date_achat', 'asc')
-                        ->first();
-                    if ($achatActif) {
-                        $item->prix_achat    = $achatActif->prix_achat;
-                        $item->prix_unitaire = $achatActif->prix_vente_suggere ?? $produit->prix_vente;
-                        $item->achat_id      = $achatActif->id;
-                        Log::info("✅ FALLBACK FIFO: Achat #{$achatActif->id} - PA: {$item->prix_achat} DH");
-                    } else {
+                    if (!empty($item->achat_id) && $item->achat_id !== 'manuel') {
+                        $achat = Achat::find($item->achat_id);
+                        if ($achat) {
+                            $item->prix_achat    = $achat->prix_achat;
+                            $item->prix_unitaire = $achat->prix_vente_suggere ?? $produit->prix_vente;
+                        }
+                    } elseif ($item->achat_id === 'manuel') {
                         $item->prix_achat    = $produit->prix_achat ?? 0;
                         $item->prix_unitaire = $produit->prix_vente ?? 0;
-                        Log::warning("⚠️ FALLBACK DEFAULT: Aucun achat disponible");
+                        $item->achat_id      = null;
+                    } elseif (!empty($item->prix_unitaire) && !empty($item->prix_achat)) {
+                        // Prix fournis — rien à faire
+                    } else {
+                        $stockFifo   = Achat::where('produit_id', $produit->id)->where('quantite_restante', '>', 0)->sum('quantite_restante');
+                        $stockManuel = max(0, $produit->quantite_stock - $stockFifo);
+
+                        if ($stockManuel > 0) {
+                            $item->prix_achat    = $produit->prix_achat ?? 0;
+                            $item->prix_unitaire = $produit->prix_vente ?? 0;
+                        } else {
+                            $achatActif = Achat::where('produit_id', $produit->id)
+                                ->where('quantite_restante', '>', 0)
+                                ->orderBy('date_achat', 'asc')
+                                ->first();
+                            if ($achatActif) {
+                                $item->prix_achat    = $achatActif->prix_achat;
+                                $item->prix_unitaire = $achatActif->prix_vente_suggere ?? $produit->prix_vente;
+                                $item->achat_id      = $achatActif->id;
+                            } else {
+                                $item->prix_achat    = $produit->prix_achat ?? 0;
+                                $item->prix_unitaire = $produit->prix_vente ?? 0;
+                            }
+                        }
                     }
                 }
             }
-        }
-    }
 
-    // Calculs
-    $item->sous_total     = $item->quantite * $item->prix_unitaire;
-    $item->marge_unitaire = $item->prix_unitaire - $item->prix_achat;
-    $item->marge_totale   = $item->marge_unitaire * $item->quantite;
-
-    if ($item->remise_appliquee) {
-        $item->calculerRemise();
-    } else {
-        $item->total_apres_remise = $item->sous_total;
-    }
-});
-
-   
-
-        static::updating(function ($item) {
-            // ✅ Recalculer si remise ou quantité change
-            if ($item->isDirty(['remise_appliquee', 'remise_montant', 'remise_pourcentage', 'quantite', 'prix_unitaire'])) {
-                // Recalculer sous-total et marges
-                $item->sous_total = $item->quantite * $item->prix_unitaire;
+            if ($item->is_gift) {
+    // Sauvegarder le prix original avant de le mettre à 0
+    $item->prix_original = $item->prix_unitaire;
+ 
+    // Prix de vente = 0 (c'est un cadeau)
+    $item->prix_unitaire = 0;
+ 
+    // ✅ FIX MARGE: Gift = marge 0 (pas de vente, pas de perte comptable sur la ligne)
+    // Le coût réel est enregistré comme CHARGE séparée
+    $item->sous_total         = 0;
+    $item->marge_unitaire     = 0;   // ← était: 0 - prix_achat (FAUX)
+    $item->marge_totale       = 0;   // ← était: négatif (FAUX)
+    $item->total_apres_remise = 0;
+    $item->remise_appliquee   = false;
+    $item->remise_montant     = 0;
+    $item->remise_pourcentage = 0;
+ 
+    \Illuminate\Support\Facades\Log::info("🎁 GIFT créé: {$item->produit_nom} x{$item->quantite} | Prix original: {$item->prix_original} DH | Prix achat: {$item->prix_achat} DH");
+} else {
+                // === CALCULS NORMAUX ===
+                $item->sous_total     = $item->quantite * $item->prix_unitaire;
                 $item->marge_unitaire = $item->prix_unitaire - $item->prix_achat;
-                $item->marge_totale = $item->marge_unitaire * $item->quantite;
-                
-                // Recalculer remise
+                $item->marge_totale   = $item->marge_unitaire * $item->quantite;
+
                 if ($item->remise_appliquee) {
                     $item->calculerRemise();
                 } else {
                     $item->total_apres_remise = $item->sous_total;
-                    $item->remise_montant = 0;
+                }
+            }
+        });
+
+        static::updating(function ($item) {
+            if ($item->isDirty(['remise_appliquee', 'remise_montant', 'remise_pourcentage', 'quantite', 'prix_unitaire'])) {
+                $item->sous_total     = $item->quantite * $item->prix_unitaire;
+                $item->marge_unitaire = $item->prix_unitaire - $item->prix_achat;
+                $item->marge_totale   = $item->marge_unitaire * $item->quantite;
+
+                if ($item->remise_appliquee) {
+                    $item->calculerRemise();
+                } else {
+                    $item->total_apres_remise = $item->sous_total;
+                    $item->remise_montant     = 0;
                     $item->remise_pourcentage = 0;
                 }
             }
         });
 
         static::created(function ($item) {
-    if ($item->product_variant_id) {
-        $variant = $item->variant;
-        
-        if ($variant) {
-            $stockAvant = $variant->quantite_stock;
-            $variant->decrement('quantite_stock', $item->quantite);
-            
-            $produit = $variant->produit;
-            $totalStock = $produit->variants()->sum('quantite_stock');
-            $produit->update(['quantite_stock' => $totalStock]);
+            if ($item->product_variant_id) {
+                $variant = $item->variant;
+                if ($variant) {
+                    $stockAvant = $variant->quantite_stock;
+                    $variant->decrement('quantite_stock', $item->quantite);
 
-            StockMovement::create([
-                'produit_id'  => $item->produit_id,
-                'recu_ucg_id' => $item->recu_ucg_id,
-                'user_id'     => auth()->id(),
-                'type'        => 'sortie',
-                'quantite'    => $item->quantite,
-                'stock_avant' => $stockAvant,
-                'stock_apres' => $variant->fresh()->quantite_stock,
-                'motif'       => "Vente variant ({$variant->variant_name}) - Reçu #{$item->recuUcg->numero_recu}",
-                'reference'   => "VARIANT-{$variant->id}"
-            ]);
-        }
-    } else {
-        // ✅ FIFO - Produit Simple
-        $produit = $item->produit;
+                    $produit    = $variant->produit;
+                    $totalStock = $produit->variants()->sum('quantite_stock');
+                    $produit->update(['quantite_stock' => $totalStock]);
 
-        if ($produit) {
-            $stockAvant = $produit->quantite_stock;
-            
-            // ✅ بعث achat_id باش ينقص من الـ lot المختار بالضبط
-            self::decrementerStockFIFO(
-                $item->produit_id,
-                $item->quantite,
-                $item->recu_ucg_id,
-                $item->achat_id  // ← الجديد
-            );
-            
-            $produit->decrement('quantite_stock', $item->quantite);
-            $produit->increment('total_vendu', $item->quantite);
+                    StockMovement::create([
+                        'produit_id'  => $item->produit_id,
+                        'recu_ucg_id' => $item->recu_ucg_id,
+                        'user_id'     => auth()->id(),
+                        'type'        => 'sortie',
+                        'quantite'    => $item->quantite,
+                        'stock_avant' => $stockAvant,
+                        'stock_apres' => $variant->fresh()->quantite_stock,
+                        'motif'       => $item->is_gift
+                            ? "🎁 GIFT variant ({$variant->variant_name}) - Reçu #{$item->recuUcg->numero_recu}"
+                            : "Vente variant ({$variant->variant_name}) - Reçu #{$item->recuUcg->numero_recu}",
+                        'reference'   => "VARIANT-{$variant->id}",
+                    ]);
+                }
+            } else {
+                $produit = $item->produit;
+                if ($produit) {
+                    $stockAvant = $produit->quantite_stock;
 
-            StockMovement::create([
-                'produit_id'  => $produit->id,
-                'recu_ucg_id' => $item->recu_ucg_id,
-                'user_id'     => auth()->id(),
-                'type'        => 'sortie',
-                'quantite'    => $item->quantite,
-                'stock_avant' => $stockAvant,
-                'stock_apres' => $produit->fresh()->quantite_stock,
-                'motif'       => $item->achat_id
-                    ? "Vente Lot #{$item->achat_id} - Reçu #{$item->recuUcg->numero_recu}"
-                    : "Vente FIFO - Reçu #{$item->recuUcg->numero_recu}"
-            ]);
-        }
-    }
+                    self::decrementerStockFIFO(
+                        $item->produit_id,
+                        $item->quantite,
+                        $item->recu_ucg_id,
+                        $item->achat_id
+                    );
 
-    $item->recuUcg->calculerTotal();
-});
+                    $produit->decrement('quantite_stock', $item->quantite);
+                    $produit->increment('total_vendu', $item->quantite);
+
+                    StockMovement::create([
+                        'produit_id'  => $produit->id,
+                        'recu_ucg_id' => $item->recu_ucg_id,
+                        'user_id'     => auth()->id(),
+                        'type'        => 'sortie',
+                        'quantite'    => $item->quantite,
+                        'stock_avant' => $stockAvant,
+                        'stock_apres' => $produit->fresh()->quantite_stock,
+                        'motif'       => $item->is_gift
+                            ? "🎁 GIFT - Reçu #{$item->recuUcg->numero_recu}"
+                            : ($item->achat_id
+                                ? "Vente Lot #{$item->achat_id} - Reçu #{$item->recuUcg->numero_recu}"
+                                : "Vente FIFO - Reçu #{$item->recuUcg->numero_recu}"),
+                    ]);
+
+                    // ✅ GIFT → Créer automatiquement une charge variable
+                    if ($item->is_gift) {
+                        self::creerChargeGift($item);
+                    }
+                }
+            }
+
+            $item->recuUcg->calculerTotal();
+        });
 
         static::updated(function ($item) {
             $item->recuUcg->calculerTotal();
         });
 
-         static::deleting(function ($item) {
-    if (!$item->isForceDeleting()) {
-        if ($item->product_variant_id) {
-            $variant = $item->variant;
-            
-            if ($variant) {
-                $stockAvant = $variant->quantite_stock;
-                $variant->increment('quantite_stock', $item->quantite);
-                
-                $produit = $variant->produit;
-                $totalStock = $produit->variants()->sum('quantite_stock');
-                $produit->update(['quantite_stock' => $totalStock]);
+        static::deleting(function ($item) {
+            if (!$item->isForceDeleting()) {
+                if ($item->product_variant_id) {
+                    $variant = $item->variant;
+                    if ($variant) {
+                        $stockAvant = $variant->quantite_stock;
+                        $variant->increment('quantite_stock', $item->quantite);
 
-                StockMovement::create([
-                    'produit_id'  => $item->produit_id,
-                    'recu_ucg_id' => $item->recu_ucg_id,
-                    'user_id'     => auth()->id(),
-                    'type'        => 'retour',
-                    'quantite'    => $item->quantite,
-                    'stock_avant' => $stockAvant,
-                    'stock_apres' => $variant->fresh()->quantite_stock,
-                    'motif'       => "Suppression item variant ({$variant->variant_name})"
-                ]);
+                        $produit    = $variant->produit;
+                        $totalStock = $produit->variants()->sum('quantite_stock');
+                        $produit->update(['quantite_stock' => $totalStock]);
+
+                        StockMovement::create([
+                            'produit_id'  => $item->produit_id,
+                            'recu_ucg_id' => $item->recu_ucg_id,
+                            'user_id'     => auth()->id(),
+                            'type'        => 'retour',
+                            'quantite'    => $item->quantite,
+                            'stock_avant' => $stockAvant,
+                            'stock_apres' => $variant->fresh()->quantite_stock,
+                            'motif'       => "Suppression item variant ({$variant->variant_name})",
+                        ]);
+                    }
+                } else {
+                    $produit = $item->produit;
+                    if ($produit) {
+                        $stockAvant = $produit->quantite_stock;
+
+                        self::restaurerStockFIFO($item->produit_id, $item->quantite, $item->achat_id);
+                        $produit->increment('quantite_stock', $item->quantite);
+
+                        StockMovement::create([
+                            'produit_id'  => $produit->id,
+                            'recu_ucg_id' => $item->recu_ucg_id,
+                            'user_id'     => auth()->id(),
+                            'type'        => 'retour',
+                            'quantite'    => $item->quantite,
+                            'stock_avant' => $stockAvant,
+                            'stock_apres' => $produit->fresh()->quantite_stock,
+                            'motif'       => $item->achat_id
+                                ? "Annulation Lot #{$item->achat_id} - Reçu #{$item->recu_ucg_id}"
+                                : "Annulation Stock Manuel - Reçu #{$item->recu_ucg_id}",
+                        ]);
+
+                        // ✅ GIFT → Supprimer la charge associée
+                        if ($item->is_gift) {
+                            Charge::where('recu_item_id_gift', $item->id)->delete();
+                            Log::info("🗑️ Charge gift supprimée pour item #{$item->id}");
+                        }
+                    }
+                }
+            } else {
+                Log::info("⚠️ Force delete détecté - Stock NON modifié pour item #{$item->id}");
             }
-        } else {
-            $produit = $item->produit;
-
-            if ($produit) {
-                $stockAvant = $produit->quantite_stock;
-                
-                // ✅ Passer achat_id pour restaurer le bon lot OU stock manuel
-                self::restaurerStockFIFO(
-                    $item->produit_id,
-                    $item->quantite,
-                    $item->achat_id  // ← null = stock manuel, int = lot spécifique
-                );
-                
-                $produit->increment('quantite_stock', $item->quantite);
-
-                StockMovement::create([
-                    'produit_id'  => $produit->id,
-                    'recu_ucg_id' => $item->recu_ucg_id,
-                    'user_id'     => auth()->id(),
-                    'type'        => 'retour',
-                    'quantite'    => $item->quantite,
-                    'stock_avant' => $stockAvant,
-                    'stock_apres' => $produit->fresh()->quantite_stock,
-                    'motif'       => $item->achat_id
-                        ? "Annulation Lot #{$item->achat_id} - Reçu #{$item->recu_ucg_id}"
-                        : "Annulation Stock Manuel - Reçu #{$item->recu_ucg_id}"
-                ]);
-            }
-        }
-    } else {
-        Log::info("⚠️ Force delete détecté - Stock NON modifié pour item #{$item->id} (Produit: {$item->produit_nom}, Quantité: {$item->quantite})");
-    }
-});
+        });
 
         static::deleted(function ($item) {
-        if ($item->recuUcg && !$item->isForceDeleting()) {
-            $item->recuUcg->calculerTotal();
-        }
-    });
+            if ($item->recuUcg && !$item->isForceDeleting()) {
+                $item->recuUcg->calculerTotal();
+            }
+        });
 
-
-
-         // ✅ ✅ ✅ NOUVEAU EVENT - RESTORATION
         static::restored(function ($item) {
             Log::info("🔄 Restauration item #{$item->id} - Reçu #{$item->recu_ucg_id}");
-            
+
             if ($item->product_variant_id) {
-                // ✅ VARIANT - Vérifier stock puis décrémenter
                 $variant = $item->variant;
-                
                 if ($variant) {
-                    // Vérifier si stock suffisant
                     if ($variant->quantite_stock < $item->quantite) {
-                        throw new \Exception("Stock insuffisant pour restaurer {$variant->full_name}. Stock actuel: {$variant->quantite_stock}, besoin: {$item->quantite}");
+                        throw new \Exception("Stock insuffisant pour restaurer {$variant->full_name}.");
                     }
-                    
                     $stockAvant = $variant->quantite_stock;
                     $variant->decrement('quantite_stock', $item->quantite);
-                    
-                    $produit = $variant->produit;
+                    $produit    = $variant->produit;
                     $totalStock = $produit->variants()->sum('quantite_stock');
                     $produit->update(['quantite_stock' => $totalStock]);
 
                     StockMovement::create([
-                        'produit_id' => $item->produit_id,
+                        'produit_id'  => $item->produit_id,
                         'recu_ucg_id' => $item->recu_ucg_id,
-                        'user_id' => auth()->id(),
-                        'type' => 'sortie',
-                        'quantite' => $item->quantite,
+                        'user_id'     => auth()->id(),
+                        'type'        => 'sortie',
+                        'quantite'    => $item->quantite,
                         'stock_avant' => $stockAvant,
                         'stock_apres' => $variant->fresh()->quantite_stock,
-                        'motif' => "Restauration variant ({$variant->variant_name}) - Reçu #{$item->recuUcg->numero_recu}",
-                        'reference' => "RESTORE-VARIANT-{$variant->id}"
+                        'motif'       => "Restauration variant ({$variant->variant_name}) - Reçu #{$item->recuUcg->numero_recu}",
+                        'reference'   => "RESTORE-VARIANT-{$variant->id}",
                     ]);
-                    
-                    Log::info("✅ Variant {$variant->variant_name} - Stock décrementé: {$stockAvant} → {$variant->fresh()->quantite_stock}");
                 }
             } else {
-                // ✅ PRODUIT SIMPLE - Vérifier stock puis décrémenter FIFO
                 $produit = $item->produit;
-
                 if ($produit) {
-                    // Vérifier si stock suffisant
                     if ($produit->quantite_stock < $item->quantite) {
-                        throw new \Exception("Stock insuffisant pour restaurer {$produit->nom}. Stock actuel: {$produit->quantite_stock}, besoin: {$item->quantite}");
+                        throw new \Exception("Stock insuffisant pour restaurer {$produit->nom}.");
                     }
-                    
                     $stockAvant = $produit->quantite_stock;
-                    
-                    // ✅ Décrémenter stock FIFO
                     self::decrementerStockFIFO($item->produit_id, $item->quantite, $item->recu_ucg_id);
-                    
-                    // Décrémenter stock global
                     $produit->decrement('quantite_stock', $item->quantite);
                     $produit->increment('total_vendu', $item->quantite);
 
                     StockMovement::create([
-                        'produit_id' => $produit->id,
+                        'produit_id'  => $produit->id,
                         'recu_ucg_id' => $item->recu_ucg_id,
-                        'user_id' => auth()->id(),
-                        'type' => 'sortie',
-                        'quantite' => $item->quantite,
+                        'user_id'     => auth()->id(),
+                        'type'        => 'sortie',
+                        'quantite'    => $item->quantite,
                         'stock_avant' => $stockAvant,
                         'stock_apres' => $produit->fresh()->quantite_stock,
-                        'motif' => "Restauration FIFO - Reçu #{$item->recuUcg->numero_recu}"
+                        'motif'       => "Restauration FIFO - Reçu #{$item->recuUcg->numero_recu}",
                     ]);
-                    
-                    Log::info("✅ Produit {$produit->nom} - Stock décrementé: {$stockAvant} → {$produit->fresh()->quantite_stock}");
+
+                    // ✅ GIFT restauré → recréer la charge
+                    if ($item->is_gift) {
+                        self::creerChargeGift($item);
+                    }
                 }
             }
 
-            // Recalculer total du reçu
             if ($item->recuUcg) {
                 $item->recuUcg->calculerTotal();
-                Log::info("✅ Total reçu recalculé: {$item->recuUcg->total} DH");
             }
         });
 
         static::forceDeleting(function ($item) {
-        // ⚠️ CRITIQUE: Ne JAMAIS toucher au stock lors du force delete!
-        // Le stock a déjà été restauré lors du soft delete (deleting event)
-        
-        Log::info("🗑️ PERMANENT DELETE: Item #{$item->id} - Produit: {$item->produit_nom} (Qté: {$item->quantite}) - Stock INCHANGÉ");
-        
-        // ✅ Pas de manipulation stock ici!
-        // ✅ Pas de StockMovement création!
-        // ✅ Juste du logging pour audit
-    });
+            Log::info("🗑️ PERMANENT DELETE: Item #{$item->id} - {$item->produit_nom} (Stock INCHANGÉ)");
+        });
     }
-    
 
+    // ================================= GIFT - CHARGE AUTO ==============================
 
-    
+    /**
+     * ✅ Créer automatiquement une charge variable quand un gift est ajouté
+     * La valeur = prix_achat × quantite (coût réel du cadeau)
+     */
+    private static function creerChargeGift(RecuItem $item): void
+{
+    try {
+        $montant = $item->prix_achat * $item->quantite;
+        $recu    = $item->recuUcg;
+ 
+        // ✅ FIX CATÉGORIE: chercher "GIFT" en priorité, créer si inexistant
+        $chargeCategory = \App\Models\ChargeCategory::where(function ($q) {
+            $q->where('nom', 'like', '%gift%')
+              ->orWhere('nom', 'like', '%Gift%')
+              ->orWhere('nom', 'like', '%GIFT%')
+              ->orWhere('nom', 'like', '%cadeau%')
+              ->orWhere('nom', 'like', '%Cadeau%');
+        })->first();
+ 
+        // ✅ Si aucune catégorie GIFT n'existe → la créer automatiquement
+        if (!$chargeCategory) {
+            $chargeCategory = \App\Models\ChargeCategory::create([
+                'nom'         => 'GIFT',
+                'type_defaut' => 'variable',
+                'description' => 'Charges liées aux cadeaux offerts aux clients',
+                'couleur'     => '#28a745', // vert — optionnel si ton model a ce champ
+            ]);
+            \Illuminate\Support\Facades\Log::info("✅ Catégorie GIFT créée automatiquement (id: {$chargeCategory->id})");
+        }
+ 
+        Charge::create([
+            'libelle'            => "🎁 Gift: {$item->produit_nom} x{$item->quantite} — Reçu #{$recu->numero_recu}",
+            'description'        => "Accessoire offert comme cadeau au client {$recu->client_nom}. Prix achat unitaire: {$item->prix_achat} DH.",
+            'type'               => 'variable',
+            'charge_category_id' => $chargeCategory->id,   // ✅ toujours catégorie GIFT
+            'montant'            => $montant,
+            'date_charge'        => now()->toDateString(),
+            'mode_paiement'      => 'especes',
+            'statut_paiement'    => 'paye',
+            'montant_paye'       => $montant,
+            'fournisseur'        => 'Stock interne',
+            'notes'              => "Auto-généré depuis reçu #{$recu->numero_recu} — Produit ID: {$item->produit_id}",
+            'user_id'            => auth()->id() ?? $recu->user_id,
+            'recu_item_id_gift'  => $item->id,
+        ]);
+ 
+        \Illuminate\Support\Facades\Log::info("✅ Charge gift créée: {$montant} DH pour {$item->produit_nom} x{$item->quantite} → catégorie: {$chargeCategory->nom}");
+ 
+    } catch (\Exception $e) {
+        \Illuminate\Support\Facades\Log::error("❌ Erreur création charge gift: " . $e->getMessage());
+        // On ne throw pas — le reçu doit quand même être créé
+    }
+}
 
     // ================================= MÉTHODES FIFO ==============================
-    
-    /**
-     * ✅ MÉTHODE FIFO - Décrémenter stock mn les achats kadim
-     */
-   private static function decrementerStockFIFO($produitId, $quantiteVendue, $recuId, $achatIdChoisi = null)
-{
-    $produit = Produit::find($produitId);
 
-    // ✅ CAS 1: Lot spécifique choisi
-    if ($achatIdChoisi && $achatIdChoisi !== 'manuel') {
-        $achat = Achat::find($achatIdChoisi);
-        if ($achat && $achat->quantite_restante >= $quantiteVendue) {
-            $achat->decrement('quantite_restante', $quantiteVendue);
-            Log::info("✅ LOT SPÉCIFIQUE: -{$quantiteVendue} de l'achat #{$achat->id}");
-            return;
+    private static function decrementerStockFIFO($produitId, $quantiteVendue, $recuId, $achatIdChoisi = null)
+    {
+        $produit = Produit::find($produitId);
+
+        if ($achatIdChoisi && $achatIdChoisi !== 'manuel') {
+            $achat = Achat::find($achatIdChoisi);
+            if ($achat && $achat->quantite_restante >= $quantiteVendue) {
+                $achat->decrement('quantite_restante', $quantiteVendue);
+                return;
+            }
+            Log::warning("⚠️ Lot #{$achatIdChoisi} insuffisant, fallback FIFO");
         }
-        // Si stock insuffisant dans ce lot → fallback FIFO
-        Log::warning("⚠️ Lot #{$achatIdChoisi} insuffisant, fallback FIFO");
-    }
 
-    // ✅ CAS 2: Stock manuel
-    $stockFifo   = Achat::where('produit_id', $produitId)->where('quantite_restante', '>', 0)->sum('quantite_restante');
-    $stockManuel = max(0, $produit->quantite_stock - $stockFifo);
+        $stockFifo   = Achat::where('produit_id', $produitId)->where('quantite_restante', '>', 0)->sum('quantite_restante');
+        $stockManuel = max(0, $produit->quantite_stock - $stockFifo);
 
-    if ($stockManuel > 0 && !$achatIdChoisi) {
-        $quantiteManuel  = min($stockManuel, $quantiteVendue);
-        $quantiteVendue -= $quantiteManuel;
-        Log::info("✅ STOCK MANUEL: -{$quantiteManuel} unités");
-        if ($quantiteVendue <= 0) return;
-    }
-
-    // ✅ CAS 3: FIFO normal
-    $achats = Achat::where('produit_id', $produitId)
-        ->where('quantite_restante', '>', 0)
-        ->orderBy('date_achat', 'asc')
-        ->get();
-
-    foreach ($achats as $achat) {
-        if ($quantiteVendue <= 0) break;
-        if ($achat->quantite_restante >= $quantiteVendue) {
-            $achat->decrement('quantite_restante', $quantiteVendue);
-            $quantiteVendue = 0;
-        } else {
-            $quantiteVendue -= $achat->quantite_restante;
-            $achat->update(['quantite_restante' => 0]);
+        if ($stockManuel > 0 && !$achatIdChoisi) {
+            $quantiteManuel  = min($stockManuel, $quantiteVendue);
+            $quantiteVendue -= $quantiteManuel;
+            if ($quantiteVendue <= 0) return;
         }
-    }
-}
 
-    /**
-     * ✅ Restaurer stock FIFO (inverse dial decrementerStockFIFO)
-     */
-  private static function restaurerStockFIFO($produitId, $quantite, $achatId = null)
-{
-    // ✅ CAS 1: Lot spécifique connu → restaurer ce lot exactement
-    if ($achatId) {
-        $achat = Achat::find($achatId);
-        if ($achat) {
-            $achat->increment('quantite_restante', $quantite);
-            Log::info("✅ Restauration Lot #{$achatId}: +{$quantite} unités");
-            return;
+        $achats = Achat::where('produit_id', $produitId)
+            ->where('quantite_restante', '>', 0)
+            ->orderBy('date_achat', 'asc')
+            ->get();
+
+        foreach ($achats as $achat) {
+            if ($quantiteVendue <= 0) break;
+            if ($achat->quantite_restante >= $quantiteVendue) {
+                $achat->decrement('quantite_restante', $quantiteVendue);
+                $quantiteVendue = 0;
+            } else {
+                $quantiteVendue -= $achat->quantite_restante;
+                $achat->update(['quantite_restante' => 0]);
+            }
         }
     }
 
-    // ✅ CAS 2: achat_id = null → c'était du stock manuel
-    // Ne RIEN faire ici - le produit->quantite_stock sera incrémenté
-    // par le deleting event automatiquement, ce qui restaure le stock manuel
-    Log::info("✅ Restauration Stock Manuel: +{$quantite} unités (quantite_stock sera incrémenté par deleting event)");
-    return;
-}
+    private static function restaurerStockFIFO($produitId, $quantite, $achatId = null)
+    {
+        if ($achatId) {
+            $achat = Achat::find($achatId);
+            if ($achat) {
+                $achat->increment('quantite_restante', $quantite);
+                return;
+            }
+        }
+        Log::info("✅ Restauration Stock Manuel: +{$quantite} unités");
+    }
 
     // ================================= MÉTHODES REMISE ==============================
-    
-    /**
-     * ✅ CALCULER REMISE ET TOTAL APRÈS REMISE
-     * Gère les remises en montant fixe OU en pourcentage
-     */
+
     public function calculerRemise()
     {
-        // Recalculer sous-total au cas où
-        $this->sous_total = $this->quantite * $this->prix_unitaire;
-        
-        $montantRemise = 0;
-        
+        $this->sous_total  = $this->quantite * $this->prix_unitaire;
+        $montantRemise     = 0;
+
         if ($this->remise_appliquee) {
             if ($this->remise_pourcentage > 0) {
-                // Remise en pourcentage
-                $montantRemise = ($this->sous_total * $this->remise_pourcentage) / 100;
-                // Synchroniser remise_montant avec le calcul
+                $montantRemise       = ($this->sous_total * $this->remise_pourcentage) / 100;
                 $this->remise_montant = $montantRemise;
             } elseif ($this->remise_montant > 0) {
-                // Remise en montant fixe
                 $montantRemise = $this->remise_montant;
             }
         }
-        
-        // Total après remise
+
         $this->total_apres_remise = max(0, $this->sous_total - $montantRemise);
-        
-        // Recalculer marge après remise (la remise diminue la marge)
-        $this->marge_totale = (($this->prix_unitaire - $this->prix_achat) * $this->quantite) - $montantRemise;
-        
-        Log::info("🏷️ Remise calculée: " . ($this->remise_pourcentage > 0 ? "{$this->remise_pourcentage}%" : "{$montantRemise} DH") . " - Total après remise: {$this->total_apres_remise} DH");
+        $this->marge_totale       = (($this->prix_unitaire - $this->prix_achat) * $this->quantite) - $montantRemise;
     }
-    
-    /**
-     * ✅ GET MONTANT REMISE RÉEL (Accessor)
-     * Retourne le montant réel de la remise (calculé si pourcentage)
-     */
+
     public function getMontantRemiseAttribute()
     {
-        if (!$this->remise_appliquee) {
-            return 0;
-        }
-        
-        // Si remise en pourcentage, calculer le montant
+        if (!$this->remise_appliquee) return 0;
         if ($this->attributes['remise_pourcentage'] > 0) {
             return ($this->sous_total * $this->attributes['remise_pourcentage']) / 100;
         }
-        
-        // Sinon retourner le montant fixe
         return $this->attributes['remise_montant'] ?? 0;
     }
 
-    /**
-     * ✅ MARGE APRÈS REMISE
-     * Retourne la marge réelle après application de la remise
-     */
     public function margeApresRemise(): float
     {
-        if (!$this->remise_appliquee) {
-            return $this->marge_totale;
-        }
-        
-        // La marge est déjà ajustée dans calculerRemise()
-        // Mais on peut aussi la calculer à la volée:
+        if (!$this->remise_appliquee) return $this->marge_totale;
         $margeBase = ($this->prix_unitaire - $this->prix_achat) * $this->quantite;
         return max(0, $margeBase - $this->montant_remise);
     }
 
-    /**
-     * ✅ VÉRIFIE SI LA REMISE EST APPLIQUÉE SUR CET ITEM
-     */
     public function aRemiseAppliquee(): bool
     {
         return (bool) $this->remise_appliquee;
     }
-    
-    /**
-     * ✅ GET TYPE DE REMISE
-     * Retourne 'pourcentage', 'montant' ou null
-     */
+
     public function getTypeRemise(): ?string
     {
-        if (!$this->remise_appliquee) {
-            return null;
-        }
-        
-        if ($this->remise_pourcentage > 0) {
-            return 'pourcentage';
-        }
-        
-        if ($this->remise_montant > 0) {
-            return 'montant';
-        }
-        
+        if (!$this->remise_appliquee) return null;
+        if ($this->remise_pourcentage > 0) return 'pourcentage';
+        if ($this->remise_montant > 0) return 'montant';
         return null;
     }
-    
-    /**
-     * ✅ GET VALEUR REMISE (pour affichage)
-     * Retourne "15%" ou "50 DH"
-     */
+
     public function getRemiseFormatee(): string
     {
-        if (!$this->remise_appliquee) {
-            return '-';
-        }
-        
-        if ($this->remise_pourcentage > 0) {
-            return number_format($this->remise_pourcentage, 2) . '%';
-        }
-        
-        if ($this->remise_montant > 0) {
-            return number_format($this->remise_montant, 2) . ' DH';
-        }
-        
+        if (!$this->remise_appliquee) return '-';
+        if ($this->remise_pourcentage > 0) return number_format($this->remise_pourcentage, 2) . '%';
+        if ($this->remise_montant > 0) return number_format($this->remise_montant, 2) . ' DH';
         return '-';
     }
 }

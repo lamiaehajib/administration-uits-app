@@ -51,13 +51,27 @@
             $ventesStatsRaw[$pid]['total_vendu']  += $item->quantite;
             $ventesStatsRaw[$pid]['ca_total']     += $item->sous_total - $remiseProduit;
             $ventesStatsRaw[$pid]['marge_totale'] += $item->marge_totale;
+
+            // Gifts
+if ($item->is_gift) {
+    if (!isset($ventesStatsRaw[$pid]['gifts_count'])) {
+        $ventesStatsRaw[$pid]['gifts_count'] = 0;
+        $ventesStatsRaw[$pid]['gifts_valeur'] = 0;
+    }
+    $ventesStatsRaw[$pid]['gifts_count'] += $item->quantite;
+    $ventesStatsRaw[$pid]['gifts_valeur'] += $item->prix_achat * $item->quantite;
+}
         }
     }
 
     // 3️⃣ Convertir en collection keyBy produit_id
     $ventesStats = collect($ventesStatsRaw)->map(function($data, $pid) {
-        return (object) array_merge($data, ['produit_id' => $pid]);
-    });
+    return (object) array_merge([
+        'gifts_count'  => 0,
+        'gifts_valeur' => 0,
+    ], $data, ['produit_id' => $pid]);
+});
+    
 @endphp
 
 @if($produits->isEmpty())
@@ -74,6 +88,7 @@
             <th>Stock actuel</th>
             <th>Valeur stock</th>
             <th>Qté vendue</th>
+            <th>Gifts</th>
             <th>CA (MAD)</th>
             <th>Marge (MAD)</th>
             <th>Taux marge</th>
@@ -82,8 +97,15 @@
     </thead>
     <tbody>
     @foreach($produits as $produit)
-   @php
-    $s         = $ventesStats[$produit->id] ?? null;
+@php
+    // ✅ $s awwlan
+    $s           = $ventesStats[$produit->id] ?? null;
+    
+    // ✅ Gifts b3d $s
+    $giftsCount  = $s ? (int)$s->gifts_count   : 0;
+    $giftsValeur = $s ? (float)$s->gifts_valeur : 0;
+    
+    // Reste dial les variables
     $vendu     = $s ? (int)$s->total_vendu   : 0;
     $ca        = $s ? (float)$s->ca_total     : 0;
     $marge     = $s ? (float)$s->marge_totale : 0;
@@ -142,6 +164,17 @@
                 </div>
             </div>
         </td>
+        {{-- Gifts --}}
+<td data-label="Gifts">
+    @if($giftsCount > 0)
+        <span style="display:inline-flex;align-items:center;gap:4px;">
+            <span style="font-family:'JetBrains Mono',monospace;font-weight:600;color:#15803d;">{{ $giftsCount }}</span>
+            <span style="font-size:.65rem;color:#6b7280;">({{ number_format($giftsValeur, 0, ',', ' ') }} MAD)</span>
+        </span>
+    @else
+        <span style="color:#d1d5db;">—</span>
+    @endif
+</td>
 <td data-label="Valeur stock" class="num-cell" style="color:#7e22ce;font-weight:600;">
     {{ $produit->quantite_stock > 0 ? number_format($valeurStockProd, 2, ',', ' ') . ' MAD' : '—' }}
 </td>
@@ -177,6 +210,9 @@
 
     {{-- Ligne totaux --}}
    @php
+   $totGiftsCount  = $ventesStats->sum('gifts_count');
+$totGiftsValeur = $ventesStats->sum('gifts_valeur');
+
     $totStock      = $produits->sum('quantite_stock');
     $totVendu      = $ventesStats->sum('total_vendu');
     $totCA         = $ventesStats->sum('ca_total');
@@ -202,6 +238,14 @@
     {{ $totValeurStock > 0 ? number_format($totValeurStock, 2, ',', ' ') . ' MAD' : '—' }}
 </td>            
             <td class="num-cell" style="font-weight:700;">{{ $totVendu > 0 ? number_format($totVendu) : '—' }}</td>
+            <td class="num-cell" style="font-weight:700;color:#15803d;">
+    @if($totGiftsCount > 0)
+        {{ $totGiftsCount }}
+        <span style="font-size:.68rem;font-weight:400;color:#6b7280;">({{ number_format($totGiftsValeur, 0, ',', ' ') }} MAD)</span>
+    @else
+        —
+    @endif
+</td>
             <td class="num-cell num-neutral" style="font-weight:700;">{{ $totCA > 0 ? number_format($totCA, 2, ',', ' ') : '—' }}</td>
             <td class="num-cell num-positive" style="font-weight:700;">{{ $totMarge > 0 ? number_format($totMarge, 2, ',', ' ') : '—' }}</td>
             <td class="num-cell" style="font-weight:700;">{{ $totTaux > 0 ? number_format($totTaux, 1) . ' %' : '—' }}</td>

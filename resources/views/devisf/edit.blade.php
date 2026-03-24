@@ -1,21 +1,23 @@
 <x-app-layout>
     <style>
-        /* Les styles du create.blade appliqués pour l'édition */
+        /* Couleurs et Thème - Garder le bleu pour l'édition aussi */
         .gradient-bg {
-            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            background: linear-gradient(135deg, #007bff, #0056b3);
         }
-
+        
         .gradient-text {
-            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            background: linear-gradient(135deg, #007bff, #0056b3);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
+        /* Conteneur Général */
         .edit-container {
             max-width: 1200px;
             margin: 0 auto;
         }
 
+        /* Cartes de Formulaire */
         .form-card {
             background: white;
             border-radius: 20px;
@@ -24,6 +26,7 @@
             margin-bottom: 30px;
         }
 
+        /* En-tête de Section */
         .section-header {
             display: flex;
             align-items: center;
@@ -36,7 +39,7 @@
             width: 50px;
             height: 50px;
             border-radius: 12px;
-            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            background: linear-gradient(135deg, #007bff, #0056b3);
             color: white;
             display: flex;
             align-items: center;
@@ -52,6 +55,7 @@
             margin: 0;
         }
 
+        /* Labels et Contrôles de Formulaire */
         .form-label {
             font-weight: 600;
             color: #374151;
@@ -74,15 +78,14 @@
         }
 
         .form-control:focus, .form-select:focus {
-            border-color: #D32F2F;
-            box-shadow: 0 0 0 4px rgba(211, 47, 47, 0.1);
+            border-color: #007bff;
+            box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.1);
             outline: none;
         }
 
         .form-control:disabled, .form-control[readonly] {
             background-color: #f9fafb;
             cursor: not-allowed;
-            color: #6b7280; /* Style pour les champs en lecture seule */
         }
 
         textarea.form-control {
@@ -90,7 +93,7 @@
             min-height: 100px;
         }
 
-        /* Styles spécifiques aux lignes de produits */
+        /* Ligne de Produit/Formation */
         .product-row {
             background: #f9fafb;
             border: 2px solid #e5e7eb;
@@ -102,15 +105,15 @@
         }
 
         .product-row:hover {
-            border-color: #D32F2F;
-            box-shadow: 0 5px 20px rgba(211, 47, 47, 0.1);
+            border-color: #007bff;
+            box-shadow: 0 5px 20px rgba(0, 123, 255, 0.1);
         }
-
+        
         .product-number {
             position: absolute;
             top: -15px;
             left: 20px;
-            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            background: linear-gradient(135deg, #007bff, #0056b3);
             color: white;
             width: 35px;
             height: 35px;
@@ -120,11 +123,10 @@
             justify-content: center;
             font-weight: 700;
             font-size: 14px;
-            box-shadow: 0 4px 10px rgba(211, 47, 47, 0.3);
+            box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
         }
-        /* Fin Styles spécifiques aux lignes de produits */
 
-        /* Styles des informations importantes */
+        /* Lignes d'Informations Importantes */
         .important-row {
             background: #fef3c7;
             border: 2px solid #fbbf24;
@@ -140,12 +142,10 @@
             flex: 1;
             margin-bottom: 0 !important;
         }
-        /* Fin Styles des informations importantes */
 
-
-        /* Styles des boutons */
+        /* Boutons */
         .btn-gradient {
-            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            background: linear-gradient(135deg, #007bff, #0056b3);
             color: white;
             border: none;
             padding: 12px 30px;
@@ -159,12 +159,12 @@
 
         .btn-gradient:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(211, 47, 47, 0.3);
+            box-shadow: 0 8px 20px rgba(0, 123, 255, 0.3);
             color: white;
         }
 
         .btn-add {
-            background: linear-gradient(135deg, #10b981, #059669); /* Vert pour Ajouter Produit */
+            background: linear-gradient(135deg, #10b981, #059669);
             color: white;
             border: none;
             padding: 10px 25px;
@@ -188,8 +188,6 @@
             font-weight: 600;
             transition: all 0.3s ease;
             white-space: nowrap;
-            /* For the button inside the product-row on mobile */
-            flex-shrink: 0;
         }
 
         .btn-remove:hover {
@@ -199,7 +197,7 @@
         }
 
         .btn-important {
-            background: linear-gradient(135deg, #f59e0b, #d97706); /* Jaune/Orange pour Ajouter Info Importante */
+            background: linear-gradient(135deg, #f59e0b, #d97706);
             color: white;
             border: none;
             padding: 10px 25px;
@@ -213,7 +211,7 @@
             box-shadow: 0 6px 15px rgba(245, 158, 11, 0.3);
             color: white;
         }
-
+        
         .btn-cancel {
             background: #6b7280;
             color: white;
@@ -222,9 +220,6 @@
             border-radius: 10px;
             font-weight: 600;
             transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
         }
 
         .btn-cancel:hover {
@@ -232,9 +227,8 @@
             transform: translateY(-2px);
             color: white;
         }
-        /* Fin Styles des boutons */
 
-        /* Styles des Totaux */
+        /* Section Totaux */
         .total-section {
             background: linear-gradient(135deg, #f0fdf4, #dcfce7);
             border: 2px solid #10b981;
@@ -243,7 +237,7 @@
             margin-top: 30px;
         }
 
-        .total-row-display { /* Nouvelle classe pour le total-row dans la section totale */
+        .total-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -252,7 +246,7 @@
             border-bottom: 1px solid #d1fae5;
         }
 
-        .total-row-display:last-child {
+        .total-row:last-child {
             border-bottom: none;
             margin-bottom: 0;
         }
@@ -270,7 +264,7 @@
         }
 
         .total-ttc-row {
-            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            background: linear-gradient(135deg, #007bff, #0056b3);
             color: white;
             border-radius: 12px;
             padding: 20px;
@@ -285,9 +279,8 @@
         .total-ttc-row .total-value {
             font-size: 28px;
         }
-        /* Fin Styles des Totaux */
 
-        /* Mise en page en Grille */
+        /* Dispositions en Grille */
         .grid-2 {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -300,50 +293,34 @@
             gap: 20px;
         }
 
-        .grid-4 {
+        .grid-product-line {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: 2fr 1fr 1fr 1fr 150px 150px;
             gap: 15px;
-        }
-        /* Fin Mise en page en Grille */
-
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: flex-end;
-            margin-top: 30px;
-            padding-top: 30px;
-            border-top: 2px solid #e5e7eb;
+            align-items: start;
         }
 
-        .alert-danger {
-            background: linear-gradient(135deg, #fee2e2, #fecaca);
-            border: 2px solid #ef4444;
-            border-radius: 12px;
-            padding: 15px 20px;
-            color: #b91c1c;
-            font-weight: 500;
-            margin-bottom: 25px;
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .grid-product-line {
+                grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+            }
         }
 
-        .alert-danger ul {
-            margin-bottom: 0;
-            padding-left: 20px;
-        }
-
-        /* Media Queries pour la réactivité */
         @media (max-width: 992px) {
-            .grid-4, .grid-3, .grid-2 {
+            .grid-2, .grid-3 {
                 grid-template-columns: repeat(2, 1fr);
             }
-
+            .grid-product-line {
+                grid-template-columns: 1fr;
+            }
             .form-card {
                 padding: 25px;
             }
         }
 
         @media (max-width: 576px) {
-            .grid-4, .grid-3, .grid-2 {
+            .grid-2, .grid-3 {
                 grid-template-columns: 1fr;
             }
 
@@ -354,37 +331,86 @@
             .product-row {
                 padding: 20px;
             }
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e5e7eb;
+        }
 
-            .action-buttons {
-                flex-direction: column;
-            }
+        /* Messages d'alerte */
+        .alert-danger {
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            border: 2px solid #ef4444;
+            color: #991b1b;
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+        }
+        
+        .alert-info {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            border: 2px solid #3b82f6;
+            border-radius: 12px;
+            padding: 15px 20px;
+            color: #1e40af;
+            font-weight: 500;
+            margin-bottom: 25px;
+        }
 
-            .action-buttons button,
-            .action-buttons a {
-                width: 100%;
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
             }
-            .btn-remove {
-                padding: 12px 20px; /* Taille plus grande pour mobile */
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
 
+        /* Remise input special styling */
+        .remise-field .form-control {
+            border-color: #f59e0b;
+            background: #fffbeb;
+        }
+        .remise-field .form-control:focus {
+            border-color: #d97706;
+            box-shadow: 0 0 0 4px rgba(245,158,11,0.15);
+        }
+        .remise-badge {
+            font-size: 11px; font-weight: 700; color: #92400e;
+            background: #fef3c7; border: 1px solid #fbbf24;
+            border-radius: 6px; padding: 2px 7px; display: inline-block; margin-top: 4px;
+        }
     </style>
 
     <div class="edit-container px-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h2 class="gradient-text mb-1" style="font-size: 32px; font-weight: 700;">
-                    <i class="fas fa-edit"></i> Modifier le Devis N° {{ $devisf->devis_num }}
+                    <i class="fas fa-edit me-2"></i> Modifier le Devis N° {{ $devisf->devis_num }}
                 </h2>
                 <p class="text-muted mb-0">Mettez à jour les informations de votre devis de formation</p>
             </div>
             <a href="{{ route('devisf.index') }}" class="btn btn-cancel">
-                <i class="fas fa-arrow-left me-2"></i> Annuler
+                <i class="fas fa-arrow-left me-2"></i> Retour
             </a>
         </div>
-
+        
         @if ($errors->any())
-            <div class="alert alert-danger">
+            <div class="alert alert-danger fade-in">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Veuillez corriger les erreurs suivantes :
                 <ul>
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
@@ -393,155 +419,172 @@
             </div>
         @endif
 
-        <form action="{{ route('devisf.update', $devisf->id) }}" method="POST" id="devis-formation-form">
+        <form action="{{ route('devisf.update', $devisf->id) }}" method="POST" id="devis-form">
             @csrf
             @method('PUT')
 
-            <div class="form-card">
+            <div class="form-card fade-in">
                 <div class="section-header">
                     <div class="section-icon">
                         <i class="fas fa-info-circle"></i>
                     </div>
-                    <h3 class="section-title">Informations Générales</h3>
+                    <h3 class="section-title">Informations Générales du Devis</h3>
                 </div>
 
-                <div class="grid-2 mb-3">
+                <div class="grid-2 mb-4">
                     <div>
-                        <label for="devis_num" class="form-label">Numéro du Devis</label>
-                        <input type="text" name="devis_num" class="form-control" value="{{ old('devis_num', $devisf->devis_num) }}" readonly>
+                        <label class="form-label" for="devis_num">Numéro du Devis</label>
+                        <input type="text" name="devis_num" id="devis_num" class="form-control" value="{{ old('devis_num', $devisf->devis_num) }}" readonly>
                     </div>
                     <div>
-                        <label for="date" class="form-label">Date <span class="required">*</span></label>
+                        <label class="form-label" for="date">Date <span class="required">*</span></label>
                         <input type="date" name="date" class="form-control" value="{{ old('date', $devisf->date) }}" required>
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <label for="titre" class="form-label">Titre <span class="required">*</span></label>
-                    <input type="text" name="titre" class="form-control" placeholder="Ex: Devis pour la formation en cybersécurité" value="{{ old('titre', $devisf->titre) }}" required>
+                <div class="mb-4">
+                    <label class="form-label" for="titre">Titre <span class="required">*</span></label>
+                    <input type="text" name="titre" id="titre" class="form-control" placeholder="Ex: Formation en Sécurité Informatique" value="{{ old('titre', $devisf->titre) }}" required>
                 </div>
 
                 <div class="grid-3 mb-3">
                     <div>
-                        <label for="client" class="form-label">Client <span class="required">*</span></label>
-                        <input type="text" name="client" class="form-control" placeholder="Nom de l'entreprise/client" value="{{ old('client', $devisf->client) }}" required>
+                        <label class="form-label" for="client">Client <span class="required">*</span></label>
+                        <input type="text" name="client" id="client" class="form-control" placeholder="Nom de la société/client" value="{{ old('client', $devisf->client) }}" required>
                     </div>
                     <div>
-                        <label for="contact" class="form-label">Contact</label>
-                        <input type="text" name="contact" class="form-control" placeholder="Personne de contact ou email" value="{{ old('contact', $devisf->contact) }}">
+                        <label class="form-label" for="contact">Contact</label>
+                        <input type="text" name="contact" id="contact" class="form-control" placeholder="Email ou téléphone" value="{{ old('contact', $devisf->contact) }}">
                     </div>
                     <div>
-                        <label for="ref" class="form-label">Référence</label>
-                        <input type="text" name="ref" class="form-control" placeholder="Votre référence interne" value="{{ old('ref', $devisf->ref) }}">
+                        <label class="form-label" for="ref">Référence</label>
+                        <input type="text" name="ref" id="ref" class="form-control" placeholder="Référence interne/client" value="{{ old('ref', $devisf->ref) }}">
                     </div>
-                </div>
-
-                <div class="mb-4">
-                    <label for="vide" class="form-label">Champ "Vide" (Information Supplémentaire)</label>
-                    <input type="text" name="vide" class="form-control" value="{{ old('vide', $devisf->vide) }}">
                 </div>
             </div>
 
-            <div class="form-card">
+            <div class="form-card fade-in">
                 <div class="section-header">
                     <div class="section-icon">
-                        <i class="fas fa-cubes"></i>
+                        <i class="fas fa-graduation-cap"></i>
                     </div>
-                    <h3 class="section-title">Détails des Formations/Prestations</h3>
+                    <h3 class="section-title">Détails de la Formation</h3>
                 </div>
 
                 <div id="product-container">
                     @foreach($devisf->items as $index => $item)
-                        <div class="product-row" data-index="{{ $index }}">
+                        <div class="product-row fade-in" data-index="{{ $index }}">
                             <div class="product-number">{{ $index + 1 }}</div>
-                            <div class="mb-3">
-                                <label for="libele" class="form-label">Libellé de la prestation <span class="required">*</span></label>
-                                <textarea name="libele[]" class="form-control" rows="3" required>{{ old("libele.$index", $item->libele) }}</textarea>
-                            </div>
-
-                            <div class="grid-4">
-                                <div class="col-md-4">
-                                    <label for="type" class="form-label">Choisir le type <span class="required">*</span></label>
+                            <div class="grid-product-line">
+                                <div class="form-group">
+                                    <label class="form-label" for="libele">Libellé / Description <span class="required">*</span></label>
+                                    <textarea name="libele[]" class="form-control" rows="3" placeholder="Description de la formation/module..." required>{{ old("libele.$index", $item->libele) }}</textarea>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label" for="type">Choisir le Type <span class="required">*</span></label>
                                     <select name="type[]" class="form-select type-select" onchange="toggleFields(this); calculatePrixTotal()">
-                                        <option value="formation" {{ (old("type.$index") == 'formation' || ($item->nombre == null && $item->nombre_de_jours == null)) ? 'selected' : '' }}>Durée</option>
-                                        <option value="nombre" {{ old("type.$index", $item->nombre != null ? 'nombre' : '') == 'nombre' ? 'selected' : '' }}>Nombre de collaborateurs</option>
-                                        <option value="nombre_de_jours" {{ old("type.$index", $item->nombre_de_jours != null ? 'nombre_de_jours' : '') == 'nombre_de_jours' ? 'selected' : '' }}>Nombre de jours</option>
+                                        <option value="formation" {{ (old("type.$index") == 'formation' || ($item->nombre == null && $item->nombre_de_jours == null)) ? 'selected' : '' }}>Durée (Jours/Heures)</option>
+                                        <option value="nombre" {{ old("type.$index", $item->nombre != null ? 'nombre' : '') == 'nombre' ? 'selected' : '' }}>Nb. Collaborateurs</option>
+                                        <option value="nombre_de_jours" {{ old("type.$index", $item->nombre_de_jours != null ? 'nombre_de_jours' : '') == 'nombre_de_jours' ? 'selected' : '' }}>Nb. de Jours</option>
                                     </select>
                                 </div>
-                                <div class="formation-field" style="{{ $item->nombre != null || $item->nombre_de_jours != null ? 'display:none;' : '' }}">
-                                    <label for="formation" class="form-label">Durée (en jours ou heures)</label>
-                                    <input type="text" name="formation[]" class="form-control" value="{{ old("formation.$index", $item->formation) }}">
+
+                                <div class="form-group formation-field" style="{{ $item->nombre != null || $item->nombre_de_jours != null ? 'display:none;' : '' }}">
+                                    <label class="form-label" for="formation">Durée (Jours/Heures)</label>
+                                    <input type="text" name="formation[]" class="form-control quantity-variable" value="{{ old("formation.$index", $item->formation) }}" placeholder="Ex: 3 jours, 24h">
                                 </div>
-                                <div class="nombre-field" style="{{ $item->nombre == null ? 'display:none;' : '' }}">
-                                    <label for="nombre" class="form-label">Nombre de collaborateurs</label>
-                                    <input type="number" name="nombre[]" class="form-control quantity-field" value="{{ old("nombre.$index", $item->nombre) }}" oninput="calculatePrixTotal()" min="0">
+                                <div class="form-group nombre-field" style="{{ $item->nombre == null ? 'display:none;' : '' }}">
+                                    <label class="form-label" for="nombre">Nombre de collaborateurs</label>
+                                    <input type="number" name="nombre[]" class="form-control quantity-variable" value="{{ old("nombre.$index", $item->nombre) }}" oninput="calculatePrixTotal()" min="0" placeholder="0">
                                 </div>
-                                <div class="nombre_de_jours-field" style="{{ $item->nombre_de_jours == null ? 'display:none;' : '' }}">
-                                    <label for="nombre_de_jours" class="form-label">Nombre de jours</label>
-                                    <input type="number" name="nombre_de_jours[]" class="form-control quantity-field" value="{{ old("nombre_de_jours.$index", $item->nombre_de_jours) }}" oninput="calculatePrixTotal()" min="0">
+                                <div class="form-group nombre_de_jours-field" style="{{ $item->nombre_de_jours == null ? 'display:none;' : '' }}">
+                                    <label class="form-label" for="nombre_de_jours">Nombre de jours</label>
+                                    <input type="number" name="nombre_de_jours[]" class="form-control quantity-variable" value="{{ old("nombre_de_jours.$index", $item->nombre_de_jours) }}" oninput="calculatePrixTotal()" min="0" placeholder="0">
                                 </div>
-                                <div>
-                                    <label for="prix_unitaire" class="form-label">Prix Unitaire <span class="required">*</span></label>
+                                <div class="form-group">
+                                    <label class="form-label" for="prix_unitaire">Prix Unitaire <span class="required">*</span></label>
                                     <input type="number" step="0.01" name="prix_unitaire[]" class="form-control unit-price" value="{{ old("prix_unitaire.$index", $item->prix_unitaire) }}" oninput="calculatePrixTotal()" min="0" required>
                                 </div>
-                                <div>
-                                    <label for="prix_total" class="form-label">Prix Total</label>
+                                
+                                {{-- Remise montant fixe --}}
+                                <div class="form-group remise-field">
+                                    <label class="form-label">Remise (montant fixe)</label>
+                                    <input type="number" step="0.01" name="remise[]" class="form-control remise-input"
+                                           value="{{ old("remise.$index", $item->remise ?? 0) }}" oninput="calculatePrixTotal()" min="0" placeholder="0.00">
+                                    <span class="remise-badge remise-preview" style="display:none;"></span>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label" for="prix_total">Prix Total</label>
                                     <input type="number" step="0.01" name="prix_total[]" class="form-control total-price" value="{{ old("prix_total.$index", $item->prix_total) }}" readonly>
                                 </div>
-                                <div class="d-flex align-items-end">
+                                
+                                <div class="form-group d-flex align-items-end">
                                     <button type="button" class="btn btn-remove w-100" onclick="removeProduct(this)">
-                                        <i class="fas fa-trash-alt"></i> Supprimer
+                                        <i class="fas fa-trash me-2"></i> Supprimer
                                     </button>
                                 </div>
                             </div>
                         </div>
                     @endforeach
                 </div>
-                <button type="button" class="btn btn-add" onclick="addProduct()">
-                    <i class="fas fa-plus-circle"></i> Ajouter un produit
+        
+                <button type="button" class="btn btn-add mt-3" onclick="addProduct()">
+                    <i class="fas fa-plus-circle me-2"></i> Ajouter un Module de Formation
                 </button>
             </div>
-
-            <div class="form-card">
+            
+            <div class="form-card fade-in">
                 <div class="section-header">
                     <div class="section-icon">
                         <i class="fas fa-calculator"></i>
                     </div>
-                    <h3 class="section-title">Totaux et Devise</h3>
+                    <h3 class="section-title">Calculs & Totaux</h3>
                 </div>
 
-                <div class="grid-2 mb-4">
+                <div class="grid-2 mb-3">
                     <div>
-                        <label for="tva" class="form-label">TVA (%)</label>
-                        <select name="tva" class="form-select" onchange="calculateTTC()">
-                            <option value="0" {{ old('tva', $devisf->tva == 0 ? '0' : '20') == '0' ? 'selected' : '' }}>Aucune TVA (0%)</option>
-                            <option value="20" {{ old('tva', $devisf->tva == 0 ? '0' : '20') == '20' ? 'selected' : '' }}>TVA 20%</option>
+                        <label class="form-label" for="currency">Devise <span class="required">*</span></label>
+                        <select name="currency" id="currency" class="form-select" required>
+                            <option value="DH" {{ old('currency', $devisf->currency) == 'DH' ? 'selected' : '' }}>Dirham (DH)</option>
+                            <option value="EUR" {{ old('currency', $devisf->currency) == 'EUR' ? 'selected' : '' }}>Euro (€)</option>
+                            <option value="CFA" {{ old('currency', $devisf->currency) == 'CFA' ? 'selected' : '' }}>CFA</option>
                         </select>
                     </div>
                     <div>
-                        <label for="currency" class="form-label">Devise</label>
-                        <select name="currency" class="form-select">
-                            <option value="DH" {{ old('currency', $devisf->currency) == 'DH' ? 'selected' : '' }}>Dirham (DH)</option>
-                            <option value="EUR" {{ old('currency', $devisf->currency) == 'EUR' ? 'selected' : '' }}>Euro (€)</option>
-                             <option value="CFA" {{ old('currency', $devisf->currency) == 'CFA' ? 'selected' : '' }}>CFA</option>
+                        <label class="form-label" for="tva">TVA <span class="required">*</span></label>
+                        <select name="tva" id="tva" class="form-select" onchange="calculateTTC()" required>
+                            <option value="20" {{ old('tva', $devisf->tva) == '20' ? 'selected' : '' }}>TVA 20%</option>
+                            <option value="0" {{ old('tva', $devisf->tva) == '0' ? 'selected' : '' }}>Aucune TVA (0%)</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="total-section">
-                    <div class="total-row-display">
-                        <span class="total-label">Total Hors Taxes (HT) :</span>
-                        <input type="text" name="total_ht" id="total_ht" class="form-control text-end total-value" value="{{ old('total_ht', number_format($devisf->total_ht, 2, '.', '')) }}" readonly>
+                    <div class="total-row">
+                        <span class="total-label">Total HT (Hors Taxes)</span>
+                        <span class="total-value" id="display_total_ht">{{ number_format(old('total_ht', $devisf->total_ht), 2, '.', '') }}</span>
                     </div>
-
-                    <div class="total-ttc-row d-flex justify-content-between align-items-center">
-                        <span class="total-label">Total Toutes Taxes Comprises (TTC) :</span>
-                        <input type="text" name="total_ttc" id="total_ttc" class="form-control text-end total-value" value="{{ old('total_ttc', number_format($devisf->total_ttc, 2, '.', '')) }}" readonly style="width: auto;">
+                    <div class="total-row">
+                        <span class="total-label">Montant TVA</span>
+                        <span class="total-value" id="display_tva">0.00</span>
+                    </div>
+                    <div class="total-ttc-row">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="total-label" style="font-size: 20px;">
+                                <i class="fas fa-coins me-2"></i> Total TTC (Toutes Taxes Comprises)
+                            </span>
+                            <span class="total-value" id="display_total_ttc">{{ number_format(old('total_ttc', $devisf->total_ttc), 2, '.', '') }}</span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="form-card">
+                <input type="hidden" name="total_ht" id="total_ht" value="{{ old('total_ht', $devisf->total_ht) }}">
+                <input type="hidden" name="total_ttc" id="total_ttc" value="{{ old('total_ttc', $devisf->total_ttc) }}">
+            </div>
+            
+            <div class="form-card fade-in">
                 <div class="section-header">
                     <div class="section-icon">
                         <i class="fas fa-exclamation-triangle"></i>
@@ -550,211 +593,272 @@
                 </div>
 
                 <div id="important-container">
-                    @php $important_infos = old('important', $devisf->ImportantInfof->pluck('info')->toArray() ?: ['']); @endphp
+                    @php 
+                        $important_infos = old('important', $devisf->ImportantInfof->pluck('info')->toArray() ?: ['']);
+                    @endphp
                     @foreach($important_infos as $index => $info)
-                        <div class="important-row">
-                            <input type="text" name="important[]" class="form-control" placeholder="Ajouter une information importante" value="{{ $info }}">
+                        <div class="important-row fade-in">
+                            <i class="fas fa-star" style="color: #f59e0b; font-size: 18px;"></i>
+                            <input type="text" name="important[]" class="form-control" placeholder="Ajouter une information importante (Ex: Validité du devis: 30 jours)" value="{{ $info }}">
                             <button type="button" class="btn btn-remove" onclick="removeImportant(this)">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
                     @endforeach
                 </div>
-                <button type="button" class="btn btn-important mt-2" onclick="addImportant()">
-                    <i class="fas fa-plus"></i> Ajouter une autre information
+
+                <button type="button" class="btn btn-important mt-3" onclick="addImportant()">
+                    <i class="fas fa-plus-circle me-2"></i> Ajouter une Information
                 </button>
             </div>
-
+            
             <div class="action-buttons">
                 <a href="{{ route('devisf.index') }}" class="btn btn-cancel">
-                    <i class="fas fa-times-circle"></i> Annuler
+                    <i class="fas fa-times-circle me-2"></i> Annuler
                 </a>
                 <button type="submit" class="btn btn-gradient">
-                    <i class="fas fa-save"></i> Mettre à jour le devis
+                    <i class="fas fa-save me-2"></i> Mettre à jour le Devis
                 </button>
             </div>
         </form>
     </div>
-
+    
     <script>
-        let productIndex = {{ $devisf->items->count() }}; // Initialiser l'index pour les nouveaux produits
+    let productIndex = {{ $devisf->items->count() }};
 
-        function updateProductNumbers() {
-            document.querySelectorAll('.product-row').forEach((row, index) => {
-                let numberBadge = row.querySelector('.product-number');
-                if (numberBadge) {
-                    numberBadge.textContent = index + 1;
-                    row.setAttribute('data-index', index);
-                }
-            });
-        }
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialiser l'affichage des champs dynamiques et les calculs
+        document.querySelectorAll('.type-select').forEach(toggleFields);
+        calculatePrixTotal();
+        updateProductNumbers();
+    });
 
-        function calculatePrixTotal() {
-            let totalHT = 0;
-            let rows = document.querySelectorAll('.product-row');
-
-            rows.forEach(function(row) {
-                let unitPriceInput = row.querySelector('.unit-price');
-                let totalPriceInput = row.querySelector('.total-price');
-                let type = row.querySelector('.type-select').value;
-
-                let unitPrice = parseFloat(unitPriceInput.value) || 0;
-                let quantity = 1;
-
-                // Trouver la bonne quantité en fonction du type sélectionné
-                if (type === 'nombre') {
-                    quantity = parseFloat(row.querySelector('.nombre-field .quantity-field').value) || 0;
-                } else if (type === 'nombre_de_jours') {
-                    quantity = parseFloat(row.querySelector('.nombre_de_jours-field .quantity-field').value) || 0;
-                }
-
-                let rowTotal = unitPrice * quantity;
-                totalPriceInput.value = rowTotal.toFixed(2);
-                totalHT += rowTotal;
-            });
-
-            document.getElementById('total_ht').value = totalHT.toFixed(2);
-            calculateTTC();
-        }
-
-        function calculateTTC() {
-            let totalHT = parseFloat(document.getElementById('total_ht').value) || 0;
-            let tva = parseFloat(document.querySelector('select[name="tva"]').value) || 0;
-            let totalTTC = totalHT * (1 + tva / 100);
-            document.getElementById('total_ttc').value = totalTTC.toFixed(2);
-        }
-
-        function addProduct() {
-            let productContainer = document.getElementById('product-container');
-            let newProductRow = document.createElement('div');
-            newProductRow.classList.add('product-row');
-            newProductRow.setAttribute('data-index', productIndex++);
-
-            newProductRow.innerHTML = `
-                <div class="product-number">${productIndex}</div>
-                <div class="mb-3">
-                    <label for="libele" class="form-label">Libellé de la prestation <span class="required">*</span></label>
-                    <textarea name="libele[]" class="form-control" rows="3" required></textarea>
-                </div>
-                <div class="grid-4">
-                    <div class="col-md-4">
-                        <label for="type" class="form-label">Choisir le type <span class="required">*</span></label>
-                        <select name="type[]" class="form-select type-select" onchange="toggleFields(this); calculatePrixTotal()">
-                            <option value="formation" selected>Durée</option>
-                            <option value="nombre">Nombre de collaborateurs</option>
-                            <option value="nombre_de_jours">Nombre de jours</option>
-                        </select>
-                    </div>
-                    <div class="formation-field">
-                        <label for="formation" class="form-label">Durée (en jours ou heures)</label>
-                        <input type="text" name="formation[]" class="form-control">
-                    </div>
-                    <div class="nombre-field" style="display:none;">
-                        <label for="nombre" class="form-label">Nombre de collaborateurs</label>
-                        <input type="number" name="nombre[]" class="form-control quantity-field" oninput="calculatePrixTotal()" min="0">
-                    </div>
-                    <div class="nombre_de_jours-field" style="display:none;">
-                        <label for="nombre_de_jours" class="form-label">Nombre de jours</label>
-                        <input type="number" name="nombre_de_jours[]" class="form-control quantity-field" oninput="calculatePrixTotal()" min="0">
-                    </div>
-                    <div>
-                        <label for="prix_unitaire" class="form-label">Prix Unitaire <span class="required">*</span></label>
-                        <input type="number" step="0.01" name="prix_unitaire[]" class="form-control unit-price" min="0" oninput="calculatePrixTotal()" required>
-                    </div>
-                    <div>
-                        <label for="prix_total" class="form-label">Prix Total</label>
-                        <input type="number" step="0.01" name="prix_total[]" class="form-control total-price" readonly>
-                    </div>
-                    <div class="d-flex align-items-end">
-                        <button type="button" class="btn btn-remove w-100" onclick="removeProduct(this)">
-                            <i class="fas fa-trash-alt"></i> Supprimer
-                        </button>
-                    </div>
-                </div>
-            `;
-            productContainer.appendChild(newProductRow);
-            toggleFields(newProductRow.querySelector('.type-select')); // Initialize field visibility
-            updateProductNumbers();
-        }
-
-        function removeProduct(button) {
-            let productRows = document.querySelectorAll('.product-row');
-            if (productRows.length > 1) {
-                button.closest('.product-row').remove();
-                updateProductNumbers();
-                calculatePrixTotal();
-            } else {
-                alert('Vous devez conserver au moins un produit.');
-            }
-        }
-
-        function toggleFields(select) {
-            const type = select.value;
-            const row = select.closest('.product-row');
-            const formationField = row.querySelector('.formation-field');
-            const nombreField = row.querySelector('.nombre-field');
-            const nombreDeJoursField = row.querySelector('.nombre_de_jours-field');
-
-            // Réinitialiser les champs masqués pour qu'ils ne soient pas envoyés
-            // On le fait dans la fonction calculate pour gérer la valeur de la quantité, ici on gère l'affichage.
-
-            formationField.style.display = 'none';
-            nombreField.style.display = 'none';
-            nombreDeJoursField.style.display = 'none';
-
-            // Masquer les inputs des champs non sélectionnés pour ne pas les envoyer
-            row.querySelectorAll('.quantity-field, [name="formation[]"]').forEach(input => {
-                input.removeAttribute('required');
-                // input.value = ''; // Optionnel: pour effacer la valeur quand le champ est masqué
-            });
-
-
-            if (type === 'formation') {
-                formationField.style.display = 'block';
-                // Assurez-vous que le champ "formation" n'a pas de 'required' car il est souvent optionnel
-            } else if (type === 'nombre') {
-                nombreField.style.display = 'block';
-                nombreField.querySelector('.quantity-field').setAttribute('required', 'required');
+    /**
+     * Calcule le prix total de chaque ligne et met à jour le Total HT et TTC.
+     */
+    function calculatePrixTotal() {
+        let totalHT = 0;
+     
+        document.querySelectorAll('.product-row').forEach(function (row) {
+            let unitPrice       = parseFloat(row.querySelector('.unit-price').value) || 0;
+            let remise          = parseFloat(row.querySelector('.remise-input')?.value) || 0;
+            let totalPriceInput = row.querySelector('.total-price');
+            let typeSelect      = row.querySelector('.type-select');
+            let type            = typeSelect ? typeSelect.value : 'formation';
+            let quantity        = 1;
+     
+            if (type === 'nombre') {
+                quantity = parseFloat(row.querySelector('[name="nombre[]"]').value) || 0;
             } else if (type === 'nombre_de_jours') {
-                nombreDeJoursField.style.display = 'block';
-                nombreDeJoursField.querySelector('.quantity-field').setAttribute('required', 'required');
+                quantity = parseFloat(row.querySelector('[name="nombre_de_jours[]"]').value) || 0;
             }
-        }
-
-        function addImportant() {
-            let container = document.getElementById('important-container');
-            let newRow = document.createElement('div');
-            newRow.classList.add('important-row');
-            newRow.innerHTML = `
-                <input type="text" name="important[]" class="form-control" placeholder="Ajouter une information importante">
-                <button type="button" class="btn btn-remove" onclick="removeImportant(this)">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-            container.appendChild(newRow);
-        }
-
-        function removeImportant(button) {
-            let importantRows = document.querySelectorAll('.important-row');
-            if (importantRows.length > 1) {
-                button.closest('.important-row').remove();
-            } else {
-                // S'il ne reste qu'un seul champ, on ne le supprime pas mais on vide sa valeur
-                let input = button.closest('.important-row').querySelector('input[name="important[]"]');
-                if (input) {
-                    input.value = '';
+     
+            // Prix après remise = prix unitaire - remise fixe
+            let prixApresRemise = Math.max(0, unitPrice - remise);
+            let rowTotal        = prixApresRemise * quantity;
+            totalPriceInput.value = rowTotal.toFixed(2);
+            totalHT += rowTotal;
+     
+            // Badge : afficher le montant déduit et le prix après remise
+            let badge = row.querySelector('.remise-preview');
+            if (badge) {
+                if (remise > 0) {
+                    badge.textContent = `-${remise.toFixed(2)} → ${prixApresRemise.toFixed(2)}/u`;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
                 }
             }
-        }
-
-        // Initialisation à l'ouverture de la page
-        document.addEventListener('DOMContentLoaded', function() {
-            // Assurer que les styles d'affichage sont corrects au chargement
-            document.querySelectorAll('.type-select').forEach(toggleFields);
-            // Mettre à jour les numéros (au cas où il y aurait eu des suppressions en cours de session)
-            updateProductNumbers();
-            // Recalculer les totaux
-            calculatePrixTotal();
         });
+     
+        document.getElementById('total_ht').value = totalHT.toFixed(2);
+        document.getElementById('display_total_ht').textContent = totalHT.toFixed(2);
+        calculateTTC();
+    }
+
+    /**
+     * Calcule le Total TTC et la TVA.
+     */
+    function calculateTTC() {
+        let totalHT = parseFloat(document.getElementById('total_ht').value) || 0;
+        let tvaRate = parseFloat(document.querySelector('[name="tva"]').value) || 0;
+        
+        let montantTVA = totalHT * (tvaRate / 100);
+        let totalTTC = totalHT + montantTVA;
+
+        document.getElementById('total_ttc').value = totalTTC.toFixed(2);
+        
+        // Affichage
+        document.getElementById('display_tva').textContent = montantTVA.toFixed(2);
+        document.getElementById('display_total_ttc').textContent = totalTTC.toFixed(2);
+    }
+
+    /**
+     * Ajoute une nouvelle ligne de module de formation.
+     */
+    function addProduct() {
+        let productContainer = document.getElementById('product-container');
+        let productRows = document.querySelectorAll('.product-row').length;
+     
+        let newRow = document.createElement('div');
+        newRow.classList.add('product-row', 'fade-in');
+        newRow.innerHTML = `
+            <div class="product-number">${productRows + 1}</div>
+            <div class="grid-product-line">
+                <div class="form-group">
+                    <label class="form-label">Libellé / Description <span class="required">*</span></label>
+                    <textarea name="libele[]" class="form-control" rows="3" placeholder="Description de la formation/module..." required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Choisir le Type <span class="required">*</span></label>
+                    <select name="type[]" class="form-select type-select" onchange="toggleFields(this); calculatePrixTotal()">
+                        <option value="formation" selected>Durée (Jours/Heures)</option>
+                        <option value="nombre">Nb. Collaborateurs</option>
+                        <option value="nombre_de_jours">Nb. de Jours</option>
+                    </select>
+                </div>
+     
+                <div class="form-group formation-field">
+                    <label class="form-label">Durée (Jours/Heures)</label>
+                    <input type="text" name="formation[]" class="form-control quantity-variable" placeholder="Ex: 3 jours, 24h">
+                </div>
+                <div class="form-group nombre-field" style="display: none;">
+                    <label class="form-label">Nombre de collaborateurs</label>
+                    <input type="number" name="nombre[]" class="form-control quantity-variable" oninput="calculatePrixTotal()" min="0" placeholder="0">
+                </div>
+                <div class="form-group nombre_de_jours-field" style="display: none;">
+                    <label class="form-label">Nombre de jours</label>
+                    <input type="number" name="nombre_de_jours[]" class="form-control quantity-variable" oninput="calculatePrixTotal()" min="0" placeholder="0">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Prix Unitaire <span class="required">*</span></label>
+                    <input type="number" step="0.01" name="prix_unitaire[]" class="form-control unit-price" min="0" oninput="calculatePrixTotal()" required>
+                </div>
+     
+                <div class="form-group remise-field">
+                    <label class="form-label">Remise (montant fixe)</label>
+                    <input type="number" step="0.01" name="remise[]" class="form-control remise-input"
+                           value="0" oninput="calculatePrixTotal()" min="0" placeholder="0.00">
+                    <span class="remise-badge remise-preview" style="display:none;"></span>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Prix Total</label>
+                    <input type="number" step="0.01" name="prix_total[]" class="form-control total-price" readonly>
+                </div>
+                
+                <div class="form-group d-flex align-items-end">
+                    <button type="button" class="btn btn-remove w-100" onclick="removeProduct(this)">
+                        <i class="fas fa-trash me-2"></i> Supprimer
+                    </button>
+                </div>
+            </div>
+        `;
+        productContainer.appendChild(newRow);
+        toggleFields(newRow.querySelector('.type-select'));
+        updateProductNumbers();
+    }
+
+    /**
+     * Supprime une ligne de produit/formation.
+     */
+    function removeProduct(button) {
+        let productRows = document.querySelectorAll('.product-row');
+        if (productRows.length > 1) {
+            button.closest('.product-row').remove();
+            calculatePrixTotal();
+            updateProductNumbers();
+        } else {
+            alert('Vous devez conserver au moins un module de formation.');
+        }
+    }
+    
+    /**
+     * Met à jour les numéros affichés sur chaque ligne de produit.
+     */
+    function updateProductNumbers() {
+        document.querySelectorAll('.product-row').forEach((row, index) => {
+            row.querySelector('.product-number').textContent = index + 1;
+        });
+    }
+
+    /**
+     * Gère l'affichage des champs de quantité dynamiques.
+     */
+    function toggleFields(select) {
+        const type = select.value;
+        const row = select.closest('.product-row');
+        
+        // Tous les champs variables
+        const variableFields = [
+            row.querySelector('.formation-field'),
+            row.querySelector('.nombre-field'),
+            row.querySelector('.nombre_de_jours-field')
+        ].filter(el => el != null);
+
+        variableFields.forEach(field => {
+            field.style.display = 'none';
+            // Réinitialiser les valeurs des champs cachés
+            let input = field.querySelector('input, textarea');
+            if (input && input.name.includes('[]')) {
+                if (field.classList.contains('nombre-field') || field.classList.contains('nombre_de_jours-field')) {
+                    // Ne pas effacer automatiquement, garder la valeur pour l'édition
+                    // mais elle ne sera pas utilisée dans le calcul car le champ est caché
+                }
+            }
+        });
+
+        let fieldToShow;
+        if (type === 'formation') {
+            fieldToShow = row.querySelector('.formation-field');
+        } else if (type === 'nombre') {
+            fieldToShow = row.querySelector('.nombre-field');
+        } else if (type === 'nombre_de_jours') {
+            fieldToShow = row.querySelector('.nombre_de_jours-field');
+        }
+        
+        if (fieldToShow) {
+            fieldToShow.style.display = 'block';
+        }
+        
+        // Déclencher un nouveau calcul après le changement de type
+        calculatePrixTotal();
+    }
+    
+    /**
+     * Ajoute une nouvelle information importante.
+     */
+    function addImportant() {
+        const container = document.getElementById('important-container');
+        const newRow = document.createElement('div');
+        newRow.className = 'important-row fade-in';
+        newRow.innerHTML = `
+            <i class="fas fa-star" style="color: #f59e0b; font-size: 18px;"></i>
+            <input type="text" name="important[]" class="form-control" placeholder="Ajouter une information importante">
+            <button type="button" class="btn btn-remove" onclick="removeImportant(this)">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        container.appendChild(newRow);
+    }
+
+    /**
+     * Supprime une information importante.
+     */
+    function removeImportant(button) {
+        let importantRows = document.querySelectorAll('.important-row');
+        if (importantRows.length > 1) {
+            button.closest('.important-row').remove();
+        } else {
+            // S'il ne reste qu'un seul champ, on ne le supprime pas mais on vide sa valeur
+            let input = button.closest('.important-row').querySelector('input[name="important[]"]');
+            if (input) {
+                input.value = '';
+            }
+        }
+    }
+
     </script>
 </x-app-layout>

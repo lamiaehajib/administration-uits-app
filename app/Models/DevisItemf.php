@@ -11,7 +11,8 @@ class DevisItemf extends Model
 
     protected $table = 'devis_itemsf';
     protected $fillable = [
-        'libele', 'formation', 'prix_unitaire', 'prix_total', 'devis_id','nombre','nombre_de_jours'
+        'libele', 'formation', 'prix_unitaire', 'remise', 'prix_apres_remise',
+        'prix_total', 'devis_id', 'nombre', 'nombre_de_jours'
     ];
     
 

@@ -378,6 +378,21 @@
                 transform: translateY(0);
             }
         }
+
+         /* ✅ Remise input special styling */
+        .remise-field .form-control {
+            border-color: #f59e0b;
+            background: #fffbeb;
+        }
+        .remise-field .form-control:focus {
+            border-color: #d97706;
+            box-shadow: 0 0 0 4px rgba(245,158,11,0.15);
+        }
+        .remise-badge {
+            font-size: 11px; font-weight: 700; color: #92400e;
+            background: #fef3c7; border: 1px solid #fbbf24;
+            border-radius: 6px; padding: 2px 7px; display: inline-block; margin-top: 4px;
+        }
     </style>
 
     <div class="create-container px-4">
@@ -495,7 +510,13 @@
                                 <label class="form-label" for="prix_unitaire">Prix Unitaire <span class="required">*</span></label>
                                 <input type="number" step="0.01" name="prix_unitaire[]" class="form-control unit-price" value="{{ old('prix_unitaire.0', 0) }}" oninput="calculatePrixTotal()" min="0" required>
                             </div>
-                            
+                            {{-- ✅ Remise % --}}
+                            <div class="form-group remise-field">
+    <label class="form-label">Remise (montant fixe)</label>
+    <input type="number" step="0.01" name="remise[]" class="form-control remise-input"
+           value="{{ old('remise.0', 0) }}" oninput="calculatePrixTotal()" min="0" placeholder="0.00">
+    <span class="remise-badge remise-preview" style="display:none;"></span>
+</div>
                             <div class="form-group">
                                 <label class="form-label" for="prix_total">Prix Total</label>
                                 <input type="number" step="0.01" name="prix_total[]" class="form-control total-price" readonly>
@@ -611,36 +632,50 @@
     /**
      * Calcule le prix total de chaque ligne et met à jour le Total HT et TTC.
      */
+        // ✅ Main calculation — remise aware
     function calculatePrixTotal() {
-        let totalHT = 0;
-        let rows = document.querySelectorAll('.product-row');
-
-        rows.forEach(function(row) {
-            let unitPrice = parseFloat(row.querySelector('.unit-price').value) || 0;
-            let totalPriceInput = row.querySelector('.total-price');
-            let typeSelect = row.querySelector('.type-select');
-            let type = typeSelect ? typeSelect.value : 'formation'; // Fallback
-            let quantity = 1;
-
-            if (type === 'nombre') {
-                quantity = parseFloat(row.querySelector('[name="nombre[]"]').value) || 0;
-            } else if (type === 'nombre_de_jours') {
-                quantity = parseFloat(row.querySelector('[name="nombre_de_jours[]"]').value) || 0;
+    let totalHT = 0;
+ 
+    document.querySelectorAll('.product-row').forEach(function (row) {
+        let unitPrice       = parseFloat(row.querySelector('.unit-price').value) || 0;
+        // remise = montant fixe (ex: 200 DH)
+        let remise          = parseFloat(row.querySelector('.remise-input')?.value) || 0;
+        let totalPriceInput = row.querySelector('.total-price');
+        let typeSelect      = row.querySelector('.type-select');
+        let type            = typeSelect ? typeSelect.value : 'formation';
+        let quantity        = 1;
+ 
+        if (type === 'nombre') {
+            quantity = parseFloat(row.querySelector('[name="nombre[]"]').value) || 0;
+        } else if (type === 'nombre_de_jours') {
+            quantity = parseFloat(row.querySelector('[name="nombre_de_jours[]"]').value) || 0;
+        }
+ 
+        // Prix après remise = prix unitaire - remise fixe (pas de multiplication par %)
+        let prixApresRemise = Math.max(0, unitPrice - remise);
+        let rowTotal        = prixApresRemise * quantity;
+        totalPriceInput.value = rowTotal.toFixed(2);
+        totalHT += rowTotal;
+ 
+        // Badge : afficher le montant déduit et le prix après remise
+        let badge = row.querySelector('.remise-preview');
+        if (badge) {
+            if (remise > 0) {
+                badge.textContent = `-${remise.toFixed(2)} → ${prixApresRemise.toFixed(2)}/u`;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
             }
-            
-            // Pour 'formation' (Durée), on considère généralement la quantité comme 1, 
-            // le prix unitaire étant le prix de la formation.
-            // La quantité est utilisée uniquement pour 'nombre' ou 'nombre_de_jours'.
+        }
+    });
+ 
+    document.getElementById('total_ht').value = totalHT.toFixed(2);
+    document.getElementById('display_total_ht').textContent = totalHT.toFixed(2);
+    calculateTTC();
+}
 
-            let rowTotal = unitPrice * quantity;
-            totalPriceInput.value = rowTotal.toFixed(2);
-            totalHT += rowTotal;
-        });
 
-        document.getElementById('total_ht').value = totalHT.toFixed(2);
-        document.getElementById('display_total_ht').textContent = totalHT.toFixed(2);
-        calculateTTC();
-    }
+    
 
     /**
      * Calcule le Total TTC et la TVA.
@@ -662,64 +697,71 @@
     /**
      * Ajoute une nouvelle ligne de module de formation.
      */
-    function addProduct() {
-        let productContainer = document.getElementById('product-container');
-        let productRows = document.querySelectorAll('.product-row').length;
-        let newIndex = productRows; // Index pour les inputs
-        
-        let newRow = document.createElement('div');
-        newRow.classList.add('product-row', 'fade-in');
-        newRow.innerHTML = `
-            <div class="product-number">${newIndex + 1}</div>
-            <div class="grid-product-line">
-                <div class="form-group">
-                    <label class="form-label" for="libele">Libellé / Description <span class="required">*</span></label>
-                    <textarea name="libele[]" class="form-control" rows="3" placeholder="Description de la formation/module..." required></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label" for="type">Choisir le Type <span class="required">*</span></label>
-                    <select name="type[]" class="form-select type-select" onchange="toggleFields(this)">
-                        <option value="formation" selected>Durée (Jours/Heures)</option>
-                        <option value="nombre">Nb. Collaborateurs</option>
-                        <option value="nombre_de_jours">Nb. de Jours</option>
-                    </select>
-                </div>
-
-                <div class="form-group formation-field">
-                    <label class="form-label" for="formation">Durée (Jours/Heures)</label>
-                    <input type="text" name="formation[]" class="form-control quantity-variable" placeholder="Ex: 3 jours, 24h">
-                </div>
-                <div class="form-group nombre-field" style="display: none;">
-                    <label class="form-label" for="nombre">Nombre de collaborateurs</label>
-                    <input type="number" name="nombre[]" class="form-control quantity-variable" oninput="calculatePrixTotal()" min="0" placeholder="0">
-                </div>
-                <div class="form-group nombre_de_jours-field" style="display: none;">
-                    <label class="form-label" for="nombre_de_jours">Nombre de jours</label>
-                    <input type="number" name="nombre_de_jours[]" class="form-control quantity-variable" oninput="calculatePrixTotal()" min="0" placeholder="0">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label" for="prix_unitaire">Prix Unitaire <span class="required">*</span></label>
-                    <input type="number" step="0.01" name="prix_unitaire[]" class="form-control unit-price" min="0" oninput="calculatePrixTotal()" required>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label" for="prix_total">Prix Total</label>
-                    <input type="number" step="0.01" name="prix_total[]" class="form-control total-price" readonly>
-                </div>
-                
-                <div class="form-group d-flex align-items-end">
-                    <button type="button" class="btn btn-remove w-100" onclick="removeProduct(this)">
-                        <i class="fas fa-trash me-2"></i> Supprimer
-                    </button>
-                </div>
+   function addProduct() {
+    let productContainer = document.getElementById('product-container');
+    let productRows = document.querySelectorAll('.product-row').length;
+ 
+    let newRow = document.createElement('div');
+    newRow.classList.add('product-row', 'fade-in');
+    newRow.innerHTML = `
+        <div class="product-number">${productRows + 1}</div>
+        <div class="grid-product-line">
+            <div class="form-group">
+                <label class="form-label">Libellé / Description <span class="required">*</span></label>
+                <textarea name="libele[]" class="form-control" rows="3" placeholder="Description de la formation/module..." required></textarea>
             </div>
-        `;
-        productContainer.appendChild(newRow);
-        toggleFields(newRow.querySelector('.type-select')); // Initialisation
-        updateProductNumbers();
-    }
+            
+            <div class="form-group">
+                <label class="form-label">Choisir le Type <span class="required">*</span></label>
+                <select name="type[]" class="form-select type-select" onchange="toggleFields(this)">
+                    <option value="formation" selected>Durée (Jours/Heures)</option>
+                    <option value="nombre">Nb. Collaborateurs</option>
+                    <option value="nombre_de_jours">Nb. de Jours</option>
+                </select>
+            </div>
+ 
+            <div class="form-group formation-field">
+                <label class="form-label">Durée (Jours/Heures)</label>
+                <input type="text" name="formation[]" class="form-control quantity-variable" placeholder="Ex: 3 jours, 24h">
+            </div>
+            <div class="form-group nombre-field" style="display: none;">
+                <label class="form-label">Nombre de collaborateurs</label>
+                <input type="number" name="nombre[]" class="form-control quantity-variable" oninput="calculatePrixTotal()" min="0" placeholder="0">
+            </div>
+            <div class="form-group nombre_de_jours-field" style="display: none;">
+                <label class="form-label">Nombre de jours</label>
+                <input type="number" name="nombre_de_jours[]" class="form-control quantity-variable" oninput="calculatePrixTotal()" min="0" placeholder="0">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Prix Unitaire <span class="required">*</span></label>
+                <input type="number" step="0.01" name="prix_unitaire[]" class="form-control unit-price" min="0" oninput="calculatePrixTotal()" required>
+            </div>
+ 
+            {{-- ✅ Remise montant fixe — PAS de max="100" --}}
+            <div class="form-group remise-field">
+                <label class="form-label">Remise (montant fixe)</label>
+                <input type="number" step="0.01" name="remise[]" class="form-control remise-input"
+                       value="0" oninput="calculatePrixTotal()" min="0" placeholder="0.00">
+                <span class="remise-badge remise-preview" style="display:none;"></span>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Prix Total</label>
+                <input type="number" step="0.01" name="prix_total[]" class="form-control total-price" readonly>
+            </div>
+            
+            <div class="form-group d-flex align-items-end">
+                <button type="button" class="btn btn-remove w-100" onclick="removeProduct(this)">
+                    <i class="fas fa-trash me-2"></i> Supprimer
+                </button>
+            </div>
+        </div>
+    `;
+    productContainer.appendChild(newRow);
+    toggleFields(newRow.querySelector('.type-select'));
+    updateProductNumbers();
+}
 
     /**
      * Supprime une ligne de produit/formation.

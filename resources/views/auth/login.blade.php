@@ -23,7 +23,6 @@
             --border:     #E5E7EB;
             --bg-input:   #F9FAFB;
 
-            /* Fluid type scale — adapts to zoom levels (60%–120%) via vw */
             --fs-xs:   clamp(9px,  .85vw, 12px);
             --fs-sm:   clamp(10px, 1vw,   13px);
             --fs-base: clamp(12px, 1.1vw, 14px);
@@ -42,27 +41,25 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* ─────────────────────────────────────────
-           LAYOUT
-        ───────────────────────────────────────── */
+        /* ── LAYOUT ── */
         .page {
             display: flex;
             min-height: 100vh;
         }
 
-        /* ─────────────────────────────────────────
-           LEFT PANEL
-        ───────────────────────────────────────── */
+        /* ══════════════════════════════════════════
+           LEFT PANEL — justify-content: center
+           pour que tout soit centré verticalement
+        ══════════════════════════════════════════ */
         .left {
             flex: 0 0 46%;
             position: relative;
             background: var(--red-dark);
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: center;          /* ← centrage vertical */
             padding: clamp(24px, 4vw, 56px) clamp(20px, 4vw, 52px);
             overflow: hidden;
-            
         }
 
         /* Grid texture */
@@ -101,21 +98,26 @@
             pointer-events: none;
         }
 
-        /* Diagonal accent bar */
+        /* Accent bar */
         .left-accent {
             position: absolute;
-            width: 3px;
-            height: 40%;
+            width: 3px; height: 40%;
             background: linear-gradient(180deg, rgba(255,255,255,.18), transparent);
-            top: 10%;
-            left: clamp(28px, 4vw, 52px);
-            border-radius: 99px;
-            pointer-events: none;
+            top: 10%; left: clamp(28px, 4vw, 52px);
+            border-radius: 99px; pointer-events: none;
         }
 
-        /* Status badge */
+        /* Content wrapper — z-index above decorations */
+        .left-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        /* Badge */
         .badge {
-            position: relative; z-index: 2;
             display: inline-flex; align-items: center; gap: 7px;
             background: rgba(255,255,255,.12);
             border: 1px solid rgba(255,255,255,.18);
@@ -140,21 +142,16 @@
             50%      { opacity: .55; transform: scale(.82); }
         }
 
-        /* Main heading */
+        /* Heading */
         .left-title {
-            position: relative; z-index: 2;
             font-size: var(--fs-xl);
             font-weight: 800; color: #fff;
             line-height: 1.18; letter-spacing: -.025em;
             margin-bottom: clamp(8px, 1.3vw, 16px);
         }
-        .left-title em {
-            font-style: normal;
-            color: rgba(255,255,255,.42);
-        }
+        .left-title em { font-style: normal; color: rgba(255,255,255,.42); }
         .left-title .highlight {
-            position: relative; display: inline-block;
-            color: #fff;
+            position: relative; display: inline-block; color: #fff;
         }
         .left-title .highlight::after {
             content: '';
@@ -167,22 +164,20 @@
 
         /* Description */
         .left-desc {
-            position: relative; z-index: 2;
             font-size: var(--fs-sm);
             color: rgba(255,255,255,.52); line-height: 1.7;
             max-width: 340px;
             margin-bottom: clamp(20px, 2.8vw, 40px);
         }
 
-        /* Feature list */
-        .features { position: relative; z-index: 2; display: flex; flex-direction: column; gap: clamp(7px, 1.1vw, 13px); }
+        /* Features */
+        .features { display: flex; flex-direction: column; gap: clamp(7px, 1.1vw, 13px); }
 
         .feat {
             display: flex; align-items: center; gap: clamp(8px, 1vw, 12px);
             font-size: var(--fs-sm); font-weight: 500;
             color: rgba(255,255,255,.7);
         }
-
         .feat-icon {
             width:  clamp(22px, 2.6vw, 32px);
             height: clamp(22px, 2.6vw, 32px);
@@ -193,7 +188,7 @@
             font-size: clamp(10px, 1.2vw, 14px); flex-shrink: 0;
         }
 
-        /* University name bottom-left watermark */
+        /* Watermark */
         .left-watermark {
             position: absolute; z-index: 2;
             bottom: clamp(16px, 2.2vw, 28px);
@@ -203,23 +198,17 @@
             color: rgba(255,255,255,.22);
         }
 
-        /* Bring right panel form closer to the divider */
-        .right {
-            padding-left: clamp(16px, 3vw, 48px);
-        }
-
-        /* ─────────────────────────────────────────
+        /* ══════════════════════════════════════════
            RIGHT PANEL
-        ───────────────────────────────────────── */
+        ══════════════════════════════════════════ */
         .right {
             flex: 1;
-            display: flex; align-items: center; justify-content: flex-start;
+            display: flex; align-items: center; justify-content: center;
             background: #fff;
             padding: clamp(20px, 3vw, 48px) clamp(16px, 4vw, 60px);
             position: relative;
         }
 
-        /* Subtle background pattern on right */
         .right::before {
             content: '';
             position: absolute; inset: 0;
@@ -232,10 +221,9 @@
             position: relative; z-index: 1;
             width: 100%;
             max-width: clamp(280px, 34vw, 420px);
-            margin-left: clamp(160px, 3vw, 48px);
         }
 
-        /* Brand row */
+        /* Brand */
         .brand {
             display: flex; align-items: center; gap: clamp(9px, 1.1vw, 14px);
             margin-bottom: clamp(24px, 3.5vw, 44px);
@@ -252,11 +240,7 @@
             box-shadow: 0 2px 10px rgba(0,0,0,.1);
             flex-shrink: 0;
         }
-        .brand-logo-wrap img {
-            width: 100%; height: 100%;
-            object-fit: contain; display: block;
-        }
-        .brand-text {}
+        .brand-logo-wrap img { width: 100%; height: 100%; object-fit: contain; display: block; }
         .brand-name {
             font-size: var(--fs-md); font-weight: 800;
             color: var(--ink); letter-spacing: -.015em; line-height: 1.1;
@@ -286,22 +270,13 @@
 
         /* Fields */
         .field { margin-bottom: clamp(12px, 1.5vw, 18px); }
-
         .field label {
             display: flex; align-items: center; gap: 5px;
             font-size: var(--fs-xs); font-weight: 700;
             color: var(--ink); letter-spacing: .06em; text-transform: uppercase;
             margin-bottom: 7px;
         }
-        .field label svg {
-            opacity: .45;
-            flex-shrink: 0;
-        }
-
-        .input-wrap {
-            position: relative;
-        }
-
+        .field label svg { opacity: .45; flex-shrink: 0; }
         .field input {
             width: 100%;
             padding: clamp(9px, 1.1vw, 13px) clamp(11px, 1.2vw, 14px);
@@ -315,28 +290,19 @@
             box-shadow: 0 0 0 3.5px rgba(198,40,40,.10);
         }
         .field input::placeholder { color: #C2C7D0; }
+        .field-error { font-size: var(--fs-xs); color: var(--red); margin-top: 5px; }
 
-        .field-error {
-            font-size: var(--fs-xs); color: var(--red);
-            margin-top: 5px; display: flex; align-items: center; gap: 4px;
-        }
-
-        /* Divider row */
+        /* Row */
         .form-row {
             display: flex; align-items: center; justify-content: space-between;
             margin-bottom: clamp(14px, 1.8vw, 22px); flex-wrap: wrap; gap: 8px;
         }
-
         .remember {
             display: flex; align-items: center; gap: 8px;
             font-size: var(--fs-sm); color: var(--muted);
             cursor: pointer; user-select: none;
         }
-        .remember input[type=checkbox] {
-            width: 15px; height: 15px;
-            accent-color: var(--red); cursor: pointer;
-        }
-
+        .remember input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--red); cursor: pointer; }
         .forgot {
             font-size: var(--fs-sm); font-weight: 600;
             color: var(--red); text-decoration: none; white-space: nowrap;
@@ -344,7 +310,7 @@
         }
         .forgot:hover { color: var(--red-dark); text-decoration: underline; }
 
-        /* Submit button */
+        /* Button */
         .btn {
             width: 100%;
             padding: clamp(10px, 1.3vw, 14px);
@@ -358,22 +324,6 @@
         }
         .btn:hover  { background: var(--red-dark); box-shadow: 0 6px 22px rgba(198,40,40,.38); }
         .btn:active { transform: scale(.985); }
-        .btn svg { opacity: .85; }
-
-        /* Divider */
-        .divider {
-            display: flex; align-items: center; gap: 10px;
-            margin: clamp(14px, 1.8vw, 22px) 0;
-        }
-        .divider::before, .divider::after {
-            content: ''; flex: 1;
-            height: 1px; background: var(--border);
-        }
-        .divider span {
-            font-size: var(--fs-xs); color: #C2C7D0;
-            font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
-            white-space: nowrap;
-        }
 
         /* Security note */
         .security-note {
@@ -385,38 +335,24 @@
             margin-bottom: clamp(14px, 1.8vw, 20px);
         }
         .security-note svg { flex-shrink: 0; color: var(--red); opacity: .7; }
-        .security-note p {
-            font-size: var(--fs-xs); color: var(--muted); line-height: 1.5;
-        }
+        .security-note p { font-size: var(--fs-xs); color: var(--muted); line-height: 1.5; }
         .security-note strong { color: var(--ink); }
 
-        /* Footer copy */
+        /* Footer */
         .copy {
             text-align: center;
             font-size: var(--fs-xs); color: #C2C7D0;
             margin-top: clamp(14px, 2vw, 24px);
         }
-        .copy strong {
-            color: var(--red);
-            font-weight: 700;
-        }
+        .copy strong { color: var(--red); font-weight: 700; }
 
-        /* ─────────────────────────────────────────
-           MOBILE
-        ───────────────────────────────────────── */
+        /* ── MOBILE ── */
         @media (max-width: 680px) {
             .page { flex-direction: column; }
-            .left {
-                flex: none; min-height: 200px;
-                justify-content: flex-end;
-                padding: 24px 22px;
-            }
+            .left { flex: none; min-height: 200px; justify-content: flex-end; padding: 24px 22px; }
             .left-desc, .features, .left-watermark, .left-accent { display: none; }
             .left-title { font-size: 22px; }
-            .right {
-                background: #F7F8FC;
-                padding: 28px 18px;
-            }
+            .right { background: #F7F8FC; padding: 28px 18px; }
             .form-wrap {
                 background: #fff; border-radius: var(--radius-lg);
                 padding: 26px 22px;
@@ -430,54 +366,55 @@
 <body>
 <div class="page">
 
-    <!-- ══ LEFT ══════════════════════════════════ -->
+    <!-- ══ LEFT ══ -->
     <div class="left">
         <div class="circle2"></div>
         <div class="left-accent"></div>
 
-        <div class="badge">
-            <span class="badge-dot"></span>
-            Système opérationnel
-        </div>
-
-        <h2 class="left-title">
-            Bienvenue sur<br>
-            <span class="highlight">UITS</span> <em>— Espace</em><br>
-            <em>d'administration</em>
-        </h2>
-
-        <p class="left-desc">
-            Plateforme interne de gestion de l'Université Internationale des Technologies et Sciences —
-            devis, factures, bons de commande, livraison, stock et bien plus.
-        </p>
-
-        <div class="features">
-            <div class="feat">
-                <div class="feat-icon">📄</div>
-                Factures · Devis · Bons de commande
+        <div class="left-content">
+            <div class="badge">
+                <span class="badge-dot"></span>
+                Système opérationnel
             </div>
-            <div class="feat">
-                <div class="feat-icon">📦</div>
-                Gestion de stock en temps réel
-            </div>
-            <div class="feat">
-                <div class="feat-icon">📊</div>
-                Tableaux de bord &amp; statistiques
-            </div>
-            <div class="feat">
-                <div class="feat-icon">🧾</div>
-                Reçus · BL · Attestations
+
+            <h2 class="left-title">
+                Bienvenue sur<br>
+                <span class="highlight">UITS</span> <em>— Espace</em><br>
+                <em>d'administration</em>
+            </h2>
+
+            <p class="left-desc">
+                Plateforme interne de gestion —
+                devis, factures, bons de commande, livraison, stock et bien plus.
+            </p>
+
+            <div class="features">
+                <div class="feat">
+                    <div class="feat-icon">📄</div>
+                    Factures · Devis · Bons de commande
+                </div>
+                <div class="feat">
+                    <div class="feat-icon">📦</div>
+                    Gestion de stock en temps réel
+                </div>
+                <div class="feat">
+                    <div class="feat-icon">📊</div>
+                    Tableaux de bord &amp; statistiques
+                </div>
+                <div class="feat">
+                    <div class="feat-icon">🧾</div>
+                    Reçus · BL · Attestations
+                </div>
             </div>
         </div>
 
         <div class="left-watermark">UITS — Usage interne uniquement</div>
     </div>
 
-    <!-- ══ RIGHT ═════════════════════════════════ -->
+    <!-- ══ RIGHT ══ -->
     <div class="right">
         <div class="form-wrap">
 
-            <!-- Brand -->
             <div class="brand">
                 <div class="brand-logo-wrap">
                     <img src="{{ asset('images/red.png') }}" alt="Logo UITS">
@@ -488,12 +425,10 @@
                 </div>
             </div>
 
-            <!-- Heading -->
             <div class="login-eyebrow">Accès réservé au personnel</div>
             <h1 class="login-h">Connexion</h1>
             <p class="login-sub">Entrez vos identifiants UITS pour accéder à votre espace de travail.</p>
 
-            <!-- Security notice -->
             <div class="security-note">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
@@ -504,36 +439,29 @@
             <form method="POST" action="{{ route('login') }}">
                 @csrf
 
-                <!-- Email -->
                 <div class="field">
                     <label for="email">
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
                         Adresse e-mail
                     </label>
-                    <div class="input-wrap">
-                        <input id="email" type="email" name="email"
-                            value="{{ old('email') }}"
-                            placeholder="prenom.nom@uits.ac.ma"
-                            required autocomplete="username">
-                    </div>
+                    <input id="email" type="email" name="email"
+                        value="{{ old('email') }}"
+                        placeholder="prenom.nom@uits.ac.ma"
+                        required autocomplete="username">
                     @error('email')<div class="field-error">{{ $message }}</div>@enderror
                 </div>
 
-                <!-- Password -->
                 <div class="field">
                     <label for="password">
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                         Mot de passe
                     </label>
-                    <div class="input-wrap">
-                        <input id="password" type="password" name="password"
-                            placeholder="••••••••"
-                            required autocomplete="current-password">
-                    </div>
+                    <input id="password" type="password" name="password"
+                        placeholder="••••••••"
+                        required autocomplete="current-password">
                     @error('password')<div class="field-error">{{ $message }}</div>@enderror
                 </div>
 
-                <!-- Remember / Forgot -->
                 <div class="form-row">
                     <label class="remember">
                         <input type="checkbox" name="remember" id="remember_me">
@@ -544,12 +472,10 @@
                     @endif
                 </div>
 
-                <!-- Submit -->
                 <button type="submit" class="btn">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
                     Se connecter
                 </button>
-
             </form>
 
             <div class="copy">© {{ date('Y') }} <strong>UITS</strong> — Usage interne · Tous droits réservés</div>

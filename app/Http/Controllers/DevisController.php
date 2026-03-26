@@ -197,7 +197,7 @@ public function duplicate(Devis $devis)
         'prix_unitaire' => 'required|array',
         'prix_unitaire.*' => 'required|numeric|min:0',
         'important' => 'nullable|array',
-        'important.*' => 'nullable|string|max:255',
+        'important.*' => 'nullable|string|max:5000',
         'currency' => 'required|in:DH,EUR,CFA', // تم إضافة CFA
         'tva' => 'required|in:0,20', // نتأكدو أن TVA إما 0 وإما 20
     ]);
@@ -298,7 +298,7 @@ public function duplicate(Devis $devis)
             'prix_unitaire' => 'required|array',
             'prix_unitaire.*' => 'required|numeric|min:0',
             'important' => 'nullable|array',
-            'important.*' => 'nullable|string|max:1005', // خليناه nullable باش يقبل القيم الفارغة
+            'important.*' => 'nullable|string|max:5000', // خليناه nullable باش يقبل القيم الفارغة
             'currency' => 'required|in:DH,EUR,CFA', // تم إضافة CFA
             'tva' => 'required|in:0,20', // زدناه باش نتأكدو من TVA
         ]);

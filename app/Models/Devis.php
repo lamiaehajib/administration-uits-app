@@ -17,6 +17,10 @@ class Devis extends Model
         'ref', 'total_ht', 'tva', 'total_ttc', 'important','user_id','currency',
     ];
 
+    protected $casts = [
+    'important' => 'array',
+];
+
     // العلاقة بين Devis و DevisItem (One-to-Many)
     public function items()
     {

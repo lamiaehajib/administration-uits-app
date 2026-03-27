@@ -168,7 +168,7 @@
 </head>
 <body>
     <div>
-        <img class="header-img" src="{{ public_path('images/im.png') }}" alt="Logo">
+        <img class="header-img" src="{{ public_path('images/PNG_logo_officialpng') }}" alt="Logo">
     </div>
    
     <div class="header-container">

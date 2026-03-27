@@ -500,6 +500,7 @@
                                    class="btn btn-sm btn-secondary" title="Dupliquer">
                                     <i class="fas fa-copy"></i>
                                 </a>
+                                
                                 <form action="{{ route('factures.destroy', $facture->id) }}" 
                                       method="POST" class="d-inline">
                                     @csrf
